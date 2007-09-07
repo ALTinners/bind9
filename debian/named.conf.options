@@ -20,5 +20,22 @@ options {
 
 	auth-nxdomain no;    # conform to RFC1035
 
+	// By default, name servers should only perform recursive domain
+	// lookups for their direct clients.  If recursion is left open
+	// to the entire Internet, your name server could be used to
+	// perform distributed denial of service attacks against other
+	// innocent computers.  For more information on DDoS recursion:
+	// http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-0987
+
+	allow-recursion { localnets; };
+
+	// If you have DNS clients on other subnets outside of your
+	// server's "localnets", you can explicitly add their networks
+	// without opening up your server to the Internet at large:
+	// allow-recursion { localnets; 192.168.0.0/24; };
+
+	// If your name server is only listening on 127.0.0.1, consider:
+	// allow-recursion { 127.0.0.1; };
+
 };
 

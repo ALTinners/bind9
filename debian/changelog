@@ -1,25 +1,18 @@
-bind9 (1:9.3.2-2ubuntu1.3) dapper-security; urgency=low
+bind9 (1:9.3.2-2ubuntu3) edgy; urgency=low
 
-  * SECURITY UPDATE: query responses could be forged remotely.
-  * bin/named/client.c, lib/dispatch.c, lib/include/dispatch.h:
-    upstream fixes back ported.
+  * SECURITY UPDATE: name servers accessible from the Internet could be
+    used as an amplifier in DDoS attacks against other networks.
+  * debian/named.conf.options: allow recursion only on localnets.  This
+    matches the default configuration of listening on all interfaces, and
+    gives a reasonable balance between allowing local recursion, and
+    protecting the server from being used in a DDoS attack.
   * References
-    CVE-2007-2926
+    CVE-2006-0987
+    http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=248899
 
- -- Kees Cook <kees@ubuntu.com>  Tue, 24 Jul 2007 13:15:45 -0700
+ -- Kees Cook <kees@outflux.net>  Thu, 28 Sep 2006 16:38:15 -0700
 
-bind9 (1:9.3.2-2ubuntu1.2) dapper-security; urgency=low
-
-  * SECURITY UPDATE: remote denial of service.
-  * lib/dns/include/dns/validator.h, lib/dns/{validator,resolver}.c,
-    lib/dns/api: fixes taken from upstream changes between bind 9.3.3 and
-    9.3.4, applied inline.
-  * References
-    CVE-2007-0493 CVE-2007-0494
-
- -- Kees Cook <kees@ubuntu.com>  Tue, 30 Jan 2007 17:59:01 -0800
-
-bind9 (1:9.3.2-2ubuntu1.1) dapper-security; urgency=low
+bind9 (1:9.3.2-2ubuntu2) edgy; urgency=low
 
   * SECURITY UPDATE:
   * bin/named/query.c, lib/dns/resolver.c: Apply upstream patch from 9.3.2-P1
@@ -31,7 +24,7 @@ bind9 (1:9.3.2-2ubuntu1.1) dapper-security; urgency=low
       INSIST failure and cause the requesting service(s) to crash
       [CVE-2006-4096].
 
- -- Martin Pitt <martin.pitt@ubuntu.com>  Thu,  7 Sep 2006 12:32:03 +0000
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Thu,  7 Sep 2006 16:30:29 +0200
 
 bind9 (1:9.3.2-2ubuntu1) dapper; urgency=low
 
