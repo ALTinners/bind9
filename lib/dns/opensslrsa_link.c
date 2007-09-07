@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: opensslrsa_link.c,v 1.1.2.1 2004/12/09 03:18:21 marka Exp $
+ * $Id: opensslrsa_link.c,v 1.1.2.1.4.6 2006/10/11 03:59:22 marka Exp $
  */
 #ifdef OPENSSL
 
@@ -38,6 +38,21 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
+#if OPENSSL_VERSION_NUMBER > 0x00908000L
+#include <openssl/bn.h>
+#endif
+
+/*
+ * We don't use configure for windows so enforce the OpenSSL version
+ * here.  Unlike with configure we don't support overriding this test.
+ */
+#ifdef WIN32
+#if !((OPENSSL_VERSION_NUMBER >= 0x009070cfL && \
+       OPENSSL_VERSION_NUMBER < 0x009080000L) || \
+      OPENSSL_VERSION_NUMBER >= 0x0090804fL) 
+#error Please upgrade OpenSSL to 0.9.8d/0.9.7l or greater.
+#endif
+#endif
 
 static isc_result_t opensslrsa_todns(const dst_key_t *key, isc_buffer_t *data);
 
@@ -203,13 +218,48 @@ opensslrsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 
 static isc_result_t
 opensslrsa_generate(dst_key_t *key, int exp) {
+#if OPENSSL_VERSION_NUMBER > 0x00908000L
+	BN_GENCB cb;
+	RSA *rsa = RSA_new();
+	BIGNUM *e = BN_new();
+
+	if (rsa == NULL || e == NULL)
+		goto err;
+
+	if (exp == 0) {
+		/* RSA_F4 0x10001 */
+		BN_set_bit(e, 0);
+		BN_set_bit(e, 16);
+	} else {
+		/* F5 0x100000001 */
+		BN_set_bit(e, 0);
+		BN_set_bit(e, 32);
+	}
+
+	BN_GENCB_set_old(&cb, NULL, NULL);
+	if (RSA_generate_key_ex(rsa, key->key_size, e, &cb)) {
+		BN_free(e);
+		rsa->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE);
+		rsa->flags |= RSA_FLAG_BLINDING;
+		key->opaque = rsa;
+		return (ISC_R_SUCCESS);
+	}
+
+ err:
+	if (e != NULL)
+		BN_free(e);
+	if (rsa != NULL)
+		RSA_free(rsa);
+	ERR_clear_error();
+	return (DST_R_OPENSSLFAILURE);
+#else
 	RSA *rsa;
 	unsigned long e;
 
 	if (exp == 0)
-		e = RSA_3;
-	else
 		e = RSA_F4;
+	else
+		e = 0x40000003;
 	rsa = RSA_generate_key(key->key_size, e, NULL, NULL);
 	if (rsa == NULL) {
 		ERR_clear_error();
@@ -222,6 +272,7 @@ opensslrsa_generate(dst_key_t *key, int exp) {
 	key->opaque = rsa;
 
 	return (ISC_R_SUCCESS);
+#endif
 }
 
 static isc_boolean_t
@@ -232,7 +283,7 @@ opensslrsa_isprivate(const dst_key_t *key) {
 
 static isc_boolean_t
 opensslrsa_issymmetric(void) {
-        return (ISC_FALSE);
+	return (ISC_FALSE);
 }
 
 static void
@@ -241,7 +292,6 @@ opensslrsa_destroy(dst_key_t *key) {
 	RSA_free(rsa);
 	key->opaque = NULL;
 }
-
 
 static isc_result_t
 opensslrsa_todns(const dst_key_t *key, isc_buffer_t *data) {
