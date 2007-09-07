@@ -1,3 +1,24 @@
+bind9 (1:9.3.2-2ubuntu3.2) edgy-security; urgency=low
+
+  * SECURITY UPDATE: query responses could be forged remotely.
+  * bin/named/client.c, lib/dispatch.c, lib/include/dispatch.h:
+    upstream fixes back ported.
+  * References
+    CVE-2007-2926
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 24 Jul 2007 13:15:45 -0700
+
+bind9 (1:9.3.2-2ubuntu3.1) edgy-security; urgency=low
+
+  * SECURITY UPDATE: remote denial of service.
+  * lib/dns/include/dns/validator.h, lib/dns/{validator,resolver}.c,
+    lib/dns/api: fixes taken from upstream changes between bind 9.3.3 and
+    9.3.4, applied inline.
+  * References
+    CVE-2007-0493 CVE-2007-0494
+
+ -- Kees Cook <kees@ubuntu.com>  Thu, 25 Jan 2007 12:18:44 -0800
+
 bind9 (1:9.3.2-2ubuntu3) edgy; urgency=low
 
   * SECURITY UPDATE: name servers accessible from the Internet could be
