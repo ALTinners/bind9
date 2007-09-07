@@ -33,7 +33,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: confparser.y.dirty,v 1.44.2.8 2001/03/21 18:34:31 bwelling Exp $ */
+/* $Id: confparser.y.dirty,v 1.44.2.8.10.2 2003/09/19 06:55:44 marka Exp $ */
 
 #include <config.h>
 
@@ -292,6 +292,7 @@ static isc_boolean_t	int_too_big(isc_uint32_t base, isc_uint32_t mult);
 %token		L_DATABASE
 %token		L_DEALLOC_ON_EXIT
 %token		L_DEBUG
+%token          L_DELEGATION_ONLY
 %token		L_DEFAULT
 %token		L_DENY
 %token		L_DIALUP
@@ -1874,7 +1875,7 @@ ordering_name: /* nothing */
 			$$ = $2;
 		}
 	}
-
+	;
 
 rrset_ordering_element: ordering_class ordering_type ordering_name
 	L_ORDER L_STRING
@@ -1904,7 +1905,7 @@ rrset_ordering_element: ordering_class ordering_type ordering_name
 		isc_mem_free(memctx, $5);
 		isc_mem_free(memctx, $3);
 	}
-
+	;
 
 transfer_format: L_ONE_ANSWER
 	{
@@ -2174,6 +2175,7 @@ yea_or_nay: L_YES
 			$$ = isc_boolean_true;
 		}
 	}
+	;
 
 notify_setting: yea_or_nay
 	{
@@ -4925,6 +4927,7 @@ class_name: any_string
 		isc_mem_free(memctx, $1);
 		$$ = cl;
 	}
+	;
 
 wild_class_name: any_string
 	{
@@ -4948,6 +4951,7 @@ wild_class_name: any_string
 		isc_mem_free(memctx, $1);
 		$$ = cl;
 	}
+	;
 
 optional_class: /* Empty */
 	{
@@ -4976,6 +4980,10 @@ zone_type: L_MASTER
 	{
 		$$ = dns_c_zone_forward;
 	}
+        | L_DELEGATION_ONLY
+        {
+                $$ = dns_c_zone_delegationonly;
+        }
 	;
 
 
@@ -6121,6 +6129,7 @@ static struct token keyword_tokens [] = {
 	{ "deallocate-on-exit",		L_DEALLOC_ON_EXIT },
 	{ "debug",			L_DEBUG },
 	{ "default",			L_DEFAULT },
+        { "delegation-only",            L_DELEGATION_ONLY },
 	{ "deny",			L_DENY },
 	{ "dialup",			L_DIALUP },
 	{ "directory",			L_DIRECTORY },

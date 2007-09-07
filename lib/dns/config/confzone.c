@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: confzone.c,v 1.72.2.5 2001/03/13 02:40:20 bwelling Exp $ */
+/* $Id: confzone.c,v 1.72.2.5.10.2 2003/09/19 07:06:48 marka Exp $ */
 
 #include <config.h>
 
@@ -95,19 +95,25 @@
 #define TZ_MIN_REFRESH_TIME_BIT			12
 #define TZ_MAX_REFRESH_TIME_BIT			13
 #define TZ_STATISTICS_BIT			14
-
+#define TZ_DELEGATION_ONLY_BIT			15
 
 /*
  * Bit positions in the dns_c_forwardzone_t structure setflags field.
  */
 #define FZ_CHECK_NAME_BIT			0
 #define FZ_FORWARD_BIT				1
-
+#define FZ_DELEGATION_ONLY_BIT			2
 
 /*
  * Bit positions in the dns_c_hintzone_t structure setflags field.
  */
 #define HZ_CHECK_NAME_BIT			0
+
+/*
+ * Bit positions in the dns_c_delegationonlyzone_t structure setflags field.
+ */
+#define DZ_CHECK_NAME_BIT			0
+
 
 
 static void
@@ -120,6 +126,8 @@ static void
 hint_zone_init(dns_c_hintzone_t *hzone);
 static void
 forward_zone_init(dns_c_forwardzone_t *fzone);
+static void
+delegationonly_zone_init(dns_c_delegationonlyzone_t *dzone);
 
 static isc_result_t zone_delete(dns_c_zone_t **zone);
 static isc_result_t master_zone_clear(isc_mem_t *mem,
@@ -143,6 +151,8 @@ static void	hint_zone_print(FILE *fp, int indent,
 				dns_c_hintzone_t *hzone);
 static void	forward_zone_print(FILE *fp, int indent,
 				   dns_c_forwardzone_t *fzone);
+static void	delegationonly_zone_print(FILE *fp, int indent,
+					  dns_c_delegationonlyzone_t *dzone);
 static isc_result_t set_iplist_field(isc_mem_t *mem,
 				     dns_c_iplist_t **dest,
 				     dns_c_iplist_t *src,
@@ -172,6 +182,27 @@ dialup_totext(dns_dialuptype_t dialup) {
 	}
 	return (NULL);
 }
+
+static const char *
+zonetype_totext(dns_c_zonetype_t ztype) {
+	switch (ztype) {
+	case dns_c_zone_master:
+		return "master";
+	case dns_c_zone_slave:
+		return "slave";
+	case dns_c_zone_stub:
+		return "stub";
+	case dns_c_zone_forward:
+		return "forward";
+	case dns_c_zone_hint:
+		return "hint";
+	case dns_c_zone_delegationonly:
+		return "delegation-only";
+	default:
+		INSIST(0);
+	}
+	return (NULL);
+};
 
 isc_result_t
 dns_c_zonelist_new(isc_mem_t *mem, dns_c_zonelist_t **zlist) {
@@ -488,6 +519,10 @@ dns_c_zone_new(isc_mem_t *mem,
 	case dns_c_zone_forward:
 		forward_zone_init(&newzone->u.fzone);
 		break;
+
+	case dns_c_zone_delegationonly:
+		delegationonly_zone_init(&newzone->u.dzone);
+		break;
 	}
 
 	*zone = newzone;
@@ -554,37 +589,35 @@ dns_c_zone_print(FILE *fp, int indent, dns_c_zone_t *zone) {
 	}
 
 	fprintf(fp, " {\n");
+	dns_c_printtabs(fp, indent + 1);
+	fprintf(fp, "type %s;\n", zonetype_totext(zone->ztype));
 
 	switch (zone->ztype) {
 	case dns_c_zone_master:
-		dns_c_printtabs(fp, indent + 1);
-		fprintf(fp, "type master;\n");
 		master_zone_print(fp, indent + 1, &zone->u.mzone);
 		break;
 
 	case dns_c_zone_slave:
-		dns_c_printtabs(fp, indent + 1);
-		fprintf(fp, "type slave;\n");
 		slave_zone_print(fp, indent + 1, &zone->u.szone);
 		break;
 
 	case dns_c_zone_stub:
-		dns_c_printtabs(fp, indent + 1);
-		fprintf(fp, "type stub;\n");
 		stub_zone_print(fp, indent + 1, &zone->u.tzone);
 		break;
 
 	case dns_c_zone_hint:
-		dns_c_printtabs(fp, indent + 1);
-		fprintf(fp, "type hint;\n");
 		hint_zone_print(fp, indent + 1, &zone->u.hzone);
 		break;
 
 	case dns_c_zone_forward:
-		dns_c_printtabs(fp, indent + 1);
-		fprintf(fp, "type forward;\n");
 		forward_zone_print(fp, indent + 1, &zone->u.fzone);
 		break;
+
+	case dns_c_zone_delegationonly:
+		delegationonly_zone_print(fp, indent + 1, &zone->u.dzone);
+		break;
+	default:
+		INSIST(0);
 	}
 
 	if (zone->database != NULL) {
@@ -691,6 +724,7 @@ dns_c_zone_validate(dns_c_zone_t *zone)
 			      checknameserror, zone->name);
 
 	if (zone->ztype != dns_c_zone_forward &&
+	    zone->ztype != dns_c_zone_delegationonly &&
 	    dns_c_zone_getpubkeylist(zone, &pklist) == ISC_R_SUCCESS)
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_WARNING,
@@ -774,6 +808,9 @@ dns_c_zone_getpubkeylist(dns_c_zone_t *zone, dns_c_pklist_t **retval) {
 		break;
 
 	case dns_c_zone_hint:
+		/*
+		 * XXXDCL why does this block set p but then fail silently?
+		 */
 #if 1
 		p = zone->u.hzone.pubkeylist;
 #else
@@ -784,9 +821,11 @@ dns_c_zone_getpubkeylist(dns_c_zone_t *zone, dns_c_pklist_t **retval) {
 		return (ISC_R_FAILURE);
 
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a pubkey field");
+			      "%s zones do not have a pubkey field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -831,9 +870,11 @@ dns_c_zone_setfile(dns_c_zone_t *zone, const char *newfile) {
 		break;
 
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a file field");
+			      "%s zones do not have a file field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -883,9 +924,11 @@ dns_c_zone_getfile(dns_c_zone_t *zone, const char **retval) {
 		break;
 
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a file field");
+			      "%s zones do not have a file field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -942,6 +985,12 @@ dns_c_zone_setchecknames(dns_c_zone_t *zone, dns_severity_t severity) {
 		p = &zone->u.fzone.check_names;
 		bits = &zone->u.fzone.setflags;
 		bit = FZ_CHECK_NAME_BIT;
+		break;
+
+	case dns_c_zone_delegationonly:
+		p = &zone->u.dzone.check_names;
+		bits = &zone->u.dzone.setflags;
+		bit = DZ_CHECK_NAME_BIT;
 		break;
 	}
 
@@ -1002,12 +1051,110 @@ dns_c_zone_getchecknames(dns_c_zone_t *zone, dns_severity_t *retval) {
 		bits = &zone->u.fzone.setflags;
 		bit = FZ_CHECK_NAME_BIT;
 		break;
+	case dns_c_zone_delegationonly:
+		p = &zone->u.dzone.check_names;
+		bits = &zone->u.dzone.setflags;
+		bit = DZ_CHECK_NAME_BIT;
+		break;
 	}
 
 	if (DNS_C_CHECKBIT(bit, bits)) {
 		*retval = *p;
 		res = ISC_R_SUCCESS;
 	} else {
+		res = ISC_R_NOTFOUND;
+	}
+
+	return (res);
+}
+
+/*
+ *
+ */
+
+isc_result_t
+dns_c_zone_setdelegationonly(dns_c_zone_t *zone, isc_boolean_t only) {
+	dns_c_setbits_t *bits = NULL;
+	int bit = 0;
+	isc_result_t res;
+
+	REQUIRE(DNS_C_ZONE_VALID(zone));
+
+	switch (zone->ztype) {
+	case dns_c_zone_stub:
+		bits = &zone->u.tzone.setflags;
+		bit = TZ_DELEGATION_ONLY_BIT;
+		break;
+
+	case dns_c_zone_hint:
+		bits = &zone->u.fzone.setflags;
+		bit = FZ_DELEGATION_ONLY_BIT;
+		break;
+
+	case dns_c_zone_master:
+	case dns_c_zone_slave:
+	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
+			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
+			      "%s zones do not have a delegation-only option",
+			      zonetype_totext(zone->ztype));
+		return (ISC_R_FAILURE);
+	}
+
+	if (DNS_C_CHECKBIT(bit, bits)) {
+		res = ISC_R_EXISTS;
+	} else {
+		res = ISC_R_SUCCESS;
+	}
+
+	if (only)
+		DNS_C_SETBIT(bit, bits);
+	else
+		DNS_C_CLEARBIT(bit, bits);
+
+	return (res);
+}
+
+/*
+ *
+ */
+
+isc_result_t
+dns_c_zone_getdelegationonly(dns_c_zone_t *zone, isc_boolean_t *retval) {
+	dns_c_setbits_t *bits = NULL;
+	int bit = 0;
+	isc_result_t res;
+
+	REQUIRE(DNS_C_ZONE_VALID(zone));
+
+	switch (zone->ztype) {
+	case dns_c_zone_stub:
+		bits = &zone->u.tzone.setflags;
+		bit = TZ_DELEGATION_ONLY_BIT;
+		break;
+
+	case dns_c_zone_hint:
+		bits = &zone->u.fzone.setflags;
+		bit = FZ_DELEGATION_ONLY_BIT;
+		break;
+
+	case dns_c_zone_master:
+	case dns_c_zone_slave:
+	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
+			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
+			      "%s zones do not have a delegation-only option",
+			      zonetype_totext(zone->ztype));
+		return (ISC_R_FAILURE);
+	}
+
+	if (DNS_C_CHECKBIT(bit, bits)) {
+		*retval = ISC_TRUE;
+		res = ISC_R_EXISTS;
+	} else {
+		*retval = ISC_FALSE;
 		res = ISC_R_NOTFOUND;
 	}
 
@@ -1045,17 +1192,13 @@ dns_c_zone_setallowupdateforwarding(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have "
-			      "an allow_update_forwarding field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_update_forwarding field");
+			      "%s zones do not have an "
+			      "allow_update_forwarding field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1099,17 +1242,13 @@ dns_c_zone_getallowupdateforwarding(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an "
-			      "allow_update_forwarding field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_update_forwarding field");
+			      "%s zones do not have an "
+			      "allow_update_forwarding field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1140,29 +1279,15 @@ dns_c_zone_setssuauth(dns_c_zone_t *zone, dns_ssutable_t *ssu) {
 		p = &zone->u.mzone.ssuauth;
 		break;
 
-	case dns_c_zone_slave:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "slave zones do not have an ssuauth field");
-		break;
-
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an ssuauth field");
-		break;
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an ssuauth field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_slave:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "ssuauth field");
+			      "%s zones do not have an ssuauth field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1192,29 +1317,16 @@ dns_c_zone_getssuauth(dns_c_zone_t *zone, dns_ssutable_t **retval) {
 		break;
 
 	case dns_c_zone_slave:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "slave zones do not have an ssuauth field");
-		break;
-
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an ssuauth field");
-		break;
-
 	case dns_c_zone_hint:
+	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an ssuauth field");
+			      "%s zones do not have an ssuauth field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 
-	case dns_c_zone_forward:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "ssuauth field");
-		return (ISC_R_FAILURE);
 	}
 
 	if (p != NULL) {
@@ -1252,23 +1364,15 @@ dns_c_zone_setallownotify(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an allow_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
+	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_notify field");
+			      "%s zones do not have an allow_notify field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 
-	case dns_c_zone_forward:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_notify field");
-		return (ISC_R_FAILURE);
 	}
 
 	existed = (*p != NULL ? ISC_TRUE : ISC_FALSE);
@@ -1307,22 +1411,13 @@ dns_c_zone_getallownotify(dns_c_zone_t *zone, dns_c_ipmatchlist_t **retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an allow_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_notify field");
+			      "%s zones do not have an allow_notify field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1362,16 +1457,12 @@ dns_c_zone_setallowquery(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_query field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_query field");
+			      "%s zones do not have an allow_query field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1413,16 +1504,12 @@ dns_c_zone_getallowquery(dns_c_zone_t *zone, dns_c_ipmatchlist_t **retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_query field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_query field");
+			      "%s zones do not have an allow_query field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1467,17 +1554,13 @@ dns_c_zone_setallowtransfer(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an "
-			      "allow_transfer field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_transfer field");
+			      "%s zones do not have an "
+			      "allow_transfer field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1519,17 +1602,13 @@ dns_c_zone_getallowtransfer(dns_c_zone_t *zone, dns_c_ipmatchlist_t **retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an "
-			      "allow_transfer field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_transfer field");
+			      "%s zones do not have an "
+			      "allow_transfer field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1574,14 +1653,12 @@ dns_c_zone_setstatistics(dns_c_zone_t *zone, isc_boolean_t newval) {
 		DNS_C_SETBIT(TZ_STATISTICS_BIT, &zone->u.tzone.setflags);
 		break;
 	case dns_c_zone_forward:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a statistics field");
-		return (ISC_R_FAILURE);
 	case dns_c_zone_hint:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a statistics field");
+			      "%s zones do not have a statistics field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
@@ -1626,15 +1703,12 @@ dns_c_zone_getstatistics(dns_c_zone_t *zone, isc_boolean_t *retval) {
 		break;
 
 	case dns_c_zone_forward:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a statistics field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a statistics field");
+			      "%s zones do not have a statistics field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1696,15 +1770,12 @@ dns_c_zone_setdialup(dns_c_zone_t *zone, dns_dialuptype_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a dialup field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a dialup field");
+			      "%s zones do not have a dialup field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1752,15 +1823,12 @@ dns_c_zone_getdialup(dns_c_zone_t *zone, dns_dialuptype_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a dialup field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a dialup field");
+			      "%s zones do not have a dialup field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1794,21 +1862,12 @@ dns_c_zone_setnotify(dns_c_zone_t *zone, dns_notifytype_t newval) {
 		break;
 
 	case dns_c_zone_stub:
+	case dns_c_zone_hint:
+	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
 			      "stub zones do not have a notify field");
-		return (ISC_R_FAILURE);
-
-	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a notify field");
-		return (ISC_R_FAILURE);
-
-	case dns_c_zone_forward:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a notify field");
 		return (ISC_R_FAILURE);
 	}
 
@@ -1844,21 +1903,12 @@ dns_c_zone_getnotify(dns_c_zone_t *zone, dns_notifytype_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
+	case dns_c_zone_hint:
+	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
 			      "stub zones do not have a notify field");
-		return (ISC_R_FAILURE);
-
-	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a notify field");
-		return (ISC_R_FAILURE);
-
-	case dns_c_zone_forward:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a notify field");
 		return (ISC_R_FAILURE);
 	}
 
@@ -1899,21 +1949,13 @@ dns_c_zone_setalsonotify(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a also_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a also_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a also_notify field");
+			      "%s zones do not have a also_notify field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -1949,21 +1991,13 @@ dns_c_zone_getalsonotify(dns_c_zone_t *zone, dns_c_iplist_t **retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a also_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a also_notify field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a also_notify field");
+			      "%s zones do not have a also_notify field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2005,24 +2039,13 @@ dns_c_zone_setmaintixfrbase(dns_c_zone_t *zone, isc_boolean_t newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "maintain-xfer-base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "maintain-xfer-base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "maintain-xfer-base field");
+			      "%s zones do not have a maint-xfer-base field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2058,24 +2081,13 @@ dns_c_zone_getmaintixfrbase(dns_c_zone_t *zone, isc_boolean_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "maint_ixfr_base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "maint_ixfr_base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "maint_ixfr_base field");
+			      "%s zones do not have a maint_xfer_base field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2112,21 +2124,13 @@ dns_c_zone_setixfrbase(dns_c_zone_t *zone, const char *newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an ixfr_base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an ixfr_base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an ixfr-base field");
+			      "%s zones do not have an ixfer_base field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2168,21 +2172,13 @@ dns_c_zone_getixfrbase(dns_c_zone_t *zone, const char **retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an ixfr_base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an ixfr_base field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an ixfr_base field");
+			      "%s zones do not have an ixfer_base field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2219,21 +2215,13 @@ dns_c_zone_setixfrtmp(dns_c_zone_t *zone, const char *newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an ixfr_tmp field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an ixfr_tmp field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an ixfr_tmp field");
+			      "%s zones do not have an ixfer_tmp field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2275,21 +2263,13 @@ dns_c_zone_getixfrtmp(dns_c_zone_t *zone, const char **retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have an ixfr_tmp field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an ixfr_tmp field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an ixfr_tmp field");
+			      "%s zones do not have an ixfer_tmp field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2333,6 +2313,9 @@ dns_c_zone_addpubkey(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
+		/*
+		 * XXXDCL why does this set p and then fail silently?
+		 */
 #if 1
 		p = &zone->u.hzone.pubkeylist;
 #else
@@ -2343,9 +2326,11 @@ dns_c_zone_addpubkey(dns_c_zone_t *zone,
 		return (ISC_R_FAILURE);
 
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a pubkey field");
+			      "%s zones do not have a pubkey field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2395,16 +2380,12 @@ dns_c_zone_setmasterport(dns_c_zone_t *zone, in_port_t port) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a master_port field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "master_port field");
+			      "%s zones do not have a master-port field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2452,16 +2433,12 @@ dns_c_zone_getmasterport(dns_c_zone_t *zone, in_port_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a master_port field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "master_port field");
+			      "%s zones do not have a master-port field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2509,15 +2486,12 @@ dns_c_zone_setmasterips(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a master_ips field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a master_ips field");
+			      "%s zones do not have a master_ips field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2562,15 +2536,12 @@ dns_c_zone_getmasterips(dns_c_zone_t *zone, dns_c_iplist_t **retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a master_ips field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a master_ips field");
+			      "%s zones do not have a master_ips field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2611,17 +2582,12 @@ dns_c_zone_settransfersource(dns_c_zone_t *zone, isc_sockaddr_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "transfer_source field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "transfer_source field");
+			      "%s zones do not have a transfer_source field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2675,17 +2641,12 @@ dns_c_zone_gettransfersource(dns_c_zone_t *zone, isc_sockaddr_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "transfer_source field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "transfer_source field");
+			      "%s zones do not have a transfer_source field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2729,17 +2690,13 @@ dns_c_zone_settransfersourcev6(dns_c_zone_t *zone, isc_sockaddr_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "transfer_source_v6 field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "transfer_source_v6 field");
+			      "%s zones do not have a "
+			      "transfer_source_v6 field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2793,17 +2750,13 @@ dns_c_zone_gettransfersourcev6(dns_c_zone_t *zone, isc_sockaddr_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "transfer_source_v6 field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "transfer_source_v6 field");
+			      "%s zones do not have a "
+			      "transfer_source_v6 field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2837,24 +2790,13 @@ dns_c_zone_setnotifysource(dns_c_zone_t *zone, isc_sockaddr_t newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "notify_source field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "notify_source field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "notify_source field");
+			      "%s zones do not have a notify_source field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2897,24 +2839,13 @@ dns_c_zone_getnotifysource(dns_c_zone_t *zone, isc_sockaddr_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "notify_source field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "notify_source field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "notify_source field");
+			      "%s zones do not have a notify_source field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -2950,24 +2881,13 @@ dns_c_zone_setnotifysourcev6(dns_c_zone_t *zone, isc_sockaddr_t newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "notify_source_v6 field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "notify_source_v6 field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "notify_source_v6 field");
+			      "%s zones do not have a notify_source_v6 field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3010,24 +2930,13 @@ dns_c_zone_getnotifysourcev6(dns_c_zone_t *zone, isc_sockaddr_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "notify_source_v6 field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "notify_source_v6 field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "notify_source_v6 field");
+			      "%s zones do not have a notify_source_v6 field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3070,17 +2979,13 @@ dns_c_zone_setmaxtranstimein(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_time_in field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_time_in field");
+			      "%s zones do not have a "
+			      "max_trans_time_in field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3128,17 +3033,13 @@ dns_c_zone_getmaxtranstimein(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_time_in field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_time_in field");
+			      "%s zones do not have a "
+			      "max_trans_time_in field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3174,24 +3075,14 @@ dns_c_zone_setmaxtranstimeout(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "max_trans_time_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_time_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_time_out field");
+			      "%s zones do not have a "
+			      "max_trans_time_out field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3232,24 +3123,14 @@ dns_c_zone_getmaxtranstimeout(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "max_trans_time_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_time_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_time_out field");
+			      "%s zones do not have a "
+			      "max_trans_time_out field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3292,17 +3173,13 @@ dns_c_zone_setmaxtransidlein(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_idle_in field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_idle_in field");
+			      "%s zones do not have a "
+			      "max_trans_idle_in field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3350,17 +3227,13 @@ dns_c_zone_getmaxtransidlein(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_idle_in field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_idle_in field");
+			      "%s zones do not have a "
+			      "max_trans_idle_in field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3396,24 +3269,14 @@ dns_c_zone_setmaxtransidleout(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "max_trans_idle_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_idle_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_idle_out field");
+			      "%s zones do not have a "
+			      "max_trans_idle_out field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3455,24 +3318,14 @@ dns_c_zone_getmaxtransidleout(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "max_trans_idle_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_trans_idle_out field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_trans_idle_out field");
+			      "%s zones do not have a "
+			      "max_trans_idle_out field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3500,31 +3353,15 @@ dns_c_zone_setsigvalidityinterval(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_slave:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "slave zones do not have a "
-			      "sig_valid_interval field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "sig_valid_interval field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "sig_valid_interval field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "sig_valid_interval field");
+			      "%s zones do not have a "
+			      "sig_valid_interval field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3556,31 +3393,15 @@ dns_c_zone_getsigvalidityinterval(dns_c_zone_t *zone, isc_uint32_t *retval) {
 
 
 	case dns_c_zone_slave:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "slave zones do not have a "
-			      "sig_valid_interval field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a "
-			      "sig_valid_interval field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "sig_valid_interval field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "sig_valid_interval field");
+			      "%s zones do not have a "
+			      "sig_valid_interval field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3620,17 +3441,12 @@ dns_c_zone_setminretrytime(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "min_retry_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "min_retry_time field");
+			      "%s zones do not have a min_retry_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3682,17 +3498,12 @@ dns_c_zone_getminretrytime(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "min_retry_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "min_retry_time field");
+			      "%s zones do not have a min_retry_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 	
@@ -3732,17 +3543,12 @@ dns_c_zone_setmaxretrytime(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_retry_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_retry_time field");
+			      "%s zones do not have a max_retry_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3794,17 +3600,12 @@ dns_c_zone_getmaxretrytime(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_retry_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_retry_time field");
+			      "%s zones do not have a max_retry_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3844,17 +3645,12 @@ dns_c_zone_setminrefreshtime(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "min_refresh_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "min_refresh_time field");
+			      "%s zones do not have a min_refresh_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3906,17 +3702,12 @@ dns_c_zone_getminrefreshtime(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "min_refresh_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "min_refresh_time field");
+			      "%s zones do not have a min_refresh_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -3956,17 +3747,12 @@ dns_c_zone_setmaxrefreshtime(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_refresh_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_refresh_time field");
+			      "%s zones do not have a max_refresh_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -4018,17 +3804,12 @@ dns_c_zone_getmaxrefreshtime(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a "
-			      "max_refresh_time field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_refresh_time field");
+			      "%s zones do not have a max_refresh_time field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -4062,22 +3843,13 @@ dns_c_zone_setmaxixfrlog(dns_c_zone_t *zone, isc_uint32_t newval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a max-ixfr-log field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a max-ixfr-log field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max-ixfr-log field");
+			      "%s zones do not have a max_ixfr_log field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -4122,22 +3894,13 @@ dns_c_zone_getmaxixfrlog(dns_c_zone_t *zone, isc_uint32_t *retval) {
 		break;
 
 	case dns_c_zone_stub:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "stub zones do not have a max_ixfr_log field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a max_ixfr_log field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have a "
-			      "max_ixfr_log field");
+			      "%s zones do not have a max_ixfr_log field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -4185,9 +3948,11 @@ dns_c_zone_setforward(dns_c_zone_t *zone, dns_c_forw_t newval) {
 		break;
 
 	case dns_c_zone_hint:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a forward field");
+			      "%s zones do not have a forward field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 
 	case dns_c_zone_forward:
@@ -4242,9 +4007,11 @@ dns_c_zone_getforward(dns_c_zone_t *zone, dns_c_forw_t *retval) {
 		break;
 
 	case dns_c_zone_hint:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a forward field");
+			      "%s zones do not have a forward field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 
 	case dns_c_zone_forward:
@@ -4294,9 +4061,11 @@ dns_c_zone_setforwarders(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a forwarders field");
+			      "%s zones do not have a forwarders field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 
 	case dns_c_zone_forward:
@@ -4354,9 +4123,11 @@ dns_c_zone_getforwarders(dns_c_zone_t *zone, dns_c_iplist_t **retval) {
 		break;
 
 	case dns_c_zone_hint:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have a forwarders field");
+			      "%s zones do not have a forwarders field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 
 	case dns_c_zone_forward:
@@ -4403,16 +4174,12 @@ dns_c_zone_setallowupd(dns_c_zone_t *zone,
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_update field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_update field");
+			      "%s zones do not have an allow_update field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -4454,16 +4221,12 @@ dns_c_zone_getallowupd(dns_c_zone_t *zone, dns_c_ipmatchlist_t **retval) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_update field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_update field");
+			      "%s zones do not have an allow_update field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -4502,16 +4265,12 @@ dns_c_zone_unsetallowupd(dns_c_zone_t *zone) {
 		break;
 
 	case dns_c_zone_hint:
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
-			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "hint zones do not have an allow_update field");
-		return (ISC_R_FAILURE);
-
 	case dns_c_zone_forward:
+	case dns_c_zone_delegationonly:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_CONFIG,
 			      DNS_LOGMODULE_CONFIG, ISC_LOG_CRITICAL,
-			      "forward zones do not have an "
-			      "allow_update field");
+			      "%s zones do not have an allow_update field",
+			      zonetype_totext(zone->ztype));
 		return (ISC_R_FAILURE);
 	}
 
@@ -5343,6 +5102,22 @@ forward_zone_print(FILE *fp, int indent, dns_c_forwardzone_t *fzone) {
 	}
 }
 
+/*
+ *
+ */
+
+static void
+delegationonly_zone_print(FILE *fp, int indent,
+			  dns_c_delegationonlyzone_t *dzone) {
+	REQUIRE(dzone != NULL);
+
+	if (DNS_C_CHECKBIT(DZ_CHECK_NAME_BIT, &dzone->setflags)) {
+		dns_c_printtabs(fp, indent);
+		fprintf(fp, "check-names %s;\n",
+			dns_c_nameseverity2string(dzone->check_names,
+						  ISC_TRUE));
+	}
+}
 
 /*
  *
@@ -5440,6 +5215,14 @@ forward_zone_init(dns_c_forwardzone_t *fzone) {
 	memset(&fzone->setflags, 0x0, sizeof (fzone->setflags));
 }
 
+/*
+ *
+ */
+static void
+delegationonly_zone_init(dns_c_delegationonlyzone_t *dzone) {
+	REQUIRE(dzone != NULL);
+	memset(&dzone->setflags, 0x0, sizeof(dzone->setflags));
+}		
 
 /*
  *
@@ -5487,6 +5270,10 @@ zone_delete(dns_c_zone_t **zone) {
 
 	case dns_c_zone_forward:
 		res = forward_zone_clear(z->mem, &z->u.fzone);
+		break;
+
+	case dns_c_zone_delegationonly:
+		/* Nothing. */
 		break;
 	}
 
@@ -5748,4 +5535,3 @@ set_iplist_field(isc_mem_t *mem,
 
 	return (res);
 }
-
