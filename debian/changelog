@@ -1,3 +1,13 @@
+bind9 (1:9.3.4-2ubuntu2.1) feisty-security; urgency=low
+
+  * SECURITY UPDATE: query responses could be forged remotely.
+  * bin/named/client.c, lib/dispatch.c, lib/include/dispatch.h:
+    upstream fixes back ported.
+  * References
+    CVE-2007-2926
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 24 Jul 2007 13:15:45 -0700
+
 bind9 (1:9.3.4-2ubuntu2) feisty; urgency=low
 
   * debian/control: Update maintainer fields according to debian-
