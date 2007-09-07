@@ -1,3 +1,38 @@
+bind9 (1:9.3.2-2ubuntu1.3) dapper-security; urgency=low
+
+  * SECURITY UPDATE: query responses could be forged remotely.
+  * bin/named/client.c, lib/dispatch.c, lib/include/dispatch.h:
+    upstream fixes back ported.
+  * References
+    CVE-2007-2926
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 24 Jul 2007 13:15:45 -0700
+
+bind9 (1:9.3.2-2ubuntu1.2) dapper-security; urgency=low
+
+  * SECURITY UPDATE: remote denial of service.
+  * lib/dns/include/dns/validator.h, lib/dns/{validator,resolver}.c,
+    lib/dns/api: fixes taken from upstream changes between bind 9.3.3 and
+    9.3.4, applied inline.
+  * References
+    CVE-2007-0493 CVE-2007-0494
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 30 Jan 2007 17:59:01 -0800
+
+bind9 (1:9.3.2-2ubuntu1.1) dapper-security; urgency=low
+
+  * SECURITY UPDATE:
+  * bin/named/query.c, lib/dns/resolver.c: Apply upstream patch from 9.3.2-P1
+    to fix the following flaws:
+    - A remote user (DNS server) can send specially crafted RRset responses in
+      return to a recursive SIG query to cause the requesting named service to
+      crash [CVE-2006-4095].
+    - A remote user can also send specially crafted queries to trigger an
+      INSIST failure and cause the requesting service(s) to crash
+      [CVE-2006-4096].
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Thu,  7 Sep 2006 12:32:03 +0000
+
 bind9 (1:9.3.2-2ubuntu1) dapper; urgency=low
 
   * Drop build dependency on g++-3.4 (#292958 was filed for g++-3.3,
