@@ -1,3 +1,10 @@
+bind9 (1:9.3.2-2ubuntu1) dapper; urgency=low
+
+  * Drop build dependency on g++-3.4 (#292958 was filed for g++-3.3,
+    fixed in g++-3.4 and up).
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 16 Feb 2006 13:06:30 +0000
+
 bind9 (1:9.3.2-2) unstable; urgency=low
 
   * correct force-reload.  Closes: #333841
