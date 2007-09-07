@@ -1,3 +1,17 @@
+bind9 (1:9.3.4-2ubuntu2) feisty; urgency=low
+
+  * debian/control: Update maintainer fields according to debian-
+    maintainer-field spec.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Tue, 20 Feb 2007 12:26:57 +0000
+
+bind9 (1:9.3.4-2ubuntu1) feisty; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - debian/named.conf.options: by default, only allow recursion on localnet
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 30 Jan 2007 17:49:09 -0800
+
 bind9 (1:9.3.4-2) unstable; urgency=high
 
   * Actually really do the merge of 9.3.4.  Sigh.  Closes: #408925
@@ -10,11 +24,25 @@ bind9 (1:9.3.4-1) unstable; urgency=high
 
  -- LaMont Jones <lamont@debian.org>  Thu, 25 Jan 2007 14:31:09 -0700
 
+bind9 (1:9.3.3-1ubuntu1) feisty; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - debian/named.conf.options: allow recursion only on localnets.
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Wed, 20 Dec 2006 12:18:24 +0100
+
 bind9 (1:9.3.3-1) unstable; urgency=low
 
   * New upstream version
 
  -- LaMont Jones <lamont@debian.org>  Tue, 12 Dec 2006 23:31:51 -0700
+
+bind9 (1:9.3.2-P1.0-1ubuntu1) feisty; urgency=low
+
+  * Merge with Debian unstable; remaining changes:
+    - debian/named.conf.options: allow recursion only on localnets.
+    
+ -- Matthias Klose <doko@ubuntu.com>  Wed,  6 Dec 2006 14:56:10 +0100
 
 bind9 (1:9.3.2-P1.0-1) unstable; urgency=low
 
@@ -42,6 +70,47 @@ bind9 (1:9.3.2-P1-1) unstable; urgency=high
   * Drop redundant update-rc.d calls.  Closes: #356914
 
  -- LaMont Jones <lamont@debian.org>  Wed,  6 Sep 2006 08:07:13 -0600
+
+bind9 (1:9.3.2-2ubuntu4) feisty; urgency=low
+
+  * Rebuild for ldbl128 change on powerpc and sparc.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu,  2 Nov 2006 10:12:55 +0000
+
+bind9 (1:9.3.2-2ubuntu3) edgy; urgency=low
+
+  * SECURITY UPDATE: name servers accessible from the Internet could be
+    used as an amplifier in DDoS attacks against other networks.
+  * debian/named.conf.options: allow recursion only on localnets.  This
+    matches the default configuration of listening on all interfaces, and
+    gives a reasonable balance between allowing local recursion, and
+    protecting the server from being used in a DDoS attack.
+  * References
+    CVE-2006-0987
+    http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=248899
+
+ -- Kees Cook <kees@outflux.net>  Thu, 28 Sep 2006 16:38:15 -0700
+
+bind9 (1:9.3.2-2ubuntu2) edgy; urgency=low
+
+  * SECURITY UPDATE:
+  * bin/named/query.c, lib/dns/resolver.c: Apply upstream patch from 9.3.2-P1
+    to fix the following flaws:
+    - A remote user (DNS server) can send specially crafted RRset responses in
+      return to a recursive SIG query to cause the requesting named service to
+      crash [CVE-2006-4095].
+    - A remote user can also send specially crafted queries to trigger an
+      INSIST failure and cause the requesting service(s) to crash
+      [CVE-2006-4096].
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Thu,  7 Sep 2006 16:30:29 +0200
+
+bind9 (1:9.3.2-2ubuntu1) dapper; urgency=low
+
+  * Drop build dependency on g++-3.4 (#292958 was filed for g++-3.3,
+    fixed in g++-3.4 and up).
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 16 Feb 2006 13:06:30 +0000
 
 bind9 (1:9.3.2-2) unstable; urgency=low
 
