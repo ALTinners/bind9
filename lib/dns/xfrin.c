@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: xfrin.c,v 1.124.2.13 2006/01/04 23:50:17 marka Exp $ */
+/* $Id: xfrin.c,v 1.124.2.17 2007/08/28 07:18:18 tbox Exp $ */
 
 #include <config.h>
 
@@ -673,6 +673,11 @@ xfrin_fail(dns_xfrin_ctx_t *xfr, isc_result_t result, const char *msg) {
 			result = DNS_R_BADIXFR;
 	}
 	xfrin_cancelio(xfr);
+	/*
+	 * Close the journal.
+	 */
+	if (xfr->ixfr.journal != NULL)
+		dns_journal_destroy(&xfr->ixfr.journal);
 	if (xfr->done != NULL) {
 		(xfr->done)(xfr->zone, result);
 		xfr->done = NULL;
@@ -1243,6 +1248,11 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 		xfr->state = XFRST_INITIALSOA;
 		CHECK(xfrin_send_request(xfr));
 	} else if (xfr->state == XFRST_END) {
+		/*
+		 * Close the journal.
+		 */
+		if (xfr->ixfr.journal != NULL)
+			dns_journal_destroy(&xfr->ixfr.journal);
 		/*
 		 * Inform the caller we succeeded.
 		 */

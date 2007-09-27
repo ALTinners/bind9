@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: view.c,v 1.103.2.10 2004/03/09 06:11:10 marka Exp $ */
+/* $Id: view.c,v 1.103.2.13 2007/08/28 07:18:18 tbox Exp $ */
 
 #include <config.h>
 
@@ -660,6 +660,7 @@ dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	REQUIRE(view->frozen);
 	REQUIRE(type != dns_rdatatype_sig);
 	REQUIRE(rdataset != NULL);  /* XXXBEW - remove this */
+	REQUIRE(nodep == NULL || *nodep == NULL);
 
 	/*
 	 * Initialize.

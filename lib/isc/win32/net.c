@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.3.2.3 2004/03/09 06:12:18 marka Exp $ */
+/* $Id: net.c,v 1.3.2.6 2007/08/28 07:18:18 tbox Exp $ */
 
 #include <config.h>
 
@@ -36,6 +36,8 @@ const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
 static isc_once_t 	once = ISC_ONCE_INIT;
 static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
+
+void InitSockets(void);
 
 static isc_result_t
 try_proto(int domain) {
@@ -112,6 +114,7 @@ try_proto(int domain) {
 
 static void
 initialize_action(void) {
+	InitSockets();
 	ipv4_result = try_proto(PF_INET);
 #ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6

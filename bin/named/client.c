@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: client.c,v 1.176.2.24.6.1 2007/06/26 04:37:53 marka Exp $ */
+/* $Id: client.c,v 1.176.2.29 2007/08/28 07:18:13 tbox Exp $ */
 
 #include <config.h>
 
@@ -1087,7 +1087,7 @@ client_addopt(ns_client_t *client) {
 #endif
 
 	/*
-	 * No ENDS options in the default case.
+	 * No EDNS options in the default case.
 	 */
 	rdata->data = NULL;
 	rdata->length = 0;
@@ -1352,7 +1352,7 @@ client_request(isc_task_t *task, isc_event_t *event) {
 		}
 
 		/*
-		 * Do we understand this version of ENDS?
+		 * Do we understand this version of EDNS?
 		 *
 		 * XXXRTH need library support for this!
 		 */
@@ -1401,6 +1401,7 @@ client_request(isc_task_t *task, isc_event_t *event) {
 					 "failed to get request's "
 					 "destination: %s",
 					 isc_result_totext(result));
+			ns_client_next(client, ISC_R_SUCCESS);
 			goto cleanup;
 		}
 	} else {
