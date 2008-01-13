@@ -1,3 +1,9 @@
+bind9 (1:9.3.2-2ubuntu3.3) edgy-proposed; urgency=low
+
+  * l.root-servers.net. got a new IP. (LP #160176)
+
+ -- Soren Hansen <soren@ubuntu.com>  Fri, 11 Jan 2008 11:36:47 +0100
+
 bind9 (1:9.3.2-2ubuntu3.2) edgy-security; urgency=low
 
   * SECURITY UPDATE: query responses could be forged remotely.
