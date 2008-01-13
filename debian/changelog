@@ -1,3 +1,11 @@
+bind9 (1:9.4.1-P1-3ubuntu1) gutsy-proposed; urgency=low
+
+  * l.root-servers.net. got a new IP. (LP #160176)
+  * Modify Maintainer value to match the DebianMaintainerField
+    specification.
+
+ -- Soren Hansen <soren@ubuntu.com>  Fri, 11 Jan 2008 11:55:57 +0100
+
 bind9 (1:9.4.1-P1-3) unstable; urgency=low
 
   * Only deliver upstream changes with bind9-doc
