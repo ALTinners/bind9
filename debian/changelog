@@ -1,3 +1,9 @@
+bind9 (1:9.3.4-2ubuntu2.2) feisty-proposed; urgency=low
+
+  * l.root-servers.net. got a new IP. (LP #160176)
+
+ -- Soren Hansen <soren@ubuntu.com>  Fri, 11 Jan 2008 11:39:21 +0100
+
 bind9 (1:9.3.4-2ubuntu2.1) feisty-security; urgency=low
 
   * SECURITY UPDATE: query responses could be forged remotely.
