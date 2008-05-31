@@ -1,3 +1,11 @@
+bind9 (1:9.3.5-0) ; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * 9.3.5
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 31 May 2008 07:32:51 -0600
+
 bind9 (1:9.3.4-2etch2) stable-proposed-updates; urgency=low
 
   [Thomas Antepoth]
