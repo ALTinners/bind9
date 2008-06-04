@@ -1,3 +1,11 @@
+bind9 (1:9.4.1-P1-3ubuntu2) gutsy-security; urgency=low
+
+  * SECURITY UPDATE: Randomize UDP query source ports to improve forgery resilience.
+  * References
+    CVE-2008-1447
+
+ -- LaMont Jones <lamont@ubuntu.com>  Sun, 06 Jul 2008 19:33:49 -0600
+
 bind9 (1:9.4.1-P1-3ubuntu1) gutsy-proposed; urgency=low
 
   * l.root-servers.net. got a new IP. (LP #160176)
