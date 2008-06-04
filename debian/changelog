@@ -1,3 +1,9 @@
+bind9 (1:9.3.2-2ubuntu1.5) dapper-security-UNRELEASED; urgency=low
+
+  * placeholder CVE-2008-1447
+
+ -- LaMont Jones <lamont@ubuntu.com>  Tue, 03 Jun 2008 22:28:29 -0600
+
 bind9 (1:9.3.2-2ubuntu1.4) dapper-proposed; urgency=low
 
   * l.root-servers.net. got a new IP. (LP #160176)
