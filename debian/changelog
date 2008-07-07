@@ -1,3 +1,9 @@
+bind9 (1:9.3.4-2etch3) stable-security; urgency=high
+
+  * Randomize UDP query source ports to improve forgery resilience.
+    (CVE-2008-1447)                                                                              
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Jul 2008 19:19:53 -0600
+
 bind9 (1:9.3.4-2etch2) stable-proposed-updates; urgency=low
 
   [Thomas Antepoth]
