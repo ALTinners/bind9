@@ -1,10 +1,25 @@
-bind9 (1:9.4.2-10ubuntu1) hardy-security; urgency=low
+bind9 (1:9.4.2-13) unstable; urgency=low
 
   * SECURITY UPDATE: Randomize UDP query source ports to improve forgery resilience.
   * References
     CVE-2008-1447
 
  -- LaMont Jones <lamont@ubuntu.com>  Sun, 06 Jul 2008 19:36:16 -0600
+
+bind9 (1:9.4.2-12) unstable; urgency=low
+
+  * apparmor: allow bind to create files in /var/{lib,cache}/bind
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 30 Jun 2008 11:17:53 -0600
+
+bind9 (1:9.4.2-11) unstable; urgency=low
+
+  * apparmor: add dnscvsutil package files
+  * lwresd Depends: adduser
+  * control: fix dnsutils description to avoid list reformatting. 
+    Closes: #480317
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 17 Jun 2008 21:30:12 -0600
 
 bind9 (1:9.4.2-10) unstable; urgency=low
 
