@@ -122,8 +122,14 @@ dns_dbtable_remove
 dns_dbtable_adddefault
 dns_dbtable_getdefault
 dns_dbtable_removedefault
-dns_dbtable_find
-
+dns_decompress_edns
+dns_decompress_getmethods
+dns_decompress_init
+dns_decompress_invalidate
+dns_decompress_setmethods
+dns_decompress_type
+dns_rdatacallbacks_init
+dns_rdatacallbacks_init_stdio
 dns_difftuple_create
 dns_difftuple_free
 dns_difftuple_copy
