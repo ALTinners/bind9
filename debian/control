@@ -51,7 +51,7 @@ Description: Static Libraries and Headers used by BIND
  if you want to compile other packages that need more nameserver API than the 
  resolver code provided in libc.
 
-Package: libbind9-30
+Package: libbind9-31
 Section: libs
 Priority: standard
 Architecture: any
