@@ -1,4 +1,4 @@
-bind9 (1:9.4.2-10lenny1) testing-security; urgency=high
+bind9 (1:9.4.2-10+lenny1) testing-security; urgency=high
 
   * Randomize UDP query source ports to improve forgery resilience.
     (CVE-2008-1447)                                                                              
