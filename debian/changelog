@@ -1,4 +1,4 @@
-bind9 (1:9.4.2-10ubuntu1) hardy-security; urgency=low
+bind9 (1:9.4.2-10ubuntu0.1) hardy-security; urgency=low
 
   * SECURITY UPDATE: Randomize UDP query source ports to improve forgery resilience.
   * References
