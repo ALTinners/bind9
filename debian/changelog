@@ -6,6 +6,13 @@ bind9 (1:9.4.2-10ubuntu0.1) hardy-security; urgency=low
 
  -- LaMont Jones <lamont@ubuntu.com>  Sun, 06 Jul 2008 19:36:16 -0600
 
+bind9 (1:9.4.2-10+lenny1) testing-security; urgency=high
+
+  * Randomize UDP query source ports to improve forgery resilience.
+    (CVE-2008-1447)                                                                              
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Jul 2008 19:21:18 -0600
+
 bind9 (1:9.4.2-10) unstable; urgency=low
 
   [Jamie Strandboge]
