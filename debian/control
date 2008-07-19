@@ -10,7 +10,7 @@ XS-Vcs-Git: git://git.debian.org/~lamont/bind9.git
 
 Package: bind9
 Architecture: any
-Depends: ${shlibs:Depends}, netbase, adduser, libdns35 (=${binary:Version}), libisccfg30 (=${binary:Version}), libisc32 (=${binary:Version}), libisccc30 (=${binary:Version}), lsb-base (>=3.0-6)
+Depends: ${shlibs:Depends}, netbase, adduser, libbind9-30 (=${binary:Version}), libdns35 (=${binary:Version}), libisccfg30 (=${binary:Version}), libisc32 (=${binary:Version}), libisccc30 (=${binary:Version}), lsb-base (>=3.0-6)
 Conflicts: bind, apparmor-profiles (<< 2.1+1075-0ubuntu4)
 Replaces: bind, dnsutils (<< 1:9.1.0-3), apparmor-profiles (<< 2.1+1075-0ubuntu4)
 Suggests: dnsutils, bind9-doc, resolvconf
@@ -29,7 +29,7 @@ Description: Documentation for BIND
 Package: bind9-host
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, libbind9-30 (=${binary:Version})
 Conflicts: host, dnsutils (<< 1:9.0.0)
 Replaces: dnsutils (<< 1:9.0.0)
 Provides: host
@@ -51,7 +51,7 @@ Description: Static Libraries and Headers used by BIND
  if you want to compile other packages that need more nameserver API than the 
  resolver code provided in libc.
 
-Package: libbind9-31
+Package: libbind9-30
 Section: libs
 Priority: standard
 Architecture: any
@@ -131,7 +131,7 @@ Description: Config File Handling Library used by BIND
 Package: dnsutils
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}, bind9-host | host
+Depends: ${shlibs:Depends}, bind9-host | host, libbind9-30 (=${binary:Version})
 Suggests: rblcheck
 Conflicts: netstd (<< 2.00)
 Replaces: bind, bind9 (<< 1:9.1.0-3)
@@ -147,7 +147,7 @@ Description: Clients provided with BIND
 
 Package: lwresd
 Architecture: any
-Depends: ${shlibs:Depends}, adduser
+Depends: ${shlibs:Depends}, adduser, libbind9-30 (=${binary:Version})
 Recommends: libnss-lwres
 Description: Lightweight Resolver Daemon
  lwresd is the daemon providing name lookup services to clients that use
