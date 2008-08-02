@@ -1,4 +1,4 @@
-bind9 (1:9.3.5-0) ; urgency=low
+bind9 (1:9.3.5.dfsg.P2-0) stable-proposed-updates; urgency=low
 
   [Internet Software Consortium, Inc]
 
