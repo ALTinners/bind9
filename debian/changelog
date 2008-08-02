@@ -2,9 +2,13 @@ bind9 (1:9.3.5.dfsg.P2-0) stable-proposed-updates; urgency=low
 
   [Internet Software Consortium, Inc]
 
-  * 9.3.5
+  * New upstream release: 9.3.5-P2
 
- -- LaMont Jones <lamont@debian.org>  Sat, 31 May 2008 07:32:51 -0600
+  [LaMont Jones]
+
+  * soname cleanup for new upstream
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 01 Aug 2008 22:36:53 -0600
 
 bind9 (1:9.3.4-2etch2) stable-proposed-updates; urgency=low
 
