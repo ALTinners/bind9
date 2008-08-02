@@ -1,3 +1,15 @@
+bind9 (1:9.4.2.dfsg.P2-1) unstable; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * 9.4.2-P2
+
+  [LaMont Jones]
+
+  * meta: fix Depends versions, package vs sonames.  Closes: #490877
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 02 Aug 2008 12:46:41 -0600
+
 bind9 (1:9.4.2-13) unstable; urgency=low
 
   * SECURITY UPDATE: Randomize UDP query source ports to improve forgery resilience.
