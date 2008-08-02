@@ -29,7 +29,7 @@ Description: Documentation for BIND
 Package: bind9-host
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}, libbind9-30 (=${binary:Version})
+Depends: ${shlibs:Depends}, libbind9-30 (=${binary:Version}), libdns35 (=${binary:Version}), libisccfg30 (=${binary:Version}), libisc35 (=${binary:Version}), liblwres30 (=${binary:Version})
 Conflicts: host, dnsutils (<< 1:9.0.0)
 Replaces: dnsutils (<< 1:9.0.0)
 Provides: host
@@ -70,7 +70,7 @@ Priority: standard
 Architecture: any
 Conflicts: libbind0
 Replaces: libbind0
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, libisc35 (= ${binary:Version})
 Description: DNS Shared Library used by BIND
  ${Description}
  .
@@ -131,7 +131,7 @@ Description: Config File Handling Library used by BIND
 Package: dnsutils
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}, bind9-host | host, libbind9-30 (=${binary:Version})
+Depends: ${shlibs:Depends}, bind9-host | host, libbind9-30 (=${binary:Version}), libdns35 (=${binary:Version}), libisccfg30 (=${binary:Version}), libisc35 (=${binary:Version}), liblwres30 (=${binary:Version})
 Suggests: rblcheck
 Conflicts: netstd (<< 2.00)
 Replaces: bind, bind9 (<< 1:9.1.0-3)
@@ -147,7 +147,7 @@ Description: Clients provided with BIND
 
 Package: lwresd
 Architecture: any
-Depends: ${shlibs:Depends}, adduser, libbind9-30 (=${binary:Version})
+Depends: ${shlibs:Depends}, adduser, libbind9-30 (=${binary:Version}), libdns35 (=${binary:Version}), libisccfg30 (=${binary:Version}), libisccc30 (=${binary:Version}), libisc35 (=${binary:Version}), liblwres30 (=${binary:Version})
 Recommends: libnss-lwres
 Description: Lightweight Resolver Daemon
  lwresd is the daemon providing name lookup services to clients that use
