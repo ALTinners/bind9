@@ -1,3 +1,13 @@
+bind9 (1:9.5.0.dfsg.P2-5ubuntu1) jaunty; urgency=low
+
+  * SECURITY UPDATE: clients treat malformed signatures as good when verifying
+    server DSA and ECDSA certificates.
+    - update lib/dns/openssldsa_link.c to properly check the return code of
+      DSA_do_verify()
+    - CVE-2009-0025
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Wed, 07 Jan 2009 17:05:49 -0600
+
 bind9 (1:9.5.0.dfsg.P2-5) unstable; urgency=low
 
   [ISC]
