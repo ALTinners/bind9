@@ -1,3 +1,21 @@
+bind9 (1:9.5.1.dfsg.P2-1) unstable; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * 9.5.1-P2
+    - DNSSEC lookaside validation failed to handle unknown algorithms. [RT #19479]
+
+  [LaMont Jones]
+
+  * meta: fix override disparity
+
+  [Sven Joachim]
+
+  * meta: pass host and build into configure for hybrid build machines. 
+    Closes: #515110
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 20 Mar 2009 19:08:03 -0600
+
 bind9 (1:9.5.1.dfsg.P1-3) unstable; urgency=low
 
   * package -2 for unstable
