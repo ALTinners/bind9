@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.c,v 1.237.18.53 2008/09/04 08:03:08 marka Exp $ */
+/* $Id: socket.c,v 1.237.18.56.2.1 2008/12/23 00:14:34 marka Exp $ */
 
 /*! \file */
 
@@ -142,6 +142,35 @@ struct isc_socketwait {
 #define _DARWIN_UNLIMITED_SELECT
 #endif	/* __APPLE__ */
 #endif	/* USE_SELECT */
+
+#ifdef ISC_SOCKET_USE_POLLWATCH
+/*%
+ * If this macro is defined, enable workaround for a Solaris /dev/poll kernel
+ * bug: DP_POLL ioctl could keep sleeping even if socket I/O is possible for
+ * some of the specified FD.  The idea is based on the observation that it's
+ * likely for a busy server to keep receiving packets.  It specifically works
+ * as follows: the socket watcher is first initialized with the state of
+ * "poll_idle".  While it's in the idle state it keeps sleeping until a socket
+ * event occurs.  When it wakes up for a socket I/O event, it moves to the
+ * poll_active state, and sets the poll timeout to a short period
+ * (ISC_SOCKET_POLLWATCH_TIMEOUT msec).  If timeout occurs in this state, the
+ * watcher goes to the poll_checking state with the same timeout period.
+ * In this state, the watcher tries to detect whether this is a break
+ * during intermittent events or the kernel bug is triggered.  If the next
+ * polling reports an event within the short period, the previous timeout is
+ * likely to be a kernel bug, and so the watcher goes back to the active state.
+ * Otherwise, it moves to the idle state again.
+ *
+ * It's not clear whether this is a thread-related bug, but since we've only
+ * seen this with threads, this workaround is used only when enabling threads.
+ */
+
+typedef enum { poll_idle, poll_active, poll_checking } pollstate_t;
+
+#ifndef ISC_SOCKET_POLLWATCH_TIMEOUT
+#define ISC_SOCKET_POLLWATCH_TIMEOUT 10
+#endif	/* ISC_SOCKET_POLLWATCH_TIMEOUT */
+#endif	/* ISC_SOCKET_USE_POLLWATCH */
 
 /*%
  * Size of per-FD lock buckets.
@@ -454,6 +483,38 @@ socket_log(isc_socket_t *sock, isc_sockaddr_t *address,
 			       "socket %p %s: %s", sock, peerbuf, msgbuf);
 	}
 }
+
+#if defined(_AIX) && defined(ISC_NET_BSD44MSGHDR) && \
+    defined(USE_CMSG) && defined(IPV6_RECVPKTINFO)
+/*
+ * AIX has a kernel bug where IPV6_RECVPKTINFO gets cleared by
+ * setting IPV6_V6ONLY.
+ */
+static void
+FIX_IPV6_RECVPKTINFO(isc_socket_t *sock)
+{
+	char strbuf[ISC_STRERRORSIZE];
+	int on = 1;
+
+	if (sock->pf != AF_INET6 || sock->type != isc_sockettype_udp)
+		return;
+
+	if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+		       (void *)&on, sizeof(on)) < 0) {
+
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "setsockopt(%d, IPV6_RECVPKTINFO) "
+				 "%s: %s", sock->fd,
+				 isc_msgcat_get(isc_msgcat,
+						ISC_MSGSET_GENERAL,
+						ISC_MSG_FAILED,
+						"failed"),
+				 strbuf);
+	}
+}
+#else
+#define FIX_IPV6_RECVPKTINFO(sock) (void)0
+#endif
 
 static inline isc_result_t
 watch_fd(isc_socketmgr_t *manager, int fd, int msg) {
@@ -1246,15 +1307,17 @@ dump_msg(struct msghdr *msg) {
 	unsigned int i;
 
 	printf("MSGHDR %p\n", msg);
-	printf("\tname %p, namelen %d\n", msg->msg_name, msg->msg_namelen);
-	printf("\tiov %p, iovlen %d\n", msg->msg_iov, msg->msg_iovlen);
+	printf("\tname %p, namelen %ld\n", msg->msg_name,
+	       (long) msg->msg_namelen);
+	printf("\tiov %p, iovlen %ld\n", msg->msg_iov,
+	       (long) msg->msg_iovlen);
 	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++)
-		printf("\t\t%d\tbase %p, len %d\n", i,
+		printf("\t\t%d\tbase %p, len %ld\n", i,
 		       msg->msg_iov[i].iov_base,
-		       msg->msg_iov[i].iov_len);
+		       (long) msg->msg_iov[i].iov_len);
 #ifdef ISC_NET_BSD44MSGHDR
-	printf("\tcontrol %p, controllen %d\n", msg->msg_control,
-	       msg->msg_controllen);
+	printf("\tcontrol %p, controllen %ld\n", msg->msg_control,
+	       (long) msg->msg_controllen);
 #endif
 }
 #endif
@@ -2000,6 +2063,27 @@ opensocket(isc_socketmgr_t *manager, isc_socket_t *sock) {
 #endif
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 #endif /* defined(USE_CMSG) */
+
+#if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
+		/*
+		 * Turn off Path MTU discovery on IPv4/UDP sockets.
+		 */
+		if (sock->pf == AF_INET) {
+			int action = IP_PMTUDISC_DONT;
+			(void)setsockopt(sock->fd, IPPROTO_IP, IP_MTU_DISCOVER,
+					 &action, sizeof(action));
+		}
+#endif
+#if defined(IP_DONTFRAG)
+		/*
+		 * Turn off Path MTU discovery on IPv4/UDP sockets.
+		 */
+		if (sock->pf == AF_INET) {
+			int off = 0;
+			(void)setsockopt(sock->fd, IPPROTO_IP, IP_DONTFRAG,
+					 &off, sizeof(off));
+		}
+#endif
 
 #if defined(SO_RCVBUF)
 		optlen = sizeof(size);
@@ -3007,6 +3091,9 @@ watcher(void *uap) {
 	int maxfd;
 #endif
 	char strbuf[ISC_STRERRORSIZE];
+#ifdef ISC_SOCKET_USE_POLLWATCH
+	pollstate_t pollstate = poll_idle;
+#endif
 
 	/*
 	 * Get the control fd here.  This will never change.
@@ -3024,7 +3111,14 @@ watcher(void *uap) {
 #elif defined(USE_DEVPOLL)
 			dvp.dp_fds = manager->events;
 			dvp.dp_nfds = manager->nevents;
+#ifndef ISC_SOCKET_USE_POLLWATCH
 			dvp.dp_timeout = -1;
+#else
+			if (pollstate == poll_idle)
+				dvp.dp_timeout = -1;
+			else
+				dvp.dp_timeout = ISC_SOCKET_POLLWATCH_TIMEOUT;
+#endif	/* ISC_SOCKET_USE_POLLWATCH */
 			cc = ioctl(manager->devpoll_fd, DP_POLL, &dvp);
 #elif defined(USE_SELECT)
 			LOCK(&manager->lock);
@@ -3048,6 +3142,32 @@ watcher(void *uap) {
 							   ISC_MSG_FAILED,
 							   "failed"), strbuf);
 			}
+
+#if defined(USE_DEVPOLL) && defined(ISC_SOCKET_USE_POLLWATCH)
+			if (cc == 0) {
+				if (pollstate == poll_active)
+					pollstate = poll_checking;
+				else if (pollstate == poll_checking)
+					pollstate = poll_idle;
+			} else if (cc > 0) {
+				if (pollstate == poll_checking) {
+					/*
+					 * XXX: We'd like to use a more
+					 * verbose log level as it's actually an
+					 * unexpected event, but the kernel bug
+					 * reportedly happens pretty frequently
+					 * (and it can also be a false positive)
+					 * so it would be just too noisy.
+					 */
+					manager_log(manager,
+						    ISC_LOGCATEGORY_GENERAL,
+						    ISC_LOGMODULE_SOCKET,
+						    ISC_LOG_DEBUG(1),
+						    "unexpected POLL timeout");
+				}
+				pollstate = poll_active;
+			}
+#endif
 		} while (cc < 0);
 
 #if defined(USE_KQUEUE) || defined (USE_EPOLL) || defined (USE_DEVPOLL)
@@ -4778,9 +4898,21 @@ isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes) {
 
 #ifdef IPV6_V6ONLY
 	if (sock->pf == AF_INET6) {
-		(void)setsockopt(sock->fd, IPPROTO_IPV6, IPV6_V6ONLY,
-				 (void *)&onoff, sizeof(onoff));
+		if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_V6ONLY,
+			       (void *)&onoff, sizeof(int)) < 0) {
+			char strbuf[ISC_STRERRORSIZE];
+
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "setsockopt(%d, IPV6_V6ONLY) "
+					 "%s: %s", sock->fd,
+					 isc_msgcat_get(isc_msgcat,
+							ISC_MSGSET_GENERAL,
+							ISC_MSG_FAILED,
+							"failed"),
+					 strbuf);
+		}
 	}
+	FIX_IPV6_RECVPKTINFO(sock);	/* AIX */
 #endif
 }
 

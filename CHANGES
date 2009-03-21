@@ -1,3 +1,86 @@
+	--- 9.4.3-P2 released ---
+
+2579.	[bug]		DNSSEC lookaside validation failed to handle unknown
+			algorithms. [RT #19479]
+
+	--- 9.4.3-P1 released ---
+
+2522.	[security]	Handle -1 from DSA_do_verify().
+
+2498.	[bug]		Removed a bogus function argument used with
+			ISC_SOCKET_USE_POLLWATCH: it could cause compiler
+			warning or crash named with the debug 1 level
+			of logging. [RT #18917]
+
+	--- 9.4.3 released ---
+
+2490.	[port]		aix: work around a kernel bug where IPV6_RECVPKTINFO
+			is cleared when IPV6_V6ONLY is set. [RT #18785]
+
+2489.	[port]		solaris: Workaround Solaris's kernel bug about
+			/dev/poll:
+			http://bugs.opensolaris.org/view_bug.do?bug_id=6724237
+			Define ISC_SOCKET_USE_POLLWATCH at build time to enable
+			this workaround. [RT #18870]
+
+	--- 9.4.3rc1 released ---
+
+2473.	[port]		linux: raise the limit on open files to the possible
+			maximum value before spawning threads; 'files'
+		        specified in named.conf doesn't seem to work with
+			threads as expected. [RT #18784]
+
+2472.	[port]		linux: check the number of available cpu's before
+			calling chroot as it depends on "/proc". [RT #16923]
+
+2471.	[bug]		named-checkzone was not reporting missing manditory
+			glue when sibling checks were disabled. [RT #18768]
+
+2469.	[port]		solaris: Work around Solaris's select() limitations.
+			[RT #18769]
+
+2468.	[bug]		Resolver could try unreachable servers multiple times.
+			[RT #18739]
+
+2467.	[bug]		Failure of fcntl(F_DUPFD) wasn't logged. [RT #18740]
+
+2466.	[doc]		ARM: explain max-cache-ttl 0 SERVFAIL issue.
+			[RT #18302]
+
+2465.	[bug]		Adb's handling of lame addresses was different
+			for IPv4 and IPv6. [RT #18738]
+
+2463.   [port]          linux: POSIX doesn't include the IPv6 Advanced Socket
+			API and glibc hides parts of the IPv6 Advanced Socket
+			API as a result.  This is stupid as it breaks how the
+			two halves (Basic and Advanced) of the IPv6 Socket API				were designed to be used but we have to live with it.
+			Define _GNU_SOURCE to pull in the IPv6 Advanced Socket
+			API. [RT #18388]
+
+2462.	[doc]		Document -m (enable memory usage debugging)
+			option for dig. [RT #18757]
+
+2461.	[port]		sunos: Change #2363 was not complete. [RT #17513]
+
+2458.	[doc]		ARM: update and correction for max-cache-size.
+			[RT #18294]
+
+2455.	[bug]		Stop metadata being transfered via axfr/ixfr.
+			[RT #18639]
+
+2453.	[bug]		Remove NULL pointer dereference in dns_journal_print().
+			[RT #18316]
+
+2449.	[bug]		libbind: Out of bounds reference in dns_ho.c:addrsort.
+			[RT #18044]
+
+2445.	[doc]		ARM out-of-date on empty reverse zones (list includes
+			RFC1918 address, but these are not yet compiled in).
+			[RT #18578]
+
+2444.	[port]		Linux, FreeBSD, AIX: Turn off path mtu discovery
+			(clear DF) for UDP responses and requests.
+
 	--- 9.4.3b3 released ---
 
 2443.	[bug]		win32: UDP connect() would not generate an event,
