@@ -1,3 +1,9 @@
+bind9 (1:9.4.2.dfsg.P2-3) hardy-proposed; urgency=low
+
+  * random_1 broke memory usage assertions.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Thu, 23 Apr 2009 04:53:10 -0600
+
 bind9 (1:9.4.2.dfsg.P2-2) hardy-proposed; urgency=low
 
   * apparmor profile: add /var/log/named
