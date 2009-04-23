@@ -4,6 +4,15 @@ bind9 (1:9.4.2.dfsg.P2-3) hardy-proposed; urgency=low
 
  -- LaMont Jones <lamont@ubuntu.com>  Thu, 23 Apr 2009 04:53:10 -0600
 
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE: clients treat malformed signatures as good when verifying
+    server DSA and ECDSA certificates.
+    - update lib/dns/openssldsa_link.c to properly check the return code of
+      DSA_do_verify()
+    - CVE-2009-0025
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Wed, 07 Jan 2009 17:01:34 -0600
 bind9 (1:9.4.2.dfsg.P2-2) hardy-proposed; urgency=low
 
   * apparmor profile: add /var/log/named
