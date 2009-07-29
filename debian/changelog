@@ -1,3 +1,12 @@
+bind9 (1:9.5.1.dfsg.P3-1) stable-security; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * A specially crafted update packet will cause named to exit. 
+    CVE-2009-0696, CERT VU#725188.  Closes: #538975
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 28 Jul 2009 22:48:28 -0600
+
 bind9 (1:9.5.1.dfsg.P2-1+lenny1) stable; urgency=medium
 
   * Non-maintainer upload with permission from maintainer
