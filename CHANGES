@@ -1,4 +1,7 @@
 
+2640.	[security]	A specially crafted update packet will cause named
+			to exit. [RT #20000]
+
 2375.   [security]      Fully randomize UDP query ports to improve
 			forgery resilience. [RT #17949]
 
