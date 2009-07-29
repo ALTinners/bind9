@@ -1,3 +1,11 @@
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.2) hardy-security; urgency=low
+
+  * SECURITY UPDATE: server can exit on malicious update packet.
+    - bin/named/update.c: backported upstream fix.
+    - CVE-2009-0696
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 28 Jul 2009 20:10:39 -0700
+
 bind9 (1:9.4.2.dfsg.P2-2ubuntu0.1) hardy-security; urgency=low
 
   * SECURITY UPDATE: clients treat malformed signatures as good when verifying
