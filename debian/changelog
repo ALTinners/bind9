@@ -1,3 +1,12 @@
+bind9 (1:9.3.4-2etch5) oldstable-security; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * A specially crafted update packet will cause named to exit. 
+    CVE-2009-0696, CERT VU#725188.  Closes: #538975
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 28 Jul 2009 23:35:53 -0600
+
 bind9 (1:9.3.4-2etch4) stable-security; urgency=high
 
   * Fix check of DSA_do_verify return value.
