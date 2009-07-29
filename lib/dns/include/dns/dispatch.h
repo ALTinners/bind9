@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dispatch.h,v 1.45.2.2.4.5.4.1 2008/05/22 21:11:16 each Exp $ */
+/* $Id: dispatch.h,v 1.45.2.2.4.2 2004/03/06 08:13:55 marka Exp $ */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1

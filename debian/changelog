@@ -1,3 +1,13 @@
+bind9 (1:9.3.2-2ubuntu1.6) dapper-security; urgency=low
+
+  * SECURITY UPDATE: clients treat malformed signatures as good when verifying
+    server DSA and ECDSA certificates.
+    - update lib/dns/openssldsa_link.c to properly check the return code of
+      DSA_do_verify()
+    - CVE-2009-0025
+
+ -- Jamie Strandboge <jamie@ubuntu.com>  Wed, 07 Jan 2009 17:03:48 -0600
+
 bind9 (1:9.3.2-2ubuntu1.5) dapper-security; urgency=low
 
   * SECURITY UPDATE: Randomize UDP query source ports to improve forgery resilience.

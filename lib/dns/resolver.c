@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: resolver.c,v 1.218.2.18.4.77.2.1 2008/05/22 21:11:15 each Exp $ */
+/* $Id: resolver.c,v 1.218.2.18.4.56 2005/10/14 01:38:48 marka Exp $ */
 
 #include <config.h>
 
