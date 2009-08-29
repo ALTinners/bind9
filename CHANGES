@@ -1,3 +1,52 @@
+
+	--- 9.3.6rc1 released ---
+
+2473.	[port]		linux: raise the limit on open files to the possible
+			maximum value before spawning threads; 'files'
+		        specified in named.conf doesn't seem to work with
+			threads as expected. [RT #18784]
+
+2472.	[port]		linux: check the number of available cpu's before
+			calling chroot as it depends on "/proc". [RT #16923]
+
+2469.	[port]		solaris: Work around Solaris's select() limitations.
+			[RT #18769]
+
+2468.	[bug]		Resolver could try unreachable servers multiple times.
+			[RT #18739]
+
+2467.	[bug]		Failure of fcntl(F_DUPFD) wasn't logged. [RT #18740]
+
+2465.	[bug]		Adb's handling of lame addresses was different
+			for IPv4 and IPv6. [RT #18738]
+
+2463.   [port]          linux: POSIX doesn't include the IPv6 Advanced Socket
+			API and glibc hides parts of the IPv6 Advanced Socket
+			API as a result.  This is stupid as it breaks how the
+			two halves (Basic and Advanced) of the IPv6 Socket API				were designed to be used but we have to live with it.
+			Define _GNU_SOURCE to pull in the IPv6 Advanced Socket
+			API. [RT #18388]
+
+2462.	[doc]		Document -m (enable memory usage debugging)
+			option for dig. [RT #18757]
+
+2461.	[port]		sunos: Change #2363 was not complete. [RT #17513]
+
+2458.	[doc]		ARM: update and correction for max-cache-size.
+			[RT #18294]
+
+2455.	[bug]		Stop metadata being transfered via axfr/ixfr.
+			[RT #18639]
+
+2453.	[bug]		Remove NULL pointer dereference in dns_journal_print().
+			[RT #18316]
+
+2449.	[bug]		libbind: Out of bounds reference in dns_ho.c:addrsort.
+			[RT #18044]
+
+2444.	[port]		Linux, FreeBSD, AIX: Turn off path mtu discovery
+			(clear DF) for UDP responses and requests.
+
 	--- 9.3.6b1 released ---
 
 2443.	[bug]		win32: UDP connect() would not generate an event,

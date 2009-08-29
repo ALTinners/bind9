@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: os.h,v 1.1.2.2.8.13 2007/08/28 07:19:08 tbox Exp $ */
+/* $Id: os.h,v 1.1.2.2.8.15 2008/10/24 01:42:46 tbox Exp $ */
 
 #ifndef NS_OS_H
 #define NS_OS_H 1
@@ -42,6 +42,9 @@ ns_os_inituserinfo(const char *username);
 
 void
 ns_os_changeuser(void);
+
+void
+ns_os_adjustnofile(void);
 
 void
 ns_os_minprivs(void);
