@@ -1,4 +1,15 @@
 
+	--- 9.3.6 released ---
+
+2490.	[port]		aix: work around a kernel bug where IPV6_RECVPKTINFO
+			is cleared when IPV6_V6ONLY is set. [RT #18785]
+
+2489.	[port]		solaris: Workaround Solaris's kernel bug about
+			/dev/poll:
+			http://bugs.opensolaris.org/view_bug.do?bug_id=6724237
+			Define ISC_SOCKET_USE_POLLWATCH at build time to enable
+			this workaround. [RT #18870]
+
 	--- 9.3.6rc1 released ---
 
 2473.	[port]		linux: raise the limit on open files to the possible
