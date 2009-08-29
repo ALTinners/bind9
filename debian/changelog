@@ -1,3 +1,11 @@
+bind9 (1:9.3.6.dfsg.P1-0) stable-proposed-updates; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * New upstream
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 28 Aug 2009 19:10:10 -0600
+
 bind9 (1:9.3.5.dfsg.P2-1) stable-proposed-updates; urgency=low
 
   [Internet Software Consortium, Inc]
