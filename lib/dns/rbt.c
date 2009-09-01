@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rbt.c,v 1.138.36.3 2008/03/31 13:18:00 fdupont Exp $ */
+/* $Id: rbt.c,v 1.138.36.5 2009/01/19 23:47:02 tbox Exp $ */
 
 /*! \file */
 
@@ -120,7 +120,7 @@ struct dns_rbt {
  * Chain management.
  *
  * The "ancestors" member of chains were removed, with their job now
- * being wholy handled by parent pointers (which didn't exist, because
+ * being wholly handled by parent pointers (which didn't exist, because
  * of memory concerns, when chains were first implemented).
  */
 #define ADD_LEVEL(chain, node) \
@@ -1938,7 +1938,7 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 			} else {
 				/*
 				 * Child is parent's right child.
-				 * Everything is doen the same as above,
+				 * Everything is done the same as above,
 				 * except mirrored.
 				 */
 				sibling = LEFT(parent);
@@ -2404,7 +2404,7 @@ dns_rbtnodechain_next(dns_rbtnodechain_t *chain, dns_name_t *name,
 		 * reached without having traversed any left links, ascend one
 		 * level and look for either a right link off the point of
 		 * ascent, or search for a left link upward again, repeating
-		 * ascents until either case is true.
+		 * ascends until either case is true.
 		 */
 		do {
 			while (! IS_ROOT(current)) {

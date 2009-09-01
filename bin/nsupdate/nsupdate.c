@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsupdate.c,v 1.154.56.3 2008/01/17 23:46:36 tbox Exp $ */
+/* $Id: nsupdate.c,v 1.154.56.6 2009/04/30 07:12:15 marka Exp $ */
 
 /*! \file */
 
@@ -1507,8 +1507,9 @@ update_addordelete(char *cmdline, isc_boolean_t isdelete) {
 	}
 	region.base = word;
 	region.length = strlen(word);
+	rdataclass = dns_rdataclass_any;
 	result = dns_rdataclass_fromtext(&rdataclass, &region);
-	if (result == ISC_R_SUCCESS) {
+	if (result == ISC_R_SUCCESS && rdataclass != dns_rdataclass_any) {
 		if (!setzoneclass(rdataclass)) {
 			fprintf(stderr, "class mismatch: %s\n", word);
 			goto failure;
@@ -2462,7 +2463,7 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 		 * not a security issue), and Windows clients don't
 		 * seem to work if named complies with the spec and
 		 * includes the gratuitous TSIG.  So we're in the
-		 * bizzare situation of having to choose between
+		 * bizarre situation of having to choose between
 		 * complying with a useless requirement in the spec
 		 * and interoperating.  This is nuts.  If we can
 		 * confirm this behavior, we should ask the WG to

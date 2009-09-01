@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.126.62.3 2008/04/03 06:10:21 marka Exp $ */
+/* $Id: types.h,v 1.126.62.6 2009/01/29 22:41:45 jinmei Exp $ */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -107,7 +107,6 @@ typedef struct dns_signature			dns_signature_t;
 typedef struct dns_ssurule			dns_ssurule_t;
 typedef struct dns_ssutable			dns_ssutable_t;
 typedef struct dns_stats			dns_stats_t;
-typedef int					dns_statscounter_t;
 typedef isc_uint32_t				dns_rdatastatstype_t;
 typedef struct dns_tkeyctx			dns_tkeyctx_t;
 typedef isc_uint16_t				dns_trust_t;
@@ -266,7 +265,7 @@ enum {
 	dns_trust_glue = 3,
 #define dns_trust_glue			((dns_trust_t)dns_trust_glue)
 
-	/* Answser from a non-authoritative server */
+	/* Answer from a non-authoritative server */
 	dns_trust_answer = 4,
 #define dns_trust_answer		((dns_trust_t)dns_trust_answer)
 
@@ -275,7 +274,7 @@ enum {
 	dns_trust_authauthority = 5,
 #define dns_trust_authauthority		((dns_trust_t)dns_trust_authauthority)
 
-	/* Answser from an authoritative server */
+	/* Answer from an authoritative server */
 	dns_trust_authanswer = 6,
 #define dns_trust_authanswer		((dns_trust_t)dns_trust_authanswer)
 
@@ -289,7 +288,7 @@ enum {
 };
 
 /*%
- * Name checking severites.
+ * Name checking severities.
  */
 typedef enum {
 	dns_severity_ignore,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: db.h,v 1.89.128.2 2008/04/03 06:20:34 tbox Exp $ */
+/* $Id: db.h,v 1.89.128.5 2009/01/19 00:01:11 marka Exp $ */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -1029,7 +1029,7 @@ isc_result_t
 dns_db_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		    isc_stdtime_t now, dns_rdatasetiter_t **iteratorp);
 /*%<
- * Make '*iteratorp' an rdataset iteratator for all rdatasets at 'node' in
+ * Make '*iteratorp' an rdataset iterator for all rdatasets at 'node' in
  * version 'version' of 'db'.
  *
  * Notes:
@@ -1216,7 +1216,7 @@ dns_db_getsoaserial(dns_db_t *db, dns_dbversion_t *ver, isc_uint32_t *serialp);
 void
 dns_db_overmem(dns_db_t *db, isc_boolean_t overmem);
 /*%<
- * Enable / disable agressive cache cleaning.
+ * Enable / disable aggressive cache cleaning.
  */
 
 unsigned int
@@ -1286,7 +1286,7 @@ dns_db_register(const char *name, dns_dbcreatefunc_t create, void *driverarg,
 void
 dns_db_unregister(dns_dbimplementation_t **dbimp);
 /*%<
- * Remove a database implementation from the the list of supported
+ * Remove a database implementation from the list of supported
  * implementations.  No databases of this type can be active when this
  * is called.
  *

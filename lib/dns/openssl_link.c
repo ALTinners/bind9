@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: openssl_link.c,v 1.16 2007/08/28 07:20:42 tbox Exp $
+ * $Id: openssl_link.c,v 1.16.92.2 2009/02/11 23:46:41 tbox Exp $
  */
 #ifdef OPENSSL
 
@@ -134,18 +134,8 @@ mem_free(void *ptr) {
 
 static void *
 mem_realloc(void *ptr, size_t size) {
-	void *p;
-
 	INSIST(dst__memory_pool != NULL);
-	p = NULL;
-	if (size > 0U) {
-		p = mem_alloc(size);
-		if (p != NULL && ptr != NULL)
-			memcpy(p, ptr, size);
-	}
-	if (ptr != NULL)
-		mem_free(ptr);
-	return (p);
+	return (isc_mem_reallocate(dst__memory_pool, ptr, size));
 }
 
 isc_result_t

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,11 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.c,v 1.138.2.7.2.1 2009/07/28 14:07:14 marka Exp $ */
+/* $Id: update.c,v 1.138.2.13 2009/07/28 15:54:31 marka Exp $ */
 
 #include <config.h>
 
 #include <isc/print.h>
+#include <isc/stats.h>
 #include <isc/string.h>
 #include <isc/taskpool.h>
 #include <isc/util.h>
@@ -41,7 +42,6 @@
 #include <dns/rdatatype.h>
 #include <dns/soa.h>
 #include <dns/ssu.h>
-#include <dns/stats.h>
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
@@ -262,13 +262,13 @@ update_log(ns_client_t *client, dns_zone_t *zone,
  * Increment updated-related statistics counters.
  */
 static inline void
-inc_stats(dns_zone_t *zone, dns_statscounter_t counter) {
-	dns_generalstats_increment(ns_g_server->nsstats, counter);
+inc_stats(dns_zone_t *zone, isc_statscounter_t counter) {
+	isc_stats_increment(ns_g_server->nsstats, counter);
 
 	if (zone != NULL) {
-		dns_stats_t *zonestats = dns_zone_getrequeststats(zone);
+		isc_stats_t *zonestats = dns_zone_getrequeststats(zone);
 		if (zonestats != NULL)
-			dns_generalstats_increment(zonestats, counter);
+			isc_stats_increment(zonestats, counter);
 	}
 }
 
@@ -685,7 +685,7 @@ rrset_visible(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 		*visible = ISC_TRUE;
 		break;
 	/*
-	 * Glue, obsured, deleted or replaced records.
+	 * Glue, obscured, deleted or replaced records.
 	 */
 	case DNS_R_DELEGATION:
 	case DNS_R_DNAME:
@@ -823,8 +823,8 @@ ssu_checkall(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
  * In the RFC2136 section 3.2.5, this is the pseudocode involving
  * a variable called "temp", a mapping of <name, type> tuples to rrsets.
  *
- * Here, we represent the "temp" data structure as (non-minimial) "dns_diff_t"
- * where each typle has op==DNS_DIFFOP_EXISTS.
+ * Here, we represent the "temp" data structure as (non-minimal) "dns_diff_t"
+ * where each tuple has op==DNS_DIFFOP_EXISTS.
  */
 
 
@@ -1892,7 +1892,7 @@ add_exposed_sigs(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 
 /*%
  * Update RRSIG and NSEC records affected by an update.  The original
- * update, including the SOA serial update but exluding the RRSIG & NSEC
+ * update, including the SOA serial update but excluding the RRSIG & NSEC
  * changes, is in "diff" and has already been applied to "newver" of "db".
  * The database version prior to the update is "oldver".
  *
@@ -1948,7 +1948,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	/*
 	 * Do we look at the KSK flag on the DNSKEY to determining which
 	 * keys sign which RRsets?  First check the zone option then
-	 * check the keys flags to make sure atleast one has a ksk set
+	 * check the keys flags to make sure at least one has a ksk set
 	 * and one doesn't.
 	 */
 	check_ksk = ISC_TF((dns_zone_getoptions(zone) &
@@ -2385,26 +2385,36 @@ static isc_result_t
 remove_orphaned_ds(dns_db_t *db, dns_dbversion_t *newver, dns_diff_t *diff) {
 	isc_result_t result;
 	isc_boolean_t ns_exists;
-	dns_difftuple_t *t;
+	dns_difftuple_t *tupple;
+	dns_diff_t temp_diff;
 
-	for (t = ISC_LIST_HEAD(diff->tuples);
-	     t != NULL;
-	     t = ISC_LIST_NEXT(t, link)) {
-		if (!((t->op == DNS_DIFFOP_DEL &&
-		       t->rdata.type == dns_rdatatype_ns) ||
-		      (t->op == DNS_DIFFOP_ADD &&
-		       t->rdata.type == dns_rdatatype_ds)))
+	dns_diff_init(diff->mctx, &temp_diff);
+
+	for (tupple = ISC_LIST_HEAD(diff->tuples);
+	     tupple != NULL;
+	     tupple = ISC_LIST_NEXT(tupple, link)) {
+		if (!((tupple->op == DNS_DIFFOP_DEL &&
+		       tupple->rdata.type == dns_rdatatype_ns) ||
+		      (tupple->op == DNS_DIFFOP_ADD &&
+		       tupple->rdata.type == dns_rdatatype_ds)))
 			continue;
-		CHECK(rrset_exists(db, newver, &t->name, dns_rdatatype_ns, 0,
-				   &ns_exists));
-		if (ns_exists && !dns_name_equal(&t->name, dns_db_origin(db)))
+		CHECK(rrset_exists(db, newver, &tupple->name,
+				   dns_rdatatype_ns, 0, &ns_exists));
+		if (ns_exists &&
+		    !dns_name_equal(&tupple->name, dns_db_origin(db)))
 			continue;
-		CHECK(delete_if(true_p, db, newver, &t->name,
-				dns_rdatatype_ds, 0, NULL, diff));
+		CHECK(delete_if(true_p, db, newver, &tupple->name,
+				dns_rdatatype_ds, 0, NULL, &temp_diff));
 	}
-	return (ISC_R_SUCCESS);
+	result = ISC_R_SUCCESS;
 
  failure:
+	for (tupple = ISC_LIST_HEAD(temp_diff.tuples);
+	     tupple != NULL;
+	     tupple = ISC_LIST_HEAD(temp_diff.tuples)) {
+		ISC_LIST_UNLINK(temp_diff.tuples, tupple, link);
+		dns_diff_appendminimal(diff, &tupple);
+	}
 	return (result);
 }
 
@@ -3081,9 +3091,6 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	goto common;
 
  failure:
-	if (result == DNS_R_REFUSED)
-		inc_stats(zone, dns_nsstatscounter_updaterej);
-
 	/*
 	 * The reason for failure should have been logged at this point.
 	 */
