@@ -1,5 +1,23 @@
 
-	--- 9.5.2b released ---
+	--- 9.5.2rc1 released ---
+
+2672.	[bug]		Don't enable searching in 'host' when doing reverse
+			lookups. [RT #20218]
+
+2670.	[bug]		Unexpected connect failures failed to log enough
+			information to be useful. [RT #20205]
+
+2663.	[func]		win32:  allow named to run as a service using
+			"NT AUTHORITY\LocalService" as the account. [RT #19977]
+
+2656.	[func]		win32: add a "tools only" check box to the installer
+			which causes it to only install dig, host, nslookup,
+			nsupdate and relevent dlls.  [RT #19998]
+
+2655.	[doc]		Document that key-directory does not affect
+			rndc.key.  [RT #20155]
+
+	--- 9.5.2b1 released ---
 
 2649.	[bug]		Set the domain for forward only zones. [RT #19944]
 
