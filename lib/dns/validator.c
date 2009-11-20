@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: validator.c,v 1.155.52.8.2.2 2009/03/17 23:49:17 tbox Exp $ */
+/* $Id: validator.c,v 1.155.52.14 2009/03/17 23:46:41 tbox Exp $ */
 
 #include <config.h>
 
@@ -87,7 +87,7 @@
 #define VALID_VALIDATOR(v)		ISC_MAGIC_VALID(v, VALIDATOR_MAGIC)
 
 #define VALATTR_SHUTDOWN		0x0001	/*%< Shutting down. */
-#define VALATTR_CANCELED		0x0002	/*%< Cancelled. */
+#define VALATTR_CANCELED		0x0002	/*%< Canceled. */
 #define VALATTR_TRIEDVERIFY		0x0004  /*%< We have found a key and
 						 * have attempted a verify. */
 #define VALATTR_INSECURITY		0x0010	/*%< Attempting proveunsecure. */
@@ -1126,7 +1126,7 @@ get_dst_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo,
 }
 
 /*%
- * Get the key that genertated this signature.
+ * Get the key that generated this signature.
  */
 static isc_result_t
 get_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo) {
@@ -1139,7 +1139,7 @@ get_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo) {
 	 * Is the signer name appropriate for this signature?
 	 *
 	 * The signer name must be at the same level as the owner name
-	 * or closer to the the DNS root.
+	 * or closer to the DNS root.
 	 */
 	namereln = dns_name_fullcompare(val->event->name, &siginfo->signer,
 					&order, &nlabels);
@@ -1635,6 +1635,7 @@ dlv_validatezonekey(dns_validator_t *val) {
 				break;
 		}
 		if (result != ISC_R_SUCCESS) {
+			dns_rdataset_disassociate(&trdataset);
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "no DNSKEY matching DLV");
 			continue;
@@ -1976,6 +1977,7 @@ validatezonekey(dns_validator_t *val) {
 				break;
 		}
 		if (result != ISC_R_SUCCESS) {
+			dns_rdataset_disassociate(&trdataset);
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "no DNSKEY matching DS");
 			continue;
@@ -2403,7 +2405,7 @@ dlvfetched(isc_task_t *task, isc_event_t *event) {
 }
 
 /*%
- * Start the DLV lookup proccess.
+ * Start the DLV lookup process.
  *
  * Returns
  * \li	ISC_R_SUCCESS
@@ -2447,7 +2449,7 @@ startfinddlvsep(dns_validator_t *val, dns_name_t *unsecure) {
 		validator_log(val, ISC_LOG_DEBUG(3), "DLV %s found", namebuf);
 		dlv_validator_start(val);
 		return (DNS_R_WAIT);
-	} 
+	}
 	validator_log(val, ISC_LOG_DEBUG(3), "DLV %s found with no supported "
 		      "algorithms", namebuf);
 	markanswer(val);
@@ -2831,7 +2833,7 @@ dlv_validator_start(dns_validator_t *val) {
 /*%
  * Start the validation process.
  *
- * Attempt to valididate the answer based on the category it appears to
+ * Attempt to validate the answer based on the category it appears to
  * fall in.
  * \li	1. secure positive answer.
  * \li	2. unsecure positive answer.
@@ -2852,7 +2854,7 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 	vevent = (dns_validatorevent_t *)event;
 	val = vevent->validator;
 
-	/* If the validator has been cancelled, val->event == NULL */
+	/* If the validator has been canceled, val->event == NULL */
 	if (val->event == NULL)
 		return;
 

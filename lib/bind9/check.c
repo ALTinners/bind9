@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: check.c,v 1.86.10.7 2008/11/19 05:39:32 marka Exp $ */
+/* $Id: check.c,v 1.86.10.11 2009/06/03 07:08:20 marka Exp $ */
 
 /*! \file */
 
@@ -872,8 +872,11 @@ validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
 			if (new == NULL)
 				goto cleanup;
 			if (stackcount != 0) {
+				void *ptr;
+
+				DE_CONST(stack, ptr);
 				memcpy(new, stack, oldsize);
-				isc_mem_put(mctx, stack, oldsize);
+				isc_mem_put(mctx, ptr, oldsize);
 			}
 			stack = new;
 			stackcount = newlen;
@@ -886,8 +889,12 @@ validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
 		goto resume;
 	}
  cleanup:
-	if (stack != NULL)
-		isc_mem_put(mctx, stack, stackcount * sizeof(*stack));
+	if (stack != NULL) {
+		void *ptr;
+
+		DE_CONST(stack, ptr);
+		isc_mem_put(mctx, ptr, stackcount * sizeof(*stack));
+	}
 	isc_symtab_destroy(&symtab);
 	*countp = count;
 	return (result);
@@ -1006,9 +1013,9 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	{ "notify", MASTERZONE | SLAVEZONE },
 	{ "also-notify", MASTERZONE | SLAVEZONE },
 	{ "dialup", MASTERZONE | SLAVEZONE | STUBZONE },
-	{ "delegation-only", HINTZONE | STUBZONE },
-	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE},
-	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE},
+	{ "delegation-only", HINTZONE | STUBZONE | DELEGATIONZONE },
+	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE },
+	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE },
 	{ "maintain-ixfr-base", MASTERZONE | SLAVEZONE },
 	{ "max-ixfr-log-size", MASTERZONE | SLAVEZONE },
 	{ "notify-source", MASTERZONE | SLAVEZONE },
@@ -1109,7 +1116,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 
 	/*
 	 * Look for an already existing zone.
-	 * We need to make this cannonical as isc_symtab_define()
+	 * We need to make this canonical as isc_symtab_define()
 	 * deals with strings.
 	 */
 	dns_fixedname_init(&fixedname);

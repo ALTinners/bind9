@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: opensslrsa_link.c,v 1.16.214.2 2008/12/24 23:48:29 tbox Exp $
+ * $Id: opensslrsa_link.c,v 1.16.128.3 2009/01/19 00:01:10 marka Exp $
  */
 #ifdef OPENSSL
 
@@ -57,8 +57,8 @@
 
 
 	/*
-	 * XXXMPA  Temporarially disable RSA_BLINDING as it requires
-	 * good quality random data that cannot currently be guarenteed.
+	 * XXXMPA  Temporarily disable RSA_BLINDING as it requires
+	 * good quality random data that cannot currently be guaranteed.
 	 * XXXMPA  Find which versions of openssl use pseudo random data
 	 * and set RSA_FLAG_BLINDING for those.
 	 */
