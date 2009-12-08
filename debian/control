@@ -8,7 +8,7 @@ Standards-Version: 3.5.6.0
 
 Package: bind9
 Architecture: any
-Depends: ${shlibs:Depends}, netbase, adduser, libdns21 (=${Source-Version}), libisccfg1 (=${Source-Version}), libisc11 (=${Source-Version}), libisccc0 (=${Source-Version}), lsb-base (>=3.0-6)
+Depends: ${shlibs:Depends}, netbase, adduser, libdns23 (=${Source-Version}), libisccfg1 (=${Source-Version}), libisc11 (=${Source-Version}), libisccc0 (=${Source-Version}), lsb-base (>=3.0-6)
 Conflicts: bind
 Replaces: bind, dnsutils (<< 1:9.1.0-3)
 Suggests: dnsutils, bind9-doc
@@ -42,7 +42,7 @@ Section: libdevel
 Architecture: any
 Conflicts: bind-dev
 Replaces: bind-dev
-Depends: libdns21 (= ${Source-Version}), libisc11 (= ${Source-Version}), libisccc0(= ${Source-Version}), libisccfg1 (= ${Source-Version}), liblwres9 (= ${Source-Version}) 
+Depends: libdns23, libisc11, libisccc0, libisccfg1, liblwres9
 Description: Static Libraries and Headers used by BIND
  This package delivers archive-style libraries, header files, and API man
  pages for libbind, libdns, libisc, and liblwres.  These are are only needed 
@@ -63,6 +63,16 @@ Description: BIND9 Shared Library used by BIND
  clients.
 
 Package: libdns21
+Section: libs
+Priority: standard
+Architecture: any
+Conflicts: libisc11 (<< ${Source-Version})
+Description: DNS Shared Library used by BIND
+ ${Description}
+ .
+ This metapackage eases the upgrade path to libdns23.
+
+Package: libdns23
 Section: libs
 Priority: standard
 Architecture: any
