@@ -1,3 +1,15 @@
+bind9 (1:9.5.1.dfsg.P2-1ubuntu0.3) jaunty-security; urgency=low
+
+  * SECURITY UPDATE: incorrect cache update from additional section
+    - bin/named/query.c, lib/dns/{include/dns/types.h,masterdump.c,
+      rbtdb.c,resolver.c,validator.c}: handle the additional section
+      properly. lib/dns/api, version: increment versions.
+    - debian/*: increment to libdns46, add libdns45 metapackage so
+      upgrade-manager won't hold the bind9 upgrade back.
+    - CVE-2009-4022
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 04 Dec 2009 08:30:45 -0500
+
 bind9 (1:9.5.1.dfsg.P2-1ubuntu0.1) jaunty-security; urgency=low
 
   * SECURITY UPDATE: server can exit on malicious update packet.
