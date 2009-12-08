@@ -1,7 +1,8 @@
 Source: bind9
 Section: net
 Priority: optional
-Maintainer: LaMont Jones <lamont@debian.org>
+Maintainer: Ubuntu Core Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: LaMont Jones <lamont@debian.org>
 Uploaders: Bdale Garbee <bdale@gag.com>
 Build-Depends: libkrb5-dev, debhelper (>= 5), libssl-dev, libtool, bison, libdb-dev (>>4.6), libldap2-dev, libxml2-dev, libcap2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], hardening-wrapper, libgeoip-dev (>= 1.4.6.dfsg-5)
 Build-Conflicts: libdb4.2-dev
@@ -11,7 +12,7 @@ XS-Vcs-Git: git://git.debian.org/~lamont/bind9.git
 
 Package: bind9
 Architecture: any
-Depends: ${shlibs:Depends}, debconf | debconf-2.0, netbase, adduser, libdns50 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version}), libisccc50 (=${binary:Version}), lsb-base (>= 3.2-14), bind9utils (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version}), net-tools
+Depends: ${shlibs:Depends}, debconf | debconf-2.0, netbase, adduser, libdns53 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version}), libisccc50 (=${binary:Version}), lsb-base (>= 3.2-14), bind9utils (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version}), net-tools
 Conflicts: bind, apparmor-profiles (<< 2.1+1075-0ubuntu4)
 Replaces: bind, dnsutils (<< 1:9.1.0-3), apparmor-profiles (<< 2.1+1075-0ubuntu4)
 Suggests: dnsutils, bind9-doc, resolvconf, ufw
@@ -38,7 +39,7 @@ Description: Documentation for BIND
 Package: bind9-host
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}, libdns50 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version})
+Depends: ${shlibs:Depends}, libdns53 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version})
 Conflicts: host, dnsutils (<< 1:9.0.0)
 Replaces: dnsutils (<< 1:9.0.0)
 Provides: host
@@ -53,7 +54,7 @@ Section: libdevel
 Architecture: any
 Conflicts: bind-dev
 Replaces: bind-dev
-Depends: libbind9-50 (= ${binary:Version}), liblwres50 (= ${binary:Version}) 
+Depends: libbind9-50, liblwres50
 Description: Static Libraries and Headers used by BIND
  This package delivers archive-style libraries, header files, and API man
  pages for libbind, libdns, libisc, and liblwres.  These are only needed 
@@ -66,7 +67,7 @@ Priority: standard
 Architecture: any
 Conflicts: libbind0, libbind9-41
 Replaces: libbind0
-Depends: ${shlibs:Depends}, libdns50 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version})
+Depends: ${shlibs:Depends}, libdns53, libisccfg50, libisc50
 Description: BIND9 Shared Library used by BIND
  ${Description}
  .
@@ -77,9 +78,19 @@ Package: libdns50
 Section: libs
 Priority: standard
 Architecture: any
+Conflicts: libisc50 (<< ${binary:Version})
+Description: DNS Shared Library used by BIND
+ ${Description}
+ .
+ This metapackage eases the upgrade path to libdns53.
+
+Package: libdns53
+Section: libs
+Priority: standard
+Architecture: any
 Conflicts: libbind0, libbind9-41
 Replaces: libbind0
-Depends: ${shlibs:Depends}, libisc50 (=${binary:Version})
+Depends: ${shlibs:Depends}, libisc50
 Description: DNS Shared Library used by BIND
  ${Description}
  .
@@ -117,7 +128,7 @@ Section: libs
 Architecture: any
 Conflicts: libbind0, libbind9-41
 Replaces: libbind0
-Depends: ${shlibs:Depends}, libisc50 (=${binary:Version})
+Depends: ${shlibs:Depends}, libisc50
 Description: Command Channel Library used by BIND
  ${Description}
  .
@@ -129,7 +140,7 @@ Section: libs
 Architecture: any
 Conflicts: libbind0, libbind9-41
 Replaces: libbind0
-Depends: ${shlibs:Depends}, libdns50 (=${binary:Version}), libisccc50 (=${binary:Version}), libisc50 (=${binary:Version})
+Depends: ${shlibs:Depends}, libdns53, libisccc50, libisc50
 Description: Config File Handling Library used by BIND
  ${Description}
  .
@@ -140,7 +151,7 @@ Description: Config File Handling Library used by BIND
 Package: dnsutils
 Priority: standard
 Architecture: any
-Depends: ${shlibs:Depends}, bind9-host | host, libdns50 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version})
+Depends: ${shlibs:Depends}, bind9-host | host, libdns53 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisc50 (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version})
 Suggests: rblcheck
 Conflicts: netstd (<< 2.00)
 Replaces: bind, bind9 (<< 1:9.1.0-3)
@@ -156,7 +167,7 @@ Description: Clients provided with BIND
 
 Package: lwresd
 Architecture: any
-Depends: ${shlibs:Depends}, adduser, libdns50 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisccc50 (=${binary:Version}), libisc50 (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version})
+Depends: ${shlibs:Depends}, adduser, libdns53 (=${binary:Version}), libisccfg50 (=${binary:Version}), libisccc50 (=${binary:Version}), libisc50 (=${binary:Version}), liblwres50 (=${binary:Version}), libbind9-50 (=${binary:Version})
 Recommends: libnss-lwres
 Suggests: bind9utils
 Description: Lightweight Resolver Daemon
