@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.184.18.9 2006/07/21 02:05:57 marka Exp $ */
+/* $Id: rdata.c,v 1.196 2007/06/19 23:47:16 tbox Exp $ */
 
 /*! \file */
 
@@ -901,7 +901,7 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 	hash = ((a + n) * b) % 256;
 
 	/*
-	 * This switch block is inlined via #define, and will use "return"
+	 * This switch block is inlined via \#define, and will use "return"
 	 * to return a result to the caller if it is a valid (known)
 	 * rdatatype name.
 	 */

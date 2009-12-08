@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_ioctl.c,v 1.44.18.13 2007/08/31 23:46:25 tbox Exp $ */
+/* $Id: ifiter_ioctl.c,v 1.58 2007/08/30 06:02:28 marka Exp $ */
 
 /*! \file
  * \brief

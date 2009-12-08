@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.222.18.14 2007/08/28 07:20:04 tbox Exp $ */
+/* $Id: message.c,v 1.237.110.6 2008/07/28 08:42:50 marka Exp $ */
 
 /*! \file */
 
@@ -24,6 +24,7 @@
  ***/
 
 #include <config.h>
+#include <ctype.h>
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
@@ -44,6 +45,35 @@
 #include <dns/result.h>
 #include <dns/tsig.h>
 #include <dns/view.h>
+
+#ifdef SKAN_MSG_DEBUG
+static void
+hexdump(const char *msg, const char *msg2, void *base, size_t len) {
+	unsigned char *p;
+	unsigned int cnt;
+
+	p = base;
+	cnt = 0;
+
+	printf("*** %s [%s] (%u bytes @ %p)\n", msg, msg2, len, base);
+
+	while (cnt < len) {
+		if (cnt % 16 == 0)
+			printf("%p: ", p);
+		else if (cnt % 8 == 0)
+			printf(" |");
+		printf(" %02x %c", *p, (isprint(*p) ? *p : ' '));
+		p++;
+		cnt++;
+
+		if (cnt % 16 == 0)
+			printf("\n");
+	}
+
+	if (cnt % 16 != 0)
+		printf("\n");
+}
+#endif
 
 #define DNS_MESSAGE_OPCODE_MASK		0x7800U
 #define DNS_MESSAGE_OPCODE_SHIFT	11
@@ -592,6 +622,9 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 		msg->tsigkey = NULL;
 	}
 
+	if (msg->tsigctx != NULL)
+		dst_context_destroy(&msg->tsigctx);
+
 	if (msg->query.base != NULL) {
 		if (msg->free_query != 0)
 			isc_mem_put(msg->mctx, msg->query.base,
@@ -987,7 +1020,7 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		if (name == NULL)
 			return (ISC_R_NOMEMORY);
 		free_name = ISC_TRUE;
-		
+
 		offsets = newoffsets(msg);
 		if (offsets == NULL) {
 			result = ISC_R_NOMEMORY;
@@ -1297,7 +1330,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			}
 			/*
 			 * When the rdata is empty, the data pointer is
-			 * never dereferenced, but it must still be non-NULL. 
+			 * never dereferenced, but it must still be non-NULL.
 			 * Casting 1 rather than "" avoids warnings about
 			 * discarding the const attribute of a string,
 			 * for compilers that would warn about such things.
@@ -1436,7 +1469,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 							       rdataset)
 				      == ISC_R_SUCCESS);
 
-			if (rdtype != dns_rdatatype_opt && 
+			if (rdtype != dns_rdatatype_opt &&
 			    rdtype != dns_rdatatype_tsig &&
 			    !issigzero)
 			{
@@ -1459,14 +1492,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 				rdataset->ttl = ttl;
 		}
 
-		/*
-		 * XXXMLG Perform a totally ugly hack here to pull
-		 * the rdatalist out of the private field in the rdataset,
-		 * and append this rdata to the rdatalist's linked list
-		 * of rdata.
-		 */
-		rdatalist = (dns_rdatalist_t *)(rdataset->private1);
-
+		/* Append this rdata to the rdataset. */
+		dns_rdatalist_fromrdataset(rdataset, &rdatalist);
 		ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
 
 		/*
@@ -2896,6 +2923,35 @@ dns_message_rechecksig(dns_message_t *msg, dns_view_t *view) {
 	return (dns_message_checksig(msg, view));
 }
 
+#ifdef SKAN_MSG_DEBUG
+void
+dns_message_dumpsig(dns_message_t *msg, char *txt1) {
+	dns_rdata_t querytsigrdata = DNS_RDATA_INIT;
+	dns_rdata_any_tsig_t querytsig;
+	isc_result_t result;
+
+	if (msg->tsig != NULL) {
+		result = dns_rdataset_first(msg->tsig);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		dns_rdataset_current(msg->tsig, &querytsigrdata);
+		result = dns_rdata_tostruct(&querytsigrdata, &querytsig, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		hexdump(txt1, "TSIG", querytsig.signature,
+			querytsig.siglen);
+	}
+
+	if (msg->querytsig != NULL) {
+		result = dns_rdataset_first(msg->querytsig);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		dns_rdataset_current(msg->querytsig, &querytsigrdata);
+		result = dns_rdata_tostruct(&querytsigrdata, &querytsig, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		hexdump(txt1, "QUERYTSIG", querytsig.signature,
+			querytsig.siglen);
+	}
+}
+#endif
+
 isc_result_t
 dns_message_checksig(dns_message_t *msg, dns_view_t *view) {
 	isc_buffer_t b, msgb;
@@ -2904,10 +2960,14 @@ dns_message_checksig(dns_message_t *msg, dns_view_t *view) {
 
 	if (msg->tsigkey == NULL && msg->tsig == NULL && msg->sig0 == NULL)
 		return (ISC_R_SUCCESS);
+
 	INSIST(msg->saved.base != NULL);
 	isc_buffer_init(&msgb, msg->saved.base, msg->saved.length);
 	isc_buffer_add(&msgb, msg->saved.length);
 	if (msg->tsigkey != NULL || msg->tsig != NULL) {
+#ifdef SKAN_MSG_DEBUG
+		dns_message_dumpsig(msg, "dns_message_checksig#1");
+#endif
 		if (view != NULL)
 			return (dns_view_checksig(view, &msgb, msg));
 		else
@@ -3065,6 +3125,10 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 	isc_result_t result;
 	char buf[sizeof("1234567890")];
 	isc_uint32_t mbz;
+	dns_rdata_t rdata;
+	isc_buffer_t optbuf;
+	isc_uint16_t optcode, optlen;
+	unsigned char *optdata;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE(target != NULL);
@@ -3094,6 +3158,50 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 			ADD_STRING(target, "; udp: ");
 		snprintf(buf, sizeof(buf), "%u\n", (unsigned int)ps->rdclass);
 		ADD_STRING(target, buf);
+
+		result = dns_rdataset_first(ps);
+		if (result != ISC_R_SUCCESS)
+			return (ISC_R_SUCCESS);
+
+		/* Print EDNS info, if any */
+		dns_rdata_init(&rdata);
+		dns_rdataset_current(ps, &rdata);
+		if (rdata.length < 4)
+			return (ISC_R_SUCCESS);
+
+		isc_buffer_init(&optbuf, rdata.data, rdata.length);
+		isc_buffer_add(&optbuf, rdata.length);
+		optcode = isc_buffer_getuint16(&optbuf);
+		optlen = isc_buffer_getuint16(&optbuf);
+
+		if (optcode == DNS_OPT_NSID) {
+			ADD_STRING(target, "; NSID");
+		} else {
+			ADD_STRING(target, "; OPT=");
+			sprintf(buf, "%u", optcode);
+			ADD_STRING(target, buf);
+		}
+
+		if (optlen != 0) {
+			int i;
+			ADD_STRING(target, ": ");
+
+			optdata = rdata.data + 4;
+			for (i = 0; i < optlen; i++) {
+				sprintf(buf, "%02x ", optdata[i]);
+				ADD_STRING(target, buf);
+			}
+			for (i = 0; i < optlen; i++) {
+				ADD_STRING(target, " (");
+				if (isprint(optdata[i]))
+					isc_buffer_putmem(target, &optdata[i],
+							  1);
+				else
+					isc_buffer_putstr(target, ".");
+				ADD_STRING(target, ")");
+			}
+		}
+		ADD_STRING(target, "\n");
 		return (ISC_R_SUCCESS);
 	case DNS_PSEUDOSECTION_TSIG:
 		ps = dns_message_gettsig(msg, &name);

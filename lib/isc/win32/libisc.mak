@@ -78,8 +78,7 @@ if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
 MT_SPECIAL_RETURN=0
 MT_SPECIAL_SWITCH=
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).
-auto.manifest $(MT_SPECIAL_SWITCH) & \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
 if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
 rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
 link $** /out:$@ $(LFLAGS)
@@ -135,6 +134,7 @@ CLEAN :
 	-@erase "$(INTDIR)\hex.obj"
 	-@erase "$(INTDIR)\hmacmd5.obj"
 	-@erase "$(INTDIR)\hmacsha.obj"
+	-@erase "$(INTDIR)\httpd.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\inet_ntop.obj"
 	-@erase "$(INTDIR)\inet_pton.obj"
@@ -157,7 +157,9 @@ CLEAN :
 	-@erase "$(INTDIR)\ondestroy.obj"
 	-@erase "$(INTDIR)\os.obj"
 	-@erase "$(INTDIR)\parseint.obj"
+	-@erase "$(INTDIR)\portset.obj"
 	-@erase "$(INTDIR)\quota.obj"
+	-@erase "$(INTDIR)\radix.obj"
 	-@erase "$(INTDIR)\random.obj"
 	-@erase "$(INTDIR)\ratelimiter.obj"
 	-@erase "$(INTDIR)\refcount.obj"
@@ -241,6 +243,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\hex.obj" \
 	"$(INTDIR)\hmacmd5.obj" \
 	"$(INTDIR)\hmacsha.obj" \
+	"$(INTDIR)\httpd.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\inet_ntop.obj" \
 	"$(INTDIR)\inet_pton.obj" \
@@ -256,6 +259,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\netscope.obj" \
 	"$(INTDIR)\ondestroy.obj" \
 	"$(INTDIR)\quota.obj" \
+	"$(INTDIR)\radix.obj" \
 	"$(INTDIR)\random.obj" \
 	"$(INTDIR)\ratelimiter.obj" \
 	"$(INTDIR)\refcount.obj" \
@@ -271,6 +275,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\taskpool.obj" \
 	"$(INTDIR)\timer.obj" \
 	"$(INTDIR)\parseint.obj" \
+	"$(INTDIR)\portset.obj" \
 	"$(INTDIR)\region.obj"
 
 "..\..\..\Build\Release\libisc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -333,6 +338,8 @@ CLEAN :
 	-@erase "$(INTDIR)\hmacmd5.sbr"
 	-@erase "$(INTDIR)\hmacsha.obj"
 	-@erase "$(INTDIR)\hmacsha.sbr"
+	-@erase "$(INTDIR)\httpd.obj"
+	-@erase "$(INTDIR)\httpd.sbr"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\inet_aton.sbr"
 	-@erase "$(INTDIR)\inet_ntop.obj"
@@ -377,8 +384,12 @@ CLEAN :
 	-@erase "$(INTDIR)\os.sbr"
 	-@erase "$(INTDIR)\parseint.obj"
 	-@erase "$(INTDIR)\parseint.sbr"
+	-@erase "$(INTDIR)\portset.obj"
+	-@erase "$(INTDIR)\portset.sbr"
 	-@erase "$(INTDIR)\quota.obj"
 	-@erase "$(INTDIR)\quota.sbr"
+	-@erase "$(INTDIR)\radix.obj"
+	-@erase "$(INTDIR)\radix.sbr"
 	-@erase "$(INTDIR)\random.obj"
 	-@erase "$(INTDIR)\random.sbr"
 	-@erase "$(INTDIR)\ratelimiter.obj"
@@ -486,6 +497,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\hex.sbr" \
 	"$(INTDIR)\hmacmd5.sbr" \
 	"$(INTDIR)\hmacsha.sbr" \
+	"$(INTDIR)\httpd.sbr" \
 	"$(INTDIR)\inet_aton.sbr" \
 	"$(INTDIR)\inet_ntop.sbr" \
 	"$(INTDIR)\inet_pton.sbr" \
@@ -501,6 +513,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\netscope.sbr" \
 	"$(INTDIR)\ondestroy.sbr" \
 	"$(INTDIR)\quota.sbr" \
+	"$(INTDIR)\radix.sbr" \
 	"$(INTDIR)\random.sbr" \
 	"$(INTDIR)\ratelimiter.sbr" \
 	"$(INTDIR)\refcount.sbr" \
@@ -516,6 +529,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\taskpool.sbr" \
 	"$(INTDIR)\timer.sbr" \
 	"$(INTDIR)\parseint.sbr" \
+	"$(INTDIR)\portset.sbr" \
 	"$(INTDIR)\region.sbr"
 
 "$(OUTDIR)\libisc.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
@@ -566,6 +580,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\hex.obj" \
 	"$(INTDIR)\hmacmd5.obj" \
 	"$(INTDIR)\hmacsha.obj" \
+	"$(INTDIR)\httpd.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\inet_ntop.obj" \
 	"$(INTDIR)\inet_pton.obj" \
@@ -581,6 +596,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\netscope.obj" \
 	"$(INTDIR)\ondestroy.obj" \
 	"$(INTDIR)\quota.obj" \
+	"$(INTDIR)\radix.obj" \
 	"$(INTDIR)\random.obj" \
 	"$(INTDIR)\ratelimiter.obj" \
 	"$(INTDIR)\refcount.obj" \
@@ -596,6 +612,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\taskpool.obj" \
 	"$(INTDIR)\timer.obj" \
 	"$(INTDIR)\parseint.obj" \
+	"$(INTDIR)\portset.obj" \
 	"$(INTDIR)\region.obj"
 
 "..\..\..\Build\Debug\libisc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1281,6 +1298,24 @@ SOURCE=..\hmacsha.c
 
 !ENDIF 
 
+SOURCE=..\httpd.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\httpd.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\httpd.obj"	"$(INTDIR)\httpd.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=..\inet_aton.c
 
 !IF  "$(CFG)" == "libisc - Win32 Release"
@@ -1330,6 +1365,24 @@ SOURCE=..\inet_pton.c
 
 
 "$(INTDIR)\inet_pton.obj"	"$(INTDIR)\inet_pton.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\iterated_hash.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\iterated_hash.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\iterated_hash.obj"	"$(INTDIR)\iterated_hash.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -1551,6 +1604,24 @@ SOURCE=..\parseint.c
 
 !ENDIF 
 
+SOURCE=..\portset.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\portset.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\portset.obj"	"$(INTDIR)\portset.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=..\quota.c
 
 !IF  "$(CFG)" == "libisc - Win32 Release"
@@ -1564,6 +1635,24 @@ SOURCE=..\quota.c
 
 
 "$(INTDIR)\quota.obj"	"$(INTDIR)\quota.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\radix.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\radix.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\radix.obj"	"$(INTDIR)\radix.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

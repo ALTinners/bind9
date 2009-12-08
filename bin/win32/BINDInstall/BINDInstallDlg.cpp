@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: BINDInstallDlg.cpp,v 1.15.18.17 2007/10/31 01:43:36 marka Exp $ */
+/* $Id: BINDInstallDlg.cpp,v 1.37 2007/10/31 01:34:19 marka Exp $ */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

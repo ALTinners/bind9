@@ -1,8 +1,366 @@
-bind9 (1:9.4.2-10+lenny1) testing-security; urgency=high
+bind9 (1:9.5.1.dfsg.P3-1) stable-security; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * A specially crafted update packet will cause named to exit. 
+    CVE-2009-0696, CERT VU#725188.  Closes: #538975
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 28 Jul 2009 22:48:28 -0600
+
+bind9 (1:9.5.1.dfsg.P2-1+lenny1) stable; urgency=medium
+
+  * Non-maintainer upload with permission from maintainer
+  * Upload "DNSSEC lookaside validation failed to handle unknown
+    algorithms. [RT #19479]" fix to stable
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Wed, 29 Apr 2009 13:33:34 +0200
+
+bind9 (1:9.5.1.dfsg.P2-1) unstable; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * 9.5.1-P2
+    - DNSSEC lookaside validation failed to handle unknown algorithms. [RT #19479]
+
+  [LaMont Jones]
+
+  * meta: fix override disparity
+
+  [Sven Joachim]
+
+  * meta: pass host and build into configure for hybrid build machines. 
+    Closes: #515110
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 20 Mar 2009 19:08:03 -0600
+
+bind9 (1:9.5.1.dfsg.P1-3) unstable; urgency=low
+
+  * package -2 for unstable
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 18 Mar 2009 09:40:18 -0600
+
+bind9 (1:9.5.1.dfsg.P1-2) stable; urgency=low
+
+  [Juhana Helovuo]
+
+  * fix atomic operations on alpha.  Closes: #512285
+
+  [Dann Frazier]
+
+  * fix atomic operations on ia64.  Closes: #520179
+
+  [LaMont Jones]
+
+  * build-conflict: libdb4.2-dev.  Closes: #515074, #507013
+
+  [localization folks]
+
+  * l10n: Basque debconf template.  Closes: #516549 (Piarres Beobide)
+
+ -- LaMont Jones <lamont@debian.org>  Wed, 18 Mar 2009 05:30:22 -0600
+
+bind9 (1:9.5.1.dfsg.P1-1) unstable; urgency=low
+
+  * New upstream patch release
+    - supportable version of fix from 9.5.0.dfsg.P2-5.1
+    - CVE-2009-0025:  Closes: #511936
+    - 2475: Overly agressive cache entry removal.  Closes: #511768
+    - other bug fixes worthy of patch-release inclusion
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 26 Jan 2009 10:33:42 -0700
+
+bind9 (1:9.5.0.dfsg.P2-5.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Apply upstream ACL fixes from 9.5.1 to fix RC bug. Patch was provided
+    by Evan Hunt (upstream bind9 developer) after Emmanuel Bouthenot
+    contacted him. Closes: #496954, #501800.
+  * Remove obsolete dh_installmanpages invocation which was adding
+    unwanted manual pages to bind9. Closes: #486196.
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Fri, 02 Jan 2009 16:51:42 +0000
+
+bind9 (1:9.5.0.dfsg.P2-5) unstable; urgency=low
+
+  [ISC]
+
+  * 2463: IPv6 Advanced Socket API broken on linux.  LP: #249824
+
+  [Jamie Strandboge]
+
+  * apparmor: add capability sys_resource
+  * apparmor: add krb keytab access.  LP: #277370
+
+  [LaMont Jones]
+
+  * apparmor: allow proc/*/net/if_inet6 read access too.  LP: #289060
+  * apparmor: add /var/log/named/* entries.  LP: #294935
+
+  [Ben Hutchings]
+
+  * meta: Add dependency of bind9 on net-tools (ifconfig used in init script)
+  * meta: Fix bind9utils Depends.
+  * meta: fix typo in package description
+
+  [localization folks]
+
+  * l10n: add polish debconf translations.  Closes: #506856 (L)
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 07 Dec 2008 21:03:29 -0700
+
+bind9 (1:9.5.0.dfsg.P2-4) unstable; urgency=low
+
+  * meta: fix typo in Depends: lsb-base.  Closes: #501365
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 07 Oct 2008 17:20:11 -0600
+
+bind9 (1:9.5.0.dfsg.P2-3) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * enable largefile support.  Closes: #497040
+
+  [localization folks]
+
+  * l10n: Dutch translation.  Closes: #499977 (Paul Gevers)
+  * l10n: simplified chinese debconf template.  Closes: #501103 (LI Daobing)
+  * l10n: Update spanish template.  Closes: #493775 (Ignacio Mondino)
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 05 Oct 2008 20:20:00 -0600
+
+bind9 (1:9.5.0.dfsg.P2-2) unstable; urgency=low
+
+  [Kees Cook]
+
+  * debian/{control,rules}: enable PIE hardening (from -1ubuntu1)
+
+  [Nicolas Valcárcel]
+
+  * Add ufw integration (from -1ubuntu2)
+
+  [Dustin Kirkland]
+
+  * use pid file in init.d/bind9 status.  LP: #247084
+
+  [LaMont Jones]
+
+  * dig: add -DDIG_SIGCHASE to compile options.  LP: #257682
+  * apparmor profile: add /var/log/named
+
+  [Nikita Ofitserov]
+
+  * ipv6 support requires _GNU_SOURCE definition.  LP: #249824
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 28 Aug 2008 23:08:36 -0600
+
+bind9 (1:9.5.0.dfsg.P2-1) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * default to using resolvconf if it is installed
+  * fix sonames and dependencies.  Closes: #149259, #492418
+  * Do not build-depend libcap2-dev on non-linux.  Closes: #493392
+  * drop unused query-loc manpage.  Closes: #492564
+  * lwresd: Deliver /etc/bind directory.  Closes: #490027
+  * fix query-source comment in default install
+
+  [Internet Software Consortium, Inc]
+
+  * 9.5.0-P2.  Closes: #492949
+
+  [localization folks]
+
+  * l10n: Spanish debconf translation.  Closes: #492425 (Ignacio Mondino)
+  * l10n: Swedish debconf templates.  Closes: #491369 (Martin Ågren)
+  * l10n: Japanese debconf translations.  Closes: #492048 (Hideki Yamane
+    (Debian-JP))
+  * l10n: Finnish translation.  Closes: #490630 (Esko Arajärvi)
+  * l10n: Italian debconf translations.  Closes: #492587 (Alessandro Vietta)
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 02 Aug 2008 14:20:20 -0600
+
+bind9 (1:9.5.0.dfsg.P1-2) unstable; urgency=low
+
+  * Revert "meta: merge the mess of single-lib packages back into one large
+    one." - That way lies madness and pain.
+  * init.d/bind9: implement status function.  LP: #203169
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 08 Jul 2008 21:56:58 -0600
+
+bind9 (1:9.5.0.dfsg.P1-1) unstable; urgency=low
+
+  * Repackage 9.5.0.dfsg-5 with the -P1 tarball.
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 08 Jul 2008 15:06:07 -0600
+
+bind9 (1:9.5.0.dfsg-5) unstable; urgency=low
+
+  [Internet Software Consortium, Inc]
 
   * Randomize UDP query source ports to improve forgery resilience.
     (CVE-2008-1447)                                                                              
- -- LaMont Jones <lamont@debian.org>  Sun, 06 Jul 2008 19:21:18 -0600
+
+  [LaMont Jones]
+
+  * add build-depends: texlive-latex-base, xsltproc, remove Bv9ARM.pdf in clean
+  * fix sonames
+  * drop unneeded build-deps, since we do not actually deliver B9vARM.pdf
+  * meta: cleanup libbind9-41 Provides/Conflicts
+  * build: fix sonames for new libraries
+  * postinst: really restart bind/lwresd in postinst
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 06 Jul 2008 21:34:18 -0600
+
+bind9 (1:9.5.0.dfsg-4) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * control: fix dnsutils description to avoid list reformatting. 
+    Closes: #480317
+  * lwresd: restart in postinst.  Closes: #486481
+  * meta: merge the mess of single-lib packages back into one large one.
+  * apparmor: allow bind to create files in /var/{lib,cache}/bind
+  * build: drop .la files.  Closes: #486969
+  * build: drop the extra lib path from the library-package merge
+  * meta: liblwres40 does not conflict with the libbind9-40-provided libbind0
+
+  [localization folks]
+
+  * l10n: German debconf translation.  Closes: #486547 (Helge Kreutzmann)
+  * l10n: Indonesian debconf translations.  Closes: #486503 (Arief S Fitrianto)
+  * l10n: Slovak po-debconf translation Closes: #488905 (helix84)
+  * l10n: Turkish debconf template.  Closes: #486479 (Mert Dirik)
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 30 Jun 2008 11:22:05 -0600
+
+bind9 (1:9.4.2-12) unstable; urgency=low
+
+  * apparmor: allow bind to create files in /var/{lib,cache}/bind
+
+ -- LaMont Jones <lamont@debian.org>  Mon, 30 Jun 2008 11:17:53 -0600
+
+bind9 (1:9.4.2-11) unstable; urgency=low
+
+  * apparmor: add dnscvsutil package files
+  * lwresd Depends: adduser
+  * control: fix dnsutils description to avoid list reformatting. 
+    Closes: #480317
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 17 Jun 2008 21:30:12 -0600
+
+bind9 (1:9.5.0.dfsg-3) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * bind9utils Depends: libbind9-40.  Closes: #486194
+  * bind9 should not deliver manpages for nonexistant binaries. 
+    Closes: #486196
+
+  [localization folks]
+
+  * l10n: Vietnamese debconf templates translation update.  Closes: #486185
+    (Clytie Siddall)
+  * l10n: Russian debconf templates translation.  Closes: #486191 (Yuri Kozlov)
+  * l10n: Galician debconf template.  Closes: #486215 (Jacobo Tarrio)
+  * l10n: French debconf templates.  Closes: #486325 (CALARESU Luc)
+  * l10n: Czech debconf translation.  Closes: #486337 (Miroslav Kure)
+  * l10n: Updated Portuguese translation.  Closes: #486267 (Traduz -
+    Portuguese Translation Team)
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 15 Jun 2008 18:25:02 -0600
+
+bind9 (1:9.5.0.dfsg-2) unstable; urgency=low
+
+  [Tim Spriggs]
+
+  * init.d: Nexenta has different ifconfig arguments
+
+  [LaMont Jones]
+
+  * templates rework from debian-l10n-english
+  * reload named when an interface goes up or down.  LP: #226495
+  * build: need to create the directories for interface restart triggering
+  * Build-Depends: libcap2-dev.  Closes: #485747
+  * Leave named running during update.  Closes: #453765
+  * Fix path to uname, cleaning up the nexenta checks.
+  * l10n: avoid double-question in templates.
+
+  [localization folks]
+
+  * l10n: Vietnamese debconf translations.  Closes: #483911 (Clytie Siddall)
+  * l10n: Portuguese debconf translations.  Closes: #483872 (Traduz -
+    Portuguese Translation Team)
+
+ -- LaMont Jones <lamont@debian.org>  Fri, 13 Jun 2008 16:54:42 -0600
+
+bind9 (1:9.5.0.dfsg-1) unstable; urgency=low
+
+  [LaMont Jones]
+
+  * manpages: fix references that should say /etc/bind
+  * meta: build-depend libxml2-dev for statistics support
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 31 May 2008 12:17:21 -0600
+
+bind9 (1:9.5.0.dfsg-0) experimental; urgency=low
+
+  [Internet Software Consortium, Inc]
+
+  * 9.5.0 release
+
+  [LaMont Jones]
+
+  * Only use capabilities if they are present: reprise.  Closes: #360339, #212226
+  * control: fix dnsutils description to avoid list reformatting.  Closes: #480317
+  * build: use the correct directories in dh_shlibdeps invocation
+  * build: turn on dlz.  No pgsql or mysql support yet.  LP: #227344
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 29 May 2008 22:05:19 -0600
+
+bind9 (1:9.5.0~rc1-2~0ubuntu2) intrepid; urgency=low
+
+  * build: use the correct directories in dh_shlibdeps invocation
+  * build: turn on dlz.  LP: #227344
+
+ -- LaMont Jones <lamont@ubuntu.com>  Tue, 27 May 2008 21:43:06 -0600
+
+bind9 (1:9.5.0~rc1-2~0ubuntu1) intrepid; urgency=low
+
+  * Upload what will become (maybe an ancestor of) -2 to intrepid.
+    - Only use capabilities if they are present: reprise.  Closes: #360339, #212226
+    - control: fix dnsutils description to avoid list reformatting.  Closes: #480317
+
+ -- LaMont Jones <lamont@ubuntu.com>  Mon, 26 May 2008 11:46:27 -0600
+
+bind9 (1:9.5.0~rc1-1) experimental; urgency=low
+
+  [Patrick Winnertz]
+
+  * postinst: make add debconf support.  Closes: #473460
+
+  [Jamie Strandboge]
+
+  * debian/bind9.preinst: Apparmor force-complain on upgrade without
+    existing profile.  LP: #204658
+
+  [LaMont Jones]
+
+  * bind9utils: fix typos in .install
+  * host: manpage inaccurately describes default query.  LP: #203087
+  * apparmor: add dnscvsutil package files
+  * Revert "Only use capabilities if they are present." for merge of 9.5.0rc1.
+  * soname: libdns41 -> 42
+  * fix typos in debconf patch, #473460
+  * cleanup more files in clean target
+  * lwresd Depends: adduser
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 15 May 2008 17:59:54 -0600
+
+bind9 (1:9.5.0~b2-2) experimental; urgency=low
+
+  * meta: add bind9utils binary package, with various useful utilities.  Closes: #151957, #130445, #160483
+
+ -- LaMont Jones <lamont@debian.org>  Thu, 03 Apr 2008 07:01:42 -0600
 
 bind9 (1:9.4.2-10) unstable; urgency=low
 
@@ -67,6 +425,30 @@ bind9 (1:9.4.2-5) unstable; urgency=low
   * Add AAAA ::1 entry to db.local.  Closes: #230088
 
  -- LaMont Jones <lamont@debian.org>  Mon, 10 Mar 2008 13:51:28 -0600
+
+bind9 (1:9.5.0~b2-1) experimental; urgency=low
+
+  [Thiemo Seufer]
+
+  * mips:atomic.h: improve implementation of atomic ops, fix mips{el,64}
+
+  [LaMont Jones]
+
+  * manpages: call it /etc/bind/named.conf throughout, and typos.  Closes: #419750
+  * named.conf.5: correct filename.  Closes: #428015
+  * manpages: fix typo errors.  Closes: #395834
+  * Makefile.in: be explicit about library paths
+  * build: Turn on GSS-TSIG support.  LP: #158197
+  * build: soname changes
+  * db.root: include AAAA RRs.  Closes: #464111
+  * soname: lib{dns,isc}40 -> 41
+  * meta: use binary:Version instead of Source-Version
+
+  [Andreas John]
+
+  * Only use capabilities if they are present.  Closes: #360339, #212226
+
+ -- LaMont Jones <lamont@debian.org>  Sat, 23 Feb 2008 08:06:17 -0700
 
 bind9 (1:9.4.2-4) unstable; urgency=low
 

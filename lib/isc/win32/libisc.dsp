@@ -297,6 +297,10 @@ SOURCE=..\include\isc\hmacsha.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\httpd.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\include\isc\int.h
 # End Source File
 # Begin Source File
@@ -401,6 +405,10 @@ SOURCE=..\include\isc\parseint.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\portset.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\isc\os.h
 # End Source File
 # Begin Source File
@@ -414,6 +422,10 @@ SOURCE=..\include\isc\print.h
 # Begin Source File
 
 SOURCE=..\include\isc\quota.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\radix.h
 # End Source File
 # Begin Source File
 
@@ -601,6 +613,10 @@ SOURCE=..\hmacsha.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\httpd.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\inet_aton.c
 # End Source File
 # Begin Source File
@@ -661,7 +677,15 @@ SOURCE=..\parseint.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\portset.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\quota.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\radix.c
 # End Source File
 # Begin Source File
 

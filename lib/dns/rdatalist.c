@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.28.18.3 2005/04/29 00:16:02 marka Exp $ */
+/* $Id: rdatalist.c,v 1.33.128.2 2008/04/03 06:08:27 tbox Exp $ */
 
 /*! \file */
 
@@ -84,6 +84,16 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
 	rdataset->private3 = NULL;
 	rdataset->privateuint4 = 0;
 	rdataset->private5 = NULL;
+
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_rdatalist_fromrdataset(dns_rdataset_t *rdataset,
+			   dns_rdatalist_t **rdatalist)
+{
+	REQUIRE(rdatalist != NULL && rdataset != NULL);
+	*rdatalist = rdataset->private1;
 
 	return (ISC_R_SUCCESS);
 }

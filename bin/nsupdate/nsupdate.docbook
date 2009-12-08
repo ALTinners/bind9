@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,14 +18,14 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id: nsupdate.docbook,v 1.18.18.10 2007/08/28 07:20:01 tbox Exp $ -->
+<!-- $Id: nsupdate.docbook,v 1.29.56.2 2008/08/29 23:46:52 tbox Exp $ -->
 <refentry>
   <refentryinfo>
     <date>Jun 30, 2000</date>
   </refentryinfo>
   <refmeta>
     <refentrytitle>nsupdate</refentrytitle>
-    <manvolnum>8</manvolnum>
+    <manvolnum>1</manvolnum>
     <refmiscinfo>BIND9</refmiscinfo>
   </refmeta>
   <refnamediv>
@@ -39,6 +39,7 @@
       <year>2005</year>
       <year>2006</year>
       <year>2007</year>
+      <year>2008</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -61,6 +62,7 @@
       <arg><option>-t <replaceable class="parameter">timeout</replaceable></option></arg>
       <arg><option>-u <replaceable class="parameter">udptimeout</replaceable></option></arg>
       <arg><option>-r <replaceable class="parameter">udpretries</replaceable></option></arg>
+      <arg><option>-R <replaceable class="parameter">randomdev</replaceable></option></arg>
       <arg><option>-v</option></arg>
       <arg>filename</arg>
     </cmdsynopsis>
@@ -187,6 +189,18 @@
       The <option>-r</option> option sets the number of UDP retries. The
       default is
       3.  If zero, only one update request will be made.
+    </para>
+    <para>
+      The <option>-R <replaceable
+      class="parameter">randomdev</replaceable></option> option
+      specifies a source of randomness.  If the operating system
+      does not provide a <filename>/dev/random</filename> or
+      equivalent device, the default source of randomness is keyboard
+      input.  <filename>randomdev</filename> specifies the name of
+      a character device or file containing random data to be used
+      instead of the default.  The special value
+      <filename>keyboard</filename> indicates that keyboard input
+      should be used.  This option may be specified multiple times.
     </para>
   </refsect1>
 

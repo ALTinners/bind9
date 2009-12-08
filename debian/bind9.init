@@ -18,7 +18,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 # for a chrooted server: "-u bind -t /var/lib/named"
 # Don't modify this line, change or create /etc/default/bind9.
 OPTIONS=""
-RESOLVCONF=yes
+RESOLVCONF=no
 
 test -f /etc/default/bind9 && . /etc/default/bind9
 
@@ -26,18 +26,24 @@ test -x /usr/sbin/rndc || exit 0
 
 . /lib/lsb/init-functions
 DISTRO=$(lsb_release -is 2>/dev/null || echo Debian)
+PIDFILE=/var/run/bind/run/named.pid
 
 check_network() {
-    if [ -z "$(/sbin/ifconfig)" ]; then
-    	#log_action_msg "No networks configured."
-	return 1 
+    if [ -x /usr/bin/uname ] && [ "X$(/usr/bin/uname -o)" = XSolaris ]; then
+	IFCONFIG_OPTS="-au"
+    else
+	IFCONFIG_OPTS=""
+    fi
+    if [ -z "$(/sbin/ifconfig $IFCONFIG_OPTS)" ]; then
+       #log_action_msg "No networks configured."
+       return 1
     fi
     return 0
 }
 
 case "$1" in
     start)
-	log_daemon_msg "Starting domain name service..." "bind"
+	log_daemon_msg "Starting domain name service..." "bind9"
 
 	modprobe capability >/dev/null 2>&1 || true
 
@@ -58,7 +64,7 @@ case "$1" in
 	fi
 
 	if start-stop-daemon --start --oknodo --quiet --exec /usr/sbin/named \
-		--pidfile /var/run/bind/run/named.pid -- $OPTIONS; then
+		--pidfile ${PIDFILE} -- $OPTIONS; then
 	    if [ "X$RESOLVCONF" != "Xno" ] && [ -x /sbin/resolvconf ] ; then
 		echo "nameserver 127.0.0.1" | /sbin/resolvconf -a lo.named
 	    fi
@@ -69,7 +75,7 @@ case "$1" in
     ;;
 
     stop)
-	log_daemon_msg "Stopping domain name service..." "bind"
+	log_daemon_msg "Stopping domain name service..." "bind9"
 	if ! check_network; then
 	    log_end_msg 1
 	    exit 1
@@ -78,12 +84,18 @@ case "$1" in
 	if [ "X$RESOLVCONF" != "Xno" ] && [ -x /sbin/resolvconf ] ; then
 	    /sbin/resolvconf -d lo.named
 	fi
-	/usr/sbin/rndc stop
+	pid=$(/usr/sbin/rndc stop -p | awk '/^pid:/ {print $2}')
+	if [ -n "$pid" ]; then
+	  while kill -0 $pid 2>/dev/null; do
+	    log_progress_msg "waiting for pid $pid to die"
+	    sleep 1
+	  done
+	fi
 	log_end_msg $?
     ;;
 
     reload|force-reload)
-	log_daemon_msg "Reloading domain name service..." "bind"
+	log_daemon_msg "Reloading domain name service..." "bind9"
 	if ! check_network; then
 	    log_end_msg 1
 	    exit 1
@@ -99,12 +111,16 @@ case "$1" in
 	fi
 
 	$0 stop
-	sleep 2
 	$0 start
     ;;
     
+    status)
+    	ret=0
+	status_of_proc -p ${PIDFILE} /usr/sbin/named bind9 2>/dev/null || ret=$?
+	;;
+
     *)
-	log_action_msg "Usage: /etc/init.d/bind9 {start|stop|reload|restart|force-reload}"
+	log_action_msg "Usage: /etc/init.d/bind9 {start|stop|reload|restart|force-reload|status}"
 	exit 1
     ;;
 esac

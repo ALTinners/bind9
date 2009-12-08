@@ -2,6 +2,7 @@
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
 
+export DEB_BUILD_HARDENING=1
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -9,6 +10,9 @@ ifndef DEB_HOST_ARCH
 DEB_BUILD_ARCH := $(shell dpkg --print-installation-architecture)
 endif
 export arch = $(DEB_HOST_ARCH)
+
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 DEBUG = -g
@@ -20,22 +24,32 @@ else
 OPT = -O2
 endif
 
-export CFLAGS=-fno-strict-aliasing $(DEBUG) $(OPT)
+export CFLAGS=-fno-strict-aliasing -DDIG_SIGCHASE $(DEBUG) $(OPT)
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	./configure --prefix=/usr \
+		--build=$(DEB_BUILD_GNU_TYPE) \
+		--host=$(DEB_HOST_GNU_TYPE) \
 		--mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info \
 		--sysconfdir=/etc/bind \
 		--localstatedir=/var/run/bind \
 		--enable-threads \
+		--enable-largefile \
 		--with-libtool \
 		--enable-shared \
 		--enable-static \
 		--with-openssl=/usr \
+		--with-gssapi=/usr \
 		--with-gnu-ld \
+		--with-dlz-postgres=no \
+		--with-dlz-mysql=no \
+		--with-dlz-bdb=yes \
+		--with-dlz-filesystem=yes \
+		--with-dlz-ldap=yes \
+		--with-dlz-stub=yes \
 		--enable-ipv6
 	touch configure-stamp
 
@@ -59,7 +73,19 @@ clean:
 	-$(MAKE) distclean
 	find . -name \*.o -exec rm {} \;
 	rm -f build-stamp configure-stamp
+	rm -f debian/substvars lib/bind/include/isc/platform.h
+	rm -f contrib/dlz/bin/dlzbdb/Makefile contrib/dlz/drivers/rules
+	rm -f doc/arm/Bv9ARM.pdf
 	dh_clean
+
+newtemplate:
+	debconf-updatepo
+
+msgstats:
+	@cd debian/po && for i in *.po; do x=$$(msgfmt --statistics $$i 2>&1); echo $$i $$x; done; rm -f messages.mo *.po~
+
+msg-email:
+	@podebconf-report-po
 
 ETCBIND=debian/bind9/etc/bind
 ETCAPP=debian/bind9/etc/apparmor.d
@@ -69,6 +95,7 @@ install: build
 	dh_clean -k
 	dh_installdirs
 	$(MAKE) install DESTDIR=`pwd`/debian/bind9
+	rm -f debian/bind9/usr/lib/*.la
 	install -c -o bin -g bin -m 444 debian/db.0 ${ETCBIND}/db.0
 	install -c -o bin -g bin -m 444 debian/db.0 ${ETCBIND}/db.255
 	install -c -o bin -g bin -m 444 debian/db.empty ${ETCBIND}
@@ -79,8 +106,15 @@ install: build
 	install -c -o bin -g bin -m 440 debian/named.conf ${ETCBIND}
 	install -c -o bin -g bin -m 440 debian/named.conf.local ${ETCBIND}
 	install -c -o bin -g bin -m 440 debian/named.conf.options ${ETCBIND}
+	install -c -o bin -g bin -m 644 debian/bind9-default.md5sum debian/bind9/usr/share/bind9/
 	cp doc/arm/*.html debian/bind9-doc/usr/share/doc/bind9-doc/arm
 	install -m 644 -o root -g root debian/apparmor-profile ${ETCAPP}/usr.sbin.named
+
+	install debian/ip-up.d debian/bind9/etc/ppp/ip-up.d/bind9
+	install debian/ip-down.d debian/bind9/etc/ppp/ip-down.d/bind9
+	install debian/ip-up.d debian/bind9/etc/network/if-up.d/bind9
+	install debian/ip-down.d debian/bind9/etc/network/if-down.d/bind9
+	install -m644 debian/bind9.ufw.profile debian/bind9/etc/ufw/applications.d/bind9
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -110,21 +144,21 @@ binary-arch: build install
 	dh_installdocs -a
 	dh_installexamples -a
 	dh_installmenu -a
-	dh_installinit -a -- defaults 15 85
+	dh_installinit -a --no-start -- defaults 15 85
 	dh_installcron -a
-	dh_installmanpages -pbind9 runmdn.1 mdnconv.1 zone2ldap.1 nslint.8
+	dh_installdebconf -pbind9
 	dh_installinfo -a
 	dh_installchangelogs -a # CHANGES # upstream changelog only in bind9-doc
-	dh_movefiles --sourcedir=debian/bind9 -a
-	( cd debian/bind9/usr ; rm -fr bin include lib )
-	rm -rf debian/bind9/usr/share/man/man[13]
+	dh_install --sourcedir=debian/bind9 -a
+	(cd debian/bind9/ && rm -rf $$(cat ../*.install) )
+	rm -f debian/bind9/usr/share/man/man1/query-loc.1
 	dh_link -a
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
 	dh_makeshlibs -a
 	dh_installdeb -a
-	dh_shlibdeps -l"debian/libbind9-30/usr/lib:debian/libdns35/usr/lib:debian/libisc32/usr/lib:debian/libisccc30/usr/lib:debian/libisccfg30/usr/lib:debian/liblwres30/usr/lib:/usr/lib/libfakeroot" -a
+	dh_shlibdeps -l"debian/libbind9-40/usr/lib:debian/libbind-dev/usr/lib:debian/libdns45/usr/lib:debian/libisc45/usr/lib:debian/libisccc40/usr/lib:debian/libisccfg40/usr/lib:debian/liblwres40/usr/lib:/usr/lib/libfakeroot" -a
 	for i in $$(sed -n '/^Package:/s/^.* //p' debian/control); do cat debian/vars.in >> debian/$$i.substvars; done
 	cat debian/vars.in >> debian/substvars
 	dh_gencontrol -a
