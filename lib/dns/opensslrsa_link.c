@@ -17,7 +17,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: opensslrsa_link.c,v 1.20.50.3 2009/01/18 23:25:16 marka Exp $
+ * $Id: opensslrsa_link.c,v 1.20.50.5 2009/10/20 03:03:09 marka Exp $
  */
 #ifdef OPENSSL
 #ifndef USE_EVP
@@ -552,19 +552,20 @@ opensslrsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 		if (r.length < 1)
 			DST_RET(ISC_R_NOSPACE);
 		isc_buffer_putuint8(data, (isc_uint8_t) e_bytes);
+		isc_region_consume(&r, 1);
 	} else {
 		if (r.length < 3)
 			DST_RET(ISC_R_NOSPACE);
 		isc_buffer_putuint8(data, 0);
 		isc_buffer_putuint16(data, (isc_uint16_t) e_bytes);
+		isc_region_consume(&r, 3);
 	}
 
 	if (r.length < e_bytes + mod_bytes)
-		return (ISC_R_NOSPACE);
-	isc_buffer_availableregion(data, &r);
+		DST_RET(ISC_R_NOSPACE);
 
 	BN_bn2bin(rsa->e, r.base);
-	r.base += e_bytes;
+	isc_region_consume(&r, e_bytes);
 	BN_bn2bin(rsa->n, r.base);
 
 	isc_buffer_add(data, e_bytes + mod_bytes);
@@ -805,8 +806,8 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer) {
 			DST_RET(DST_R_NOENGINE);
 		pkey = ENGINE_load_private_key(e, label, NULL, NULL);
 		if (pkey == NULL) {
-			ERR_print_errors_fp(stderr);
-			DST_RET(ISC_R_FAILURE);
+			/* ERR_print_errors_fp(stderr); */
+			DST_RET(ISC_R_NOTFOUND);
 		}
 		key->engine = isc_mem_strdup(key->mctx, name);
 		if (key->engine == NULL)
@@ -924,7 +925,7 @@ opensslrsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 		DST_RET(DST_R_NOENGINE);
 	pkey = ENGINE_load_private_key(e, label, NULL, NULL);
 	if (pkey == NULL)
-		DST_RET(ISC_R_NOMEMORY);
+		DST_RET(ISC_R_NOTFOUND);
 	key->engine = isc_mem_strdup(key->mctx, label);
 	if (key->engine == NULL)
 		DST_RET(ISC_R_NOMEMORY);

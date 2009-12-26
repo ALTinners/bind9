@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.130.50.3.12.1 2009/11/18 23:58:04 marka Exp $ */
+/* $Id: types.h,v 1.130.50.4 2009/11/18 00:15:38 marka Exp $ */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1

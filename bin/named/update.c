@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.c,v 1.151.12.5.12.1 2009/07/28 14:18:08 marka Exp $ */
+/* $Id: update.c,v 1.151.12.8 2009/11/06 08:38:21 each Exp $ */
 
 #include <config.h>
 
@@ -3031,7 +3031,7 @@ check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	} else {
 		CHECK(get_iterations(db, ver, &iterations));
 		CHECK(dns_nsec3_maxiterations(db, ver, client->mctx, &max));
-		if (iterations > max) {
+		if (max != 0 && iterations > max) {
 			flag = ISC_TRUE;
 			update_log(client, zone, ISC_LOG_WARNING,
 				   "too many NSEC3 iterations (%u) for "
@@ -4140,9 +4140,6 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	goto common;
 
  failure:
-	if (result == DNS_R_REFUSED)
-		inc_stats(zone, dns_nsstatscounter_updaterej);
-
 	/*
 	 * The reason for failure should have been logged at this point.
 	 */
