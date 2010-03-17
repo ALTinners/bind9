@@ -2,7 +2,7 @@
               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: $Id: Bv9ARM-book.xml,v 1.380.14.22 2009/12/03 04:22:52 marka Exp $ -->
+<!-- File: $Id: Bv9ARM-book.xml,v 1.380.14.24.2.1 2010/02/25 05:39:32 marka Exp $ -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -30,6 +30,7 @@
       <year>2007</year>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -7704,6 +7705,13 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   <literal>1800</literal> (30 minutes).
                 </para>
 
+		<para>
+		  Lame-ttl also controls the amount of time DNSSEC
+		  validation failures are cached.  There is a minimum
+		  of 30 seconds applied to bad cache entries if the
+		  lame-ttl is set to less than 30 seconds.
+		</para>
+
               </listitem>
             </varlistentry>
 
@@ -7960,7 +7968,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
               <listitem>
                 <para>
                   The delay, in seconds, between sending sets of notify
-                  messages for a zone.  The default is zero.
+                  messages for a zone.  The default is five (5) seconds.
                 </para>
               </listitem>
             </varlistentry>

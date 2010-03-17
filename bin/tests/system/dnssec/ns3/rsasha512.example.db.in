@@ -1,4 +1,4 @@
-; Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,20 +12,22 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: example.db.in,v 1.2.4.3 2010/01/07 23:47:36 tbox Exp $
+; $Id: rsasha512.example.db.in,v 1.2.74.2 2010/01/15 23:47:33 tbox Exp $
 
-$TTL 30
-$ORIGIN example.
+$TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
-				2009110300 ; serial
+				2009102722 ; serial
 				20         ; refresh (20 seconds)
 				20         ; retry (20 seconds)
 				1814400    ; expire (3 weeks)
 				3600       ; minimum (1 hour)
 				)
-			NS	ns2
-			MX	10 mail
-ns2			A	10.53.0.2
-mail			A	10.0.0.2
-bad			CNAME	nice.good.
-worse                   A       6.6.6.6
+			NS	ns
+ns			A	10.53.0.3
+
+a			A	10.0.0.1
+b			A	10.0.0.2
+d			A	10.0.0.4
+z			A	10.0.0.26
+a.a.a.a.a.a.a.a.a.a.e	A	10.0.0.27
+x			CNAME	a

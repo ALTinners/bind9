@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,20 +14,22 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: sign.sh,v 1.2.4.3 2009/11/25 20:50:25 marka Exp $
+# $Id: sign.sh,v 1.2.4.6 2010/01/07 23:47:36 tbox Exp $
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
 RANDFILE=../random.data
 
-zone=example.
-infile=example.db.in
-zonefile=example.db
+for domain in example example.com; do
+	zone=${domain}.
+	infile=${domain}.db.in
+	zonefile=${domain}.db
 
-keyname1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
-keyname2=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -f KSK -n zone $zone`
+	keyname1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
+	keyname2=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -f KSK -n zone $zone`
 
-cat $infile $keyname1.key $keyname2.key >$zonefile
+	cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null
+	$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+done

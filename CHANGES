@@ -1,3 +1,58 @@
+	--- 9.6.2-P1 released ---
+
+2852.	[bug]		Handle broken DNSSEC trust chains better. [RT #15619]
+
+	--- 9.6.2 released ---
+
+2850.	[bug]		If isc_heap_insert() failed due to memory shortage
+			the heap would have corrupted entries. [RT #20951]
+
+2849.	[bug]		Don't treat errors from the xml2 library as fatal.
+			[RT #20945]
+
+2846.	[bug]		EOF on unix domain sockets was not being handled
+			correctly. [RT #20731]
+
+2844.	[doc]		notify-delay default in ARM was wrong.  It should have
+			been five (5) seconds.
+
+	--- 9.6.2rc1 released ---
+
+2838.	[func]		Backport support for SHA-2 DNSSEC algorithms,
+			RSASHA256 and RSASHA512, from BIND 9.7.  (This
+			incorporates changes 2726 and 2738 from that
+			release branch.) [RT #20871]
+
+2837.	[port]		Prevent Linux spurious warnings about fwrite().
+			[RT #20812]
+
+2831.	[security]	Do not attempt to validate or cache
+			out-of-bailiwick data returned with a secure
+			answer; it must be re-fetched from its original
+			source and validated in that context. [RT #20819]
+
+2828.	[security]	Cached CNAME or DNAME RR could be returned to clients
+			without DNSSEC validation. [RT #20737]
+
+2827.	[security]	Bogus NXDOMAIN could be cached as if valid. [RT #20712]
+
+2825.	[bug]		Changing the setting of OPTOUT in a NSEC3 chain that
+			was in the process of being created was not properly
+			recorded in the zone. [RT #20786]
+
+2823.	[bug]		rbtdb.c:getsigningtime() was missing locks. [RT #20781]
+
+2819.	[cleanup]	Removed unnecessary DNS_POINTER_MAXHOPS define
+			[RT #20771]
+
+2818.	[cleanup]	rndc could return an incorrect error code 
+			when a zone was not found. [RT #20767]
+
+2815.	[bug]		Exclusively lock the task when freezing a zone.
+			[RT #19838]
+
+2814.	[func]		Provide a definitive error message when a master
+			zone is not loaded. [RT #20757]
 
 	--- 9.6.2b1 released ---
 

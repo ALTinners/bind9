@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: server.c,v 1.520.12.9 2009/09/04 01:31:29 marka Exp $ */
+/* $Id: server.c,v 1.520.12.11.8.2 2010/02/25 10:57:11 tbox Exp $ */
 
 /*! \file */
 
@@ -4337,6 +4337,8 @@ zone_from_args(ns_server_t *server, char *args, dns_zone_t **zonep) {
 	/* Partial match? */
 	if (result != ISC_R_SUCCESS && *zonep != NULL)
 		dns_zone_detach(zonep);
+	if (result == DNS_R_PARTIALMATCH)
+		result = ISC_R_NOTFOUND;
  fail1:
 	return (result);
 }
@@ -4724,6 +4726,8 @@ dumpdone(void *arg, isc_result_t result) {
 	}
 	if (dctx->cache != NULL) {
 		dns_adb_dump(dctx->view->view->adb, dctx->fp);
+		dns_resolver_printbadcache(dctx->view->view->resolver,
+					   dctx->fp);
 		dns_db_detach(&dctx->cache);
 	}
 	if (dctx->dumpzones) {
@@ -5444,6 +5448,8 @@ ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
 		return (ISC_R_NOTFOUND);
 	}
 
+	result = isc_task_beginexclusive(server->task);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	frozen = dns_zone_getupdatedisabled(zone);
 	if (freeze) {
 		if (frozen) {
@@ -5483,6 +5489,7 @@ ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
 			}
 		}
 	}
+	isc_task_endexclusive(server->task);
 
 	if (msg != NULL && strlen(msg) < isc_buffer_availablelength(text))
 		isc_buffer_putmem(text, (const unsigned char *)msg,
