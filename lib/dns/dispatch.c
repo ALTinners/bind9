@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dispatch.c,v 1.116.18.37 2008/09/04 00:24:41 jinmei Exp $ */
+/* $Id: dispatch.c,v 1.116.18.41 2009/01/19 23:46:14 tbox Exp $ */
 
 /*! \file */
 
@@ -2298,7 +2298,7 @@ dispatch_allocate(dns_dispatchmgr_t *mgr, unsigned int maxrequests,
 
 
 /*
- * MUST be unlocked, and not used by anthing.
+ * MUST be unlocked, and not used by anything.
  */
 static void
 dispatch_free(dns_dispatch_t **dispp)
@@ -2569,6 +2569,15 @@ get_udpsocket(dns_dispatchmgr_t *mgr, dns_dispatch_t *disp,
 		 * If this fails 1024 times, we then ask the kernel for
 		 * choosing one.
 		 */
+	} else {
+		/* Allow to reuse address for non-random ports. */
+		result = open_socket(sockmgr, localaddr,
+				     ISC_SOCKET_REUSEADDRESS, &sock);
+
+		if (result == ISC_R_SUCCESS)
+			*sockp = sock;
+
+		return (result);
 	}
 
 	memset(held, 0, sizeof(held));

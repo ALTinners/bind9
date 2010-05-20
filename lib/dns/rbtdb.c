@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rbtdb.c,v 1.196.18.53.4.1 2009/11/19 00:25:17 marka Exp $ */
+/* $Id: rbtdb.c,v 1.196.18.56 2009/03/05 05:01:00 marka Exp $ */
 
 /*! \file */
 
@@ -502,7 +502,7 @@ static void free_rbtdb(dns_rbtdb_t *rbtdb, isc_boolean_t log,
 /*%
  * 'init_count' is used to initialize 'newheader->count' which inturn
  * is used to determine where in the cycle rrset-order cyclic starts.
- * We don't lock this as we don't care about simultanious updates.
+ * We don't lock this as we don't care about simultaneous updates.
  *
  * Note:
  *	Both init_count and header->count can be ISC_UINT32_MAX.
@@ -3072,7 +3072,7 @@ cache_zonecut_callback(dns_rbtnode_t *node, dns_name_t *name, void *arg) {
 	}
 
 	if (dname_header != NULL &&
-	    (!DNS_TRUST_PENDING(dname_header->trust) ||
+	    (dname_header->trust != dns_trust_pending ||
 	     (search->options & DNS_DBFIND_PENDINGOK) != 0)) {
 		/*
 		 * We increment the reference count on node to ensure that
@@ -3586,7 +3586,7 @@ cache_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	if (found == NULL ||
 	    (found->trust == dns_trust_glue &&
 	     ((options & DNS_DBFIND_GLUEOK) == 0)) ||
-	    (DNS_TRUST_PENDING(found->trust) &&
+	    (found->trust == dns_trust_pending &&
 	     ((options & DNS_DBFIND_PENDINGOK) == 0))) {
 		/*
 		 * If there is an NS rdataset at this node, then this is the
@@ -3938,8 +3938,8 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 
 		/*
 		 * Note that 'log' can be true IFF rbtdb->overmem is also true.
-		 * rbtdb->ovemem can currently only be true for cache databases
-		 * -- hence all of the "overmem cache" log strings.
+		 * rbtdb->overmem can currently only be true for cache
+		 * databases -- hence all of the "overmem cache" log strings.
 		 */
 		log = ISC_TF(isc_log_wouldlog(dns_lctx, level));
 		if (log)
@@ -4355,19 +4355,15 @@ cname_and_other_data(dns_rbtnode_t *node, rbtdb_serial_t serial) {
 			 * Look for active extant "other data".
 			 *
 			 * "Other data" is any rdataset whose type is not
-			 * KEY, RRSIG KEY, NSEC, RRSIG NSEC or RRSIG CNAME.
+			 * KEY, NSEC, SIG or RRSIG.
 			 */
 			rdtype = RBTDB_RDATATYPE_BASE(header->type);
-			if (rdtype == dns_rdatatype_rrsig ||
-			    rdtype == dns_rdatatype_sig)
-				rdtype = RBTDB_RDATATYPE_EXT(header->type);
-			if (rdtype != dns_rdatatype_nsec &&
-			    rdtype != dns_rdatatype_key &&
-			    rdtype != dns_rdatatype_cname) {
+			if (rdtype != dns_rdatatype_key &&
+			    rdtype != dns_rdatatype_sig &&
+			    rdtype != dns_rdatatype_nsec &&
+			    rdtype != dns_rdatatype_rrsig) {
 				/*
-				 * We've found a type that isn't
-				 * NSEC, KEY, CNAME, or one of their
-				 * signatures.  Is it active and extant?
+				 * Is it active and extant?
 				 */
 				do {
 					if (header->serial <= serial &&
@@ -4901,7 +4897,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 
 	/*
 	 * Update the zone's secure status.  If version is non-NULL
-	 * this is defered until closeversion() is called.
+	 * this is deferred until closeversion() is called.
 	 */
 	if (result == ISC_R_SUCCESS && version == NULL && !IS_CACHE(rbtdb))
 		rbtdb->secure = iszonesecure(db, rbtdb->origin_node);
@@ -5064,7 +5060,7 @@ subtractrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 
 	/*
 	 * Update the zone's secure status.  If version is non-NULL
-	 * this is defered until closeversion() is called.
+	 * this is deferred until closeversion() is called.
 	 */
 	if (result == ISC_R_SUCCESS && version == NULL && !IS_CACHE(rbtdb))
 		rbtdb->secure = iszonesecure(db, rbtdb->origin_node);
@@ -5116,7 +5112,7 @@ deleterdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 
 	/*
 	 * Update the zone's secure status.  If version is non-NULL
-	 * this is defered until closeversion() is called.
+	 * this is deferred until closeversion() is called.
 	 */
 	if (result == ISC_R_SUCCESS && version == NULL && !IS_CACHE(rbtdb))
 		rbtdb->secure = iszonesecure(db, rbtdb->origin_node);
@@ -5525,7 +5521,7 @@ dns_rbtdb_create
 	isc_mem_attach(mctx, &rbtdb->common.mctx);
 
 	/*
-	 * Must be initalized before free_rbtdb() is called.
+	 * Must be initialized before free_rbtdb() is called.
 	 */
 	isc_ondestroy_init(&rbtdb->common.ondest);
 

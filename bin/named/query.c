@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: query.c,v 1.257.18.46.2.2 2009/12/31 21:02:05 each Exp $ */
+/* $Id: query.c,v 1.257.18.51 2009/09/24 21:38:50 jinmei Exp $ */
 
 /*! \file */
 
@@ -109,19 +109,20 @@
 #define DNS_GETDB_NOLOG 0x02U
 #define DNS_GETDB_PARTIAL 0x04U
 
-#define PENDINGOK(x)	(((x) & DNS_DBFIND_PENDINGOK) != 0)
-
 typedef struct client_additionalctx {
 	ns_client_t *client;
 	dns_rdataset_t *rdataset;
 } client_additionalctx_t;
 
-static void
+static isc_result_t
 query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype);
 
 static isc_boolean_t
 validate(ns_client_t *client, dns_db_t *db, dns_name_t *name,
 	 dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
+
+static inline void
+log_queryerror(ns_client_t *client, isc_result_t result, int line, int level);
 
 /*%
  * Increment query statistics counters.
@@ -165,8 +166,14 @@ query_send(ns_client_t *client) {
 }
 
 static void
-query_error(ns_client_t *client, isc_result_t result) {
+query_error(ns_client_t *client, isc_result_t result, int line) {
+	int loglevel = ISC_LOG_DEBUG(3);
+
+	if (result == DNS_R_SERVFAIL)
+		loglevel = ISC_LOG_DEBUG(1);
+
 	inc_stats(client, dns_statscounter_failure);
+	log_queryerror(client, result, line, loglevel);
 	ns_client_error(client, result);
 }
 
@@ -942,7 +949,7 @@ query_getdb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 				 zonep, dbp, versionp);
 #endif
 
-	/* If successfull, Transfer ownership of zone. */
+	/* If successful, Transfer ownership of zone. */
 	if (result == ISC_R_SUCCESS) {
 #ifdef DLZ
 		*zonep = zone;
@@ -1159,7 +1166,7 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 		goto cleanup;
 
 	/*
-	 * Don't poision caches using the bailiwick protection model.
+	 * Don't poison caches using the bailiwick protection model.
 	 */
 	if (!dns_name_issubdomain(name, dns_db_origin(client->query.gluedb)))
 		goto cleanup;
@@ -1633,7 +1640,7 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 		goto cleanup;
 
 	/*
-	 * Don't poision caches using the bailiwick protection model.
+	 * Don't poison caches using the bailiwick protection model.
 	 */
 	if (!dns_name_issubdomain(name, dns_db_origin(client->query.gluedb)))
 		goto cleanup;
@@ -1723,8 +1730,8 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	 */
 	if (result == ISC_R_SUCCESS &&
 	    additionaltype == dns_rdatasetadditional_fromcache &&
-	    (DNS_TRUST_PENDING(rdataset->trust) ||
-	     DNS_TRUST_GLUE(rdataset->trust)) &&
+	    (rdataset->trust == dns_trust_pending ||
+	     rdataset->trust == dns_trust_glue) &&
 	    !validate(client, db, fname, rdataset, sigrdataset)) {
 		dns_rdataset_disassociate(rdataset);
 		if (dns_rdataset_isassociated(sigrdataset))
@@ -1763,8 +1770,8 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	 */
 	if (result == ISC_R_SUCCESS &&
 	    additionaltype == dns_rdatasetadditional_fromcache &&
-	    (DNS_TRUST_PENDING(rdataset->trust) ||
-	     DNS_TRUST_GLUE(rdataset->trust)) &&
+	    (rdataset->trust == dns_trust_pending ||
+	     rdataset->trust == dns_trust_glue) &&
 	    !validate(client, db, fname, rdataset, sigrdataset)) {
 		dns_rdataset_disassociate(rdataset);
 		if (dns_rdataset_isassociated(sigrdataset))
@@ -2293,7 +2300,7 @@ mark_secure(ns_client_t *client, dns_db_t *db, dns_name_t *name,
 
 /*
  * Find the secure key that corresponds to rrsig.
- * Note: 'keyrdataset' maintains state between sucessive calls,
+ * Note: 'keyrdataset' maintains state between successive calls,
  * there may be multiple keys with the same keyid.
  * Return ISC_FALSE if we have exhausted all the possible keys.
  */
@@ -2549,14 +2556,14 @@ query_addbestns(ns_client_t *client) {
 	/*
 	 * Attempt to validate RRsets that are pending or that are glue.
 	 */
-	if ((DNS_TRUST_PENDING(rdataset->trust) ||
-	     (sigrdataset != NULL && DNS_TRUST_PENDING(sigrdataset->trust)))
+	if ((rdataset->trust == dns_trust_pending ||
+	     (sigrdataset != NULL && sigrdataset->trust == dns_trust_pending))
 	    && !validate(client, db, fname, rdataset, sigrdataset) &&
-	    !PENDINGOK(client->query.dboptions))
+	    (client->query.dboptions & DNS_DBFIND_PENDINGOK) == 0)
 		goto cleanup;
 
-	if ((DNS_TRUST_GLUE(rdataset->trust) ||
-	     (sigrdataset != NULL && DNS_TRUST_GLUE(sigrdataset->trust))) &&
+	if ((rdataset->trust == dns_trust_glue ||
+	     (sigrdataset != NULL && sigrdataset->trust == dns_trust_glue)) &&
 	    !validate(client, db, fname, rdataset, sigrdataset) &&
 	    SECURE(client) && WANTDNSSEC(client))
 		goto cleanup;
@@ -2685,7 +2692,7 @@ query_addwildcardproof(ns_client_t *client, dns_db_t *db,
 	node = NULL;
 
 	/*
-	 * Get the NOQNAME proof then if !ispositve
+	 * Get the NOQNAME proof then if !ispositive
 	 * get the NOWILDCARD proof.
 	 *
 	 * DNS_DBFIND_NOWILD finds the NSEC records that covers the
@@ -2864,8 +2871,12 @@ query_addnxrrsetnsec(ns_client_t *client, dns_db_t *db,
 static void
 query_resume(isc_task_t *task, isc_event_t *event) {
 	dns_fetchevent_t *devent = (dns_fetchevent_t *)event;
+	dns_fetch_t *fetch;
 	ns_client_t *client;
-	isc_boolean_t fetch_cancelled, client_shuttingdown;
+	isc_boolean_t fetch_canceled, client_shuttingdown;
+	isc_result_t result;
+	isc_logcategory_t *logcategory = NS_LOGCATEGORY_QUERY_EERRORS;
+	int errorloglevel;
 
 	/*
 	 * Resume a query after recursion.
@@ -2886,30 +2897,31 @@ query_resume(isc_task_t *task, isc_event_t *event) {
 		 */
 		INSIST(devent->fetch == client->query.fetch);
 		client->query.fetch = NULL;
-		fetch_cancelled = ISC_FALSE;
+		fetch_canceled = ISC_FALSE;
 		/*
 		 * Update client->now.
 		 */
 		isc_stdtime_get(&client->now);
 	} else {
 		/*
-		 * This is a fetch completion event for a cancelled fetch.
+		 * This is a fetch completion event for a canceled fetch.
 		 * Clean up and don't resume the find.
 		 */
-		fetch_cancelled = ISC_TRUE;
+		fetch_canceled = ISC_TRUE;
 	}
 	UNLOCK(&client->query.fetchlock);
 	INSIST(client->query.fetch == NULL);
 
 	client->query.attributes &= ~NS_QUERYATTR_RECURSING;
-	dns_resolver_destroyfetch(&devent->fetch);
+	fetch = devent->fetch;
+	devent->fetch = NULL;
 
 	/*
 	 * If this client is shutting down, or this transaction
 	 * has timed out, do not resume the find.
 	 */
 	client_shuttingdown = ns_client_shuttingdown(client);
-	if (fetch_cancelled || client_shuttingdown) {
+	if (fetch_canceled || client_shuttingdown) {
 		if (devent->node != NULL)
 			dns_db_detachnode(devent->db, &devent->node);
 		if (devent->db != NULL)
@@ -2918,8 +2930,8 @@ query_resume(isc_task_t *task, isc_event_t *event) {
 		if (devent->sigrdataset != NULL)
 			query_putrdataset(client, &devent->sigrdataset);
 		isc_event_free(&event);
-		if (fetch_cancelled)
-			query_error(client, DNS_R_SERVFAIL);
+		if (fetch_canceled)
+			query_error(client, DNS_R_SERVFAIL, __LINE__);
 		else
 			query_next(client, ISC_R_CANCELED);
 		/*
@@ -2927,8 +2939,22 @@ query_resume(isc_task_t *task, isc_event_t *event) {
 		 */
 		ns_client_detach(&client);
 	} else {
-		query_find(client, devent, 0);
+		result = query_find(client, devent, 0);
+		if (result != ISC_R_SUCCESS) {
+			if (result == DNS_R_SERVFAIL)
+				errorloglevel = ISC_LOG_DEBUG(2);
+			else
+				errorloglevel = ISC_LOG_DEBUG(4);
+			if (isc_log_wouldlog(ns_g_lctx, errorloglevel)) {
+				dns_resolver_logfetch(fetch, ns_g_lctx,
+						      logcategory,
+						      NS_LOGMODULE_QUERY,
+						      errorloglevel, ISC_FALSE);
+			}
+		}
 	}
+
+	dns_resolver_destroyfetch(&fetch);
 }
 
 static isc_result_t
@@ -3055,6 +3081,7 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qdomain,
 do { \
 	eresult = r; \
 	want_restart = ISC_FALSE; \
+	line = __LINE__; \
 } while (0)
 
 /*
@@ -3294,8 +3321,7 @@ warn_rfc1918(ns_client_t *client, dns_name_t *fname, dns_rdataset_t *rdataset) {
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			dns_rdataset_current(&found, &rdata);
 			result = dns_rdata_tostruct(&rdata, &soa, NULL);
-			if (result != ISC_R_SUCCESS)
-				return;
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			if (dns_name_equal(&soa.origin, &prisoner) &&
 			    dns_name_equal(&soa.contact, &hostmaster)) {
 				char buf[DNS_NAME_FORMATSIZE];
@@ -3317,7 +3343,7 @@ warn_rfc1918(ns_client_t *client, dns_name_t *fname, dns_rdataset_t *rdataset) {
  * If 'event' is non-NULL, we are returning from recursion and 'qtype'
  * is ignored.  Otherwise, 'qtype' is the query type.
  */
-static void
+static isc_result_t
 query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 {
 	dns_db_t *db, *zdb;
@@ -3346,6 +3372,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	isc_boolean_t empty_wild;
 	dns_rdataset_t *noqname;
 	isc_boolean_t resuming;
+	int line = -1;
 
 	CTRACE("query_find");
 
@@ -4390,7 +4417,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			 * or if the client requested recursion and thus wanted
 			 * the complete answer, send an error response.
 			 */
-			query_error(client, eresult);
+			INSIST(line >= 0);
+			query_error(client, eresult, line);
 		}
 		ns_client_detach(&client);
 	} else if (!RECURSING(client)) {
@@ -4407,7 +4435,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		 * is in the glue sort it to the start of the additional
 		 * section.
 		 */
-		if (client->message->counts[DNS_SECTION_ANSWER] == 0 &&
+		if (ISC_LIST_EMPTY(client->message->sections[DNS_SECTION_ANSWER]) &&
 		    client->message->rcode == dns_rcode_noerror &&
 		    (qtype == dns_rdatatype_a || qtype == dns_rdatatype_aaaa))
 			answer_in_glue(client, qtype);
@@ -4416,10 +4444,22 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		    client->view->auth_nxdomain == ISC_TRUE)
 			client->message->flags |= DNS_MESSAGEFLAG_AA;
 
+		/*
+		 * If the response is somehow unexpected for the client and this
+		 * is a result of recursion, return an error to the caller
+		 * to indicate it may need to be logged.
+		 */
+		if (resuming &&
+		    (ISC_LIST_EMPTY(client->message->sections[DNS_SECTION_ANSWER]) ||
+		     client->message->rcode != dns_rcode_noerror))
+			eresult = ISC_R_FAILURE;
+
 		query_send(client);
 		ns_client_detach(&client);
 	}
 	CTRACE("query_find: done");
+
+	return (eresult);
 }
 
 static inline void
@@ -4444,6 +4484,48 @@ log_query(ns_client_t *client) {
 		      typename, WANTRECURSION(client) ? "+" : "-",
 		      (client->signer != NULL) ? "S": "",
 		      (client->opt != NULL) ? "E" : "");
+}
+
+static inline void
+log_queryerror(ns_client_t *client, isc_result_t result, int line, int level) {
+	char namebuf[DNS_NAME_FORMATSIZE];
+	char typename[DNS_RDATATYPE_FORMATSIZE];
+	char classname[DNS_RDATACLASS_FORMATSIZE];
+	const char *namep, *typep, *classp, *sep1, *sep2;
+	dns_rdataset_t *rdataset;
+
+	if (!isc_log_wouldlog(ns_g_lctx, level))
+		return;
+
+	namep = typep = classp = sep1 = sep2 = "";
+
+	/*
+	 * Query errors can happen for various reasons.  In some cases we cannot
+	 * even assume the query contains a valid question section, so we should
+	 * expect exceptional cases.
+	 */
+	if (client->query.origqname != NULL) {
+		dns_name_format(client->query.origqname, namebuf,
+				sizeof(namebuf));
+		namep = namebuf;
+		sep1 = " for ";
+
+		rdataset = ISC_LIST_HEAD(client->query.origqname->list);
+		if (rdataset != NULL) {
+			dns_rdataclass_format(rdataset->rdclass, classname,
+					      sizeof(classname));
+			classp = classname;
+			dns_rdatatype_format(rdataset->type, typename,
+					     sizeof(typename));
+			typep = typename;
+			sep2 = "/";
+		}
+	}
+
+	ns_client_log(client, NS_LOGCATEGORY_QUERY_EERRORS, NS_LOGMODULE_QUERY,
+		      level, "query failed (%s)%s%s%s%s%s%s at %s:%d",
+		      isc_result_totext(result), sep1, namep, sep2,
+		      classp, sep2, typep, __FILE__, line);
 }
 
 void
@@ -4506,7 +4588,7 @@ ns_query_start(ns_client_t *client) {
 	 */
 	result = dns_message_firstname(message, DNS_SECTION_QUESTION);
 	if (result != ISC_R_SUCCESS) {
-		query_error(client, result);
+		query_error(client, result, __LINE__);
 		return;
 	}
 	dns_message_currentname(message, DNS_SECTION_QUESTION,
@@ -4519,9 +4601,9 @@ ns_query_start(ns_client_t *client) {
 			 * There's more than one QNAME in the question
 			 * section.
 			 */
-			query_error(client, DNS_R_FORMERR);
+			query_error(client, DNS_R_FORMERR, __LINE__);
 		} else
-			query_error(client, result);
+			query_error(client, result, __LINE__);
 		return;
 	}
 
@@ -4532,7 +4614,7 @@ ns_query_start(ns_client_t *client) {
 	 * Check for multiple question queries, since edns1 is dead.
 	 */
 	if (message->counts[DNS_SECTION_QUESTION] > 1) {
-		query_error(client, DNS_R_FORMERR);
+		query_error(client, DNS_R_FORMERR, __LINE__);
 		return;
 	}
 
@@ -4552,7 +4634,7 @@ ns_query_start(ns_client_t *client) {
 			return;
 		case dns_rdatatype_maila:
 		case dns_rdatatype_mailb:
-			query_error(client, DNS_R_NOTIMP);
+			query_error(client, DNS_R_NOTIMP, __LINE__);
 			return;
 		case dns_rdatatype_tkey:
 			result = dns_tkey_processquery(client->message,
@@ -4561,10 +4643,10 @@ ns_query_start(ns_client_t *client) {
 			if (result == ISC_R_SUCCESS)
 				query_send(client);
 			else
-				query_error(client, result);
+				query_error(client, result, __LINE__);
 			return;
 		default: /* TSIG, etc. */
-			query_error(client, DNS_R_FORMERR);
+			query_error(client, DNS_R_FORMERR, __LINE__);
 			return;
 		}
 	}
@@ -4625,5 +4707,5 @@ ns_query_start(ns_client_t *client) {
 
 	qclient = NULL;
 	ns_client_attach(client, &qclient);
-	query_find(qclient, NULL, qtype);
+	(void)query_find(qclient, NULL, qtype);
 }
