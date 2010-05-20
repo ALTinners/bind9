@@ -1,3 +1,23 @@
+	--- 9.4-ESV released ---
+
+2831.	[security]	Do not attempt to validate or cache
+			out-of-bailiwick data returned with a secure
+			answer; it must be re-fetched from its original
+			source and validated in that context. [RT #20819]
+
+2828.	[security]	Cached CNAME or DNAME RR could be returned to clients
+			without DNSSEC validation. [RT #20737]
+
+2827.	[security]	Bogus NXDOMAIN could be cached as if valid. [RT #20712]
+
+2797.	[bug]		Don't decrement the dispatch manager's maxbuffers.
+			[RT #20613]
+
+2790.	[bug]		Handle DS queries to stub zones. [RT #20440]
+
+2772.	[security]	When validating, track whether pending data was from
+			the additional section or not and only return it if
+			validates as secure. [RT #20438]
 
 	--- 9.4-ESVb1 released ---
 
