@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.11.92.7 2009/07/29 23:55:00 each Exp $
+ * $Id: dst_api.c,v 1.11.92.12 2010/01/11 23:46:41 tbox Exp $
  */
 
 /*! \file */
@@ -1103,7 +1103,7 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 	fprintf(fp, " ");
 
 	isc_buffer_usedregion(&classb, &r);
-	fwrite(r.base, 1, r.length, fp);
+	isc_util_fwrite(r.base, 1, r.length, fp);
 
 	if ((type & DST_TYPE_KEY) != 0)
 		fprintf(fp, " KEY ");
@@ -1111,7 +1111,7 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 		fprintf(fp, " DNSKEY ");
 
 	isc_buffer_usedregion(&textb, &r);
-	fwrite(r.base, 1, r.length, fp);
+	isc_util_fwrite(r.base, 1, r.length, fp);
 
 	fputc('\n', fp);
 	fflush(fp);
@@ -1247,6 +1247,8 @@ addsuffix(char *filename, unsigned int len, const char *ofilename,
 
 	n = snprintf(filename, len, "%.*s%s", olen, ofilename, suffix);
 	if (n < 0)
+		return (ISC_R_FAILURE);
+	if ((unsigned int)n >= len)
 		return (ISC_R_NOSPACE);
 	return (ISC_R_SUCCESS);
 }
@@ -1254,6 +1256,9 @@ addsuffix(char *filename, unsigned int len, const char *ofilename,
 isc_result_t
 dst__entropy_getdata(void *buf, unsigned int len, isc_boolean_t pseudo) {
 	unsigned int flags = dst_entropy_flags;
+
+	if (len == 0)
+		return (ISC_R_SUCCESS);
 	if (pseudo)
 		flags &= ~ISC_ENTROPY_GOODONLY;
 	return (isc_entropy_getdata(dst_entropy_pool, buf, len, NULL, flags));
@@ -1261,5 +1266,22 @@ dst__entropy_getdata(void *buf, unsigned int len, isc_boolean_t pseudo) {
 
 unsigned int
 dst__entropy_status(void) {
+#ifdef GSSAPI
+	unsigned int flags = dst_entropy_flags;
+	isc_result_t ret;
+	unsigned char buf[32];
+	static isc_boolean_t first = ISC_TRUE;
+
+	if (first) {
+		/* Someone believes RAND_status() initializes the PRNG */
+		flags &= ~ISC_ENTROPY_GOODONLY;
+		ret = isc_entropy_getdata(dst_entropy_pool, buf,
+					  sizeof(buf), NULL, flags);
+		INSIST(ret == ISC_R_SUCCESS);
+		isc_entropy_putdata(dst_entropy_pool, buf,
+				    sizeof(buf), 2 * sizeof(buf));
+		first = ISC_FALSE;
+	}
+#endif
 	return (isc_entropy_status(dst_entropy_pool));
 }

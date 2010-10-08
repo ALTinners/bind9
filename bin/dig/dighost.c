@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.304.12.16 2009/06/24 03:42:32 marka Exp $ */
+/* $Id: dighost.c,v 1.304.12.21 2010/06/24 07:32:27 marka Exp $ */
 
 /*! \file
  *  \note
@@ -990,12 +990,21 @@ make_searchlist_entry(char *domain) {
 }
 
 static void
+clear_searchlist(void) {
+	dig_searchlist_t *search;
+	while ((search = ISC_LIST_HEAD(search_list)) != NULL) {
+		ISC_LIST_UNLINK(search_list, search, link);
+		isc_mem_free(mctx, search);
+	}
+}
+
+static void
 create_search_list(lwres_conf_t *confdata) {
 	int i;
 	dig_searchlist_t *search;
 
 	debug("create_search_list()");
-	ISC_LIST_INIT(search_list);
+	clear_searchlist();
 
 	for (i = 0; i < confdata->searchnxt; i++) {
 		search = make_searchlist_entry(confdata->search[i]);
@@ -1038,7 +1047,7 @@ setup_system(void) {
 	else { /* No search list. Use the domain name if any */
 		if (lwconf->domainname != NULL) {
 			domain = make_searchlist_entry(lwconf->domainname);
-			ISC_LIST_INITANDAPPEND(search_list, domain, link);
+			ISC_LIST_APPEND(search_list, domain, link);
 			domain  = NULL;
 		}
 	}
@@ -1091,15 +1100,6 @@ setup_system(void) {
 
 #endif
 
-}
-
-static void
-clear_searchlist(void) {
-	dig_searchlist_t *search;
-	while ((search = ISC_LIST_HEAD(search_list)) != NULL) {
-		ISC_LIST_UNLINK(search_list, search, link);
-		isc_mem_free(mctx, search);
-	}
 }
 
 /*%
@@ -2218,6 +2218,15 @@ force_timeout(dig_lookup_t *l, dig_query_t *query) {
 		      isc_result_totext(ISC_R_NOMEMORY));
 	}
 	isc_task_send(global_task, &event);
+
+	/*
+	 * The timer may have expired if, for example, get_address() takes
+	 * long time and the timer was running on a different thread.
+	 * We need to cancel the possible timeout event not to confuse
+	 * ourselves due to the duplicate events.
+	 */
+	if (l->timer != NULL)
+		isc_timer_detach(&l->timer);
 }
 
 
@@ -2241,7 +2250,7 @@ send_tcp_connect(dig_query_t *query) {
 	query->waiting_connect = ISC_TRUE;
 	query->lookup->current_query = query;
 	result = get_address(query->servname, port, &query->sockaddr);
-	if (result == ISC_R_NOTFOUND) {
+	if (result != ISC_R_SUCCESS) {
 		/*
 		 * This servname doesn't have an address.  Try the next server
 		 * by triggering an immediate 'timeout' (we lie, but the effect
@@ -2323,7 +2332,7 @@ send_udp(dig_query_t *query) {
 		/* XXX Check the sense of this, need assertion? */
 		query->waiting_connect = ISC_FALSE;
 		result = get_address(query->servname, port, &query->sockaddr);
-		if (result == ISC_R_NOTFOUND) {
+		if (result != ISC_R_SUCCESS) {
 			/* This servname doesn't have an address. */
 			force_timeout(l, query);
 			return;
@@ -2399,11 +2408,9 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 		if (!l->tcp_mode)
 			send_udp(ISC_LIST_NEXT(cq, link));
 		else {
-			isc_socket_cancel(query->sock, NULL,
-					  ISC_SOCKCANCEL_ALL);
-			isc_socket_detach(&query->sock);
-			sockcount--;
-			debug("sockcount=%d", sockcount);
+			if (query->sock != NULL)
+				isc_socket_cancel(query->sock, NULL,
+						  ISC_SOCKCANCEL_ALL);
 			send_tcp_connect(ISC_LIST_NEXT(cq, link));
 		}
 		UNLOCK_LOOKUP;
@@ -2607,8 +2614,8 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 	if (sevent->result == ISC_R_CANCELED) {
 		debug("in cancel handler");
 		isc_socket_detach(&query->sock);
+		INSIST(sockcount > 0);
 		sockcount--;
-		INSIST(sockcount >= 0);
 		debug("sockcount=%d", sockcount);
 		query->waiting_connect = ISC_FALSE;
 		isc_event_free(&event);

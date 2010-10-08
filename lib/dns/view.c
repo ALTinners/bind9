@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: view.c,v 1.143.128.9.2.2 2010/02/25 10:56:02 tbox Exp $ */
+/* $Id: view.c,v 1.143.128.12 2010/02/25 10:55:22 tbox Exp $ */
 
 /*! \file */
 
@@ -1250,7 +1250,8 @@ dns_view_getpeertsig(dns_view_t *view, isc_netaddr_t *peeraddr,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	return (dns_view_gettsig(view, keyname, keyp));
+	result = dns_view_gettsig(view, keyname, keyp);
+	return ((result == ISC_R_NOTFOUND) ? ISC_R_FAILURE : result);
 }
 
 isc_result_t

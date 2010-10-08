@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zone.c,v 1.470.12.12 2009/07/11 04:28:14 marka Exp $ */
+/* $Id: zone.c,v 1.470.12.16 2009/12/21 04:34:08 marka Exp $ */
 
 /*! \file */
 
@@ -181,7 +181,6 @@ struct dns_zone {
 	isc_time_t		dumptime;
 	isc_time_t		loadtime;
 	isc_time_t		notifytime;
-	isc_uint32_t		serial;
 	isc_uint32_t		refresh;
 	isc_uint32_t		retry;
 	isc_uint32_t		expire;
@@ -629,7 +628,6 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx) {
 	isc_time_settoepoch(&zone->dumptime);
 	isc_time_settoepoch(&zone->loadtime);
 	zone->notifytime = now;
-	zone->serial = 0;
 	zone->refresh = DNS_ZONE_DEFAULTREFRESH;
 	zone->retry = DNS_ZONE_DEFAULTRETRY;
 	zone->expire = 0;
@@ -854,15 +852,34 @@ dns_zone_setnotifytype(dns_zone_t *zone, dns_notifytype_t notifytype) {
 	UNLOCK_ZONE(zone);
 }
 
-isc_uint32_t
-dns_zone_getserial(dns_zone_t *zone) {
-	isc_uint32_t serial;
+isc_result_t
+dns_zone_getserial2(dns_zone_t *zone, isc_uint32_t *serialp) {
+	isc_result_t result;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
+	REQUIRE(serialp != NULL);
 
 	LOCK_ZONE(zone);
-	serial = zone->serial;
+	ZONEDB_LOCK(&zone->dblock, isc_rwlocktype_read);
+	if (zone->db != NULL) {
+		result = zone_get_from_db(zone, zone->db, NULL, NULL, serialp,
+					  NULL, NULL, NULL, NULL, NULL);
+	} else
+		result = DNS_R_NOTLOADED;
+	ZONEDB_UNLOCK(&zone->dblock, isc_rwlocktype_read);
 	UNLOCK_ZONE(zone);
+
+	return (result);
+}
+
+isc_uint32_t
+dns_zone_getserial(dns_zone_t *zone) {
+	isc_result_t result;
+	isc_uint32_t serial;
+
+	result = dns_zone_getserial2(zone, &serial);
+	if (result != ISC_R_SUCCESS)
+		serial = 0; /* XXX: not really correct, but no other choice */
 
 	return (serial);
 }
@@ -2039,7 +2056,7 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 	unsigned int soacount = 0;
 	unsigned int nscount = 0;
 	unsigned int errors = 0;
-	isc_uint32_t serial, refresh, retry, expire, minimum;
+	isc_uint32_t serial, oldserial, refresh, retry, expire, minimum;
 	isc_time_t now;
 	isc_boolean_t needdump = ISC_FALSE;
 	isc_boolean_t hasinclude = DNS_ZONE_FLAG(zone, DNS_ZONEFLG_HASINCLUDE);
@@ -2164,14 +2181,18 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 			 * This is checked in zone_replacedb() for slave zones
 			 * as they don't reload from disk.
 			 */
+			result = zone_get_from_db(zone, zone->db, NULL, NULL,
+						  &oldserial, NULL, NULL, NULL,
+						  NULL, NULL);
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			if (DNS_ZONE_OPTION(zone, DNS_ZONEOPT_IXFRFROMDIFFS) &&
-			    !isc_serial_gt(serial, zone->serial)) {
+			    !isc_serial_gt(serial, oldserial)) {
 				isc_uint32_t serialmin, serialmax;
 
 				INSIST(zone->type == dns_zone_master);
 
-				serialmin = (zone->serial + 1) & 0xffffffffU;
-				serialmax = (zone->serial + 0x7fffffffU) &
+				serialmin = (oldserial + 1) & 0xffffffffU;
+				serialmax = (oldserial + 0x7fffffffU) &
 					     0xffffffffU;
 				dns_zone_log(zone, ISC_LOG_ERROR,
 					     "ixfr-from-differences: "
@@ -2180,16 +2201,15 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 					     serialmax);
 				result = DNS_R_BADZONE;
 				goto cleanup;
-			} else if (!isc_serial_ge(serial, zone->serial))
+			} else if (!isc_serial_ge(serial, oldserial))
 				dns_zone_log(zone, ISC_LOG_ERROR,
 					     "zone serial has gone backwards");
-			else if (serial == zone->serial && !hasinclude)
+			else if (serial == oldserial && !hasinclude)
 				dns_zone_log(zone, ISC_LOG_ERROR,
 					     "zone serial unchanged. "
 					     "zone may fail to transfer "
 					     "to slaves.");
 		}
-		zone->serial = serial;
 		zone->refresh = RANGE(refresh,
 				      zone->minrefresh, zone->maxrefresh);
 		zone->retry = RANGE(retry,
@@ -2267,8 +2287,7 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 		zone_settimer(zone, &now);
 
 	if (! dns_db_ispersistent(db))
-		dns_zone_log(zone, ISC_LOG_INFO, "loaded serial %u%s",
-			     zone->serial,
+		dns_zone_log(zone, ISC_LOG_INFO, "loaded serial %u%s", serial,
 			     dns_db_issecure(db) ? " (signed)" : "");
 
 	return (result);
@@ -2286,7 +2305,8 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 		if (zone->task != NULL)
 			zone_settimer(zone, &now);
 		result = ISC_R_SUCCESS;
-	}
+	} else if (zone->type == dns_zone_master)
+		dns_zone_log(zone, ISC_LOG_ERROR, "not loaded due to errors.");
 	return (result);
 }
 
@@ -3655,6 +3675,7 @@ notify_isself(dns_zone_t *zone, isc_sockaddr_t *dst) {
 	isc_sockaddr_t any;
 	isc_boolean_t isself;
 	isc_netaddr_t dstaddr;
+	isc_result_t result;
 
 	if (zone->view == NULL || zone->isself == NULL)
 		return (ISC_FALSE);
@@ -3680,7 +3701,9 @@ notify_isself(dns_zone_t *zone, isc_sockaddr_t *dst) {
 		src = *dst;
 
 	isc_netaddr_fromsockaddr(&dstaddr, dst);
-	(void)dns_view_getpeertsig(zone->view, &dstaddr, &key);
+	result = dns_view_getpeertsig(zone->view, &dstaddr, &key);
+	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND)
+		return (ISC_FALSE);
 	isself = (zone->isself)(zone->view, key, &src, dst, zone->rdclass,
 				zone->isselfarg);
 	if (key != NULL)
@@ -3882,9 +3905,14 @@ notify_send_toaddr(isc_task_t *task, isc_event_t *event) {
 		goto cleanup;
 
 	isc_netaddr_fromsockaddr(&dstip, &notify->dst);
-	(void)dns_view_getpeertsig(notify->zone->view, &dstip, &key);
-
 	isc_sockaddr_format(&notify->dst, addrbuf, sizeof(addrbuf));
+	result = dns_view_getpeertsig(notify->zone->view, &dstip, &key);
+	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
+		notify_log(notify->zone, ISC_LOG_ERROR, "NOTIFY to %s not "
+			   "sent. Peer TSIG key lookup failure.", addrbuf);
+		goto cleanup_message;
+	}
+
 	notify_log(notify->zone, ISC_LOG_DEBUG(3), "sending notify to %s",
 		   addrbuf);
 	if (notify->zone->view->peers != NULL) {
@@ -3931,6 +3959,7 @@ notify_send_toaddr(isc_task_t *task, isc_event_t *event) {
  cleanup_key:
 	if (key != NULL)
 		dns_tsigkey_detach(&key);
+ cleanup_message:
 	dns_message_destroy(&message);
  cleanup:
 	UNLOCK_ZONE(notify->zone);
@@ -4543,7 +4572,7 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_soa_t soa;
 	isc_result_t result;
-	isc_uint32_t serial;
+	isc_uint32_t serial, oldserial;
 	unsigned int j;
 
 	zone = revent->ev_arg;
@@ -4766,12 +4795,17 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 	serial = soa.serial;
-
-	zone_debuglog(zone, me, 1, "serial: new %u, old %u",
-		      serial, zone->serial);
+	if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_LOADED)) {
+		result = dns_zone_getserial2(zone, &oldserial);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		zone_debuglog(zone, me, 1, "serial: new %u, old %u",
+			      serial, oldserial);
+	} else
+		zone_debuglog(zone, me, 1, "serial: new %u, old not loaded",
+			      serial);
 	if (!DNS_ZONE_FLAG(zone, DNS_ZONEFLG_LOADED) ||
 	    DNS_ZONE_FLAG(zone, DNS_ZONEFLG_FORCEXFER) ||
-	    isc_serial_gt(serial, zone->serial)) {
+	    isc_serial_gt(serial, oldserial)) {
 		if (dns_zonemgr_unreachable(zone->zmgr, &zone->masteraddr,
 					    &zone->sourceaddr, &now)) {
 			dns_zone_log(zone, ISC_LOG_INFO,
@@ -4795,7 +4829,7 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 		}
 		if (msg != NULL)
 			dns_message_destroy(&msg);
-	} else if (isc_serial_eq(soa.serial, zone->serial)) {
+	} else if (isc_serial_eq(soa.serial, oldserial)) {
 		if (zone->masterfile != NULL) {
 			result = ISC_R_FAILURE;
 			if (zone->journal != NULL)
@@ -4828,7 +4862,7 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 		if (!DNS_ZONE_OPTION(zone, DNS_ZONEOPT_MULTIMASTER))
 			dns_zone_log(zone, ISC_LOG_INFO, "serial number (%u) "
 				     "received from master %s < ours (%u)",
-				     soa.serial, master, zone->serial);
+				     soa.serial, master, oldserial);
 		else
 			zone_debuglog(zone, me, 1, "ahead");
 		zone->mastersok[zone->curmaster] = ISC_TRUE;
@@ -5122,10 +5156,19 @@ soa_query(isc_task_t *task, isc_event_t *event) {
 			dns_name_format(keyname, namebuf, sizeof(namebuf));
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "unable to find key: %s", namebuf);
+			goto skip_master;
 		}
 	}
-	if (key == NULL)
-		(void)dns_view_getpeertsig(zone->view, &masterip, &key);
+	if (key == NULL) {
+		result = dns_view_getpeertsig(zone->view, &masterip, &key);
+		if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
+			char addrbuf[ISC_NETADDR_FORMATSIZE];
+			isc_netaddr_format(&masterip, addrbuf, sizeof(addrbuf));
+			dns_zone_log(zone, ISC_LOG_ERROR,
+				     "unable to find TSIG key for %s", addrbuf);
+			goto skip_master;
+		}
+	}
 
 	have_xfrsource = ISC_FALSE;
 	reqnsid = zone->view->requestnsid;
@@ -5926,13 +5969,21 @@ dns_zone_notifyreceive(dns_zone_t *zone, isc_sockaddr_t *from,
 		if (result == ISC_R_SUCCESS)
 			result = dns_rdataset_first(rdataset);
 		if (result == ISC_R_SUCCESS) {
-			isc_uint32_t serial = 0;
+			isc_uint32_t serial = 0, oldserial;
 
 			dns_rdataset_current(rdataset, &rdata);
 			result = dns_rdata_tostruct(&rdata, &soa, NULL);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			serial = soa.serial;
-			if (isc_serial_le(serial, zone->serial)) {
+			/*
+			 * The following should safely be performed without DB
+			 * lock and succeed in this context.
+			 */
+			result = zone_get_from_db(zone, zone->db, NULL, NULL,
+						  &oldserial, NULL, NULL, NULL,
+						  NULL, NULL);
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
+			if (isc_serial_le(serial, oldserial)) {
 			  dns_zone_log(zone, ISC_LOG_INFO,
 					     "notify from %s: "
 					     "zone is up to date",
@@ -6606,7 +6657,7 @@ zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump) {
 	if (zone->db != NULL && zone->journal != NULL &&
 	    DNS_ZONE_OPTION(zone, DNS_ZONEOPT_IXFRFROMDIFFS) &&
 	    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_FORCEXFER)) {
-		isc_uint32_t serial;
+		isc_uint32_t serial, oldserial;
 
 		dns_zone_log(zone, ISC_LOG_DEBUG(3), "generating diffs");
 
@@ -6621,11 +6672,15 @@ zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump) {
 		/*
 		 * This is checked in zone_postload() for master zones.
 		 */
+		result = zone_get_from_db(zone, zone->db, NULL, NULL,
+					  &oldserial, NULL, NULL, NULL, NULL,
+					  NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		if (zone->type == dns_zone_slave &&
-		    !isc_serial_gt(serial, zone->serial)) {
+		    !isc_serial_gt(serial, oldserial)) {
 			isc_uint32_t serialmin, serialmax;
-			serialmin = (zone->serial + 1) & 0xffffffffU;
-			serialmax = (zone->serial + 0x7fffffffU) & 0xffffffffU;
+			serialmin = (oldserial + 1) & 0xffffffffU;
+			serialmax = (oldserial + 0x7fffffffU) & 0xffffffffU;
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "ixfr-from-differences: failed: "
 				     "new serial (%u) out of range [%u - %u]",
@@ -6818,7 +6873,6 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 				zone_unload(zone);
 				goto next_master;
 			}
-			zone->serial = serial;
 			zone->refresh = RANGE(refresh, zone->minrefresh,
 					      zone->maxrefresh);
 			zone->retry = RANGE(retry, zone->minretry,
@@ -6856,7 +6910,7 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 				buf[0] = '\0';
 			dns_zone_log(zone, ISC_LOG_INFO,
 				     "transferred serial %u%s",
-				     zone->serial, buf);
+				     serial, buf);
 		}
 
 		/*

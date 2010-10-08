@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,7 +29,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec-signzone.c,v 1.204.94.5 2009/07/21 06:45:06 tbox Exp $ */
+/* $Id: dnssec-signzone.c,v 1.204.94.8 2010/06/05 23:46:57 tbox Exp $ */
 
 /*! \file */
 
@@ -1203,6 +1203,8 @@ signapex(void) {
 
 	dns_fixedname_init(&fixed);
 	name = dns_fixedname_name(&fixed);
+	result = dns_dbiterator_seek(gdbiter, gorigin);
+	check_result(result, "dns_dbiterator_seek()");
 	result = dns_dbiterator_current(gdbiter, &node, name);
 	check_result(result, "dns_dbiterator_current()");
 	signname(node, name);
@@ -1257,6 +1259,13 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 		if (result != ISC_R_SUCCESS)
 			fatal("failure iterating database: %s",
 			      isc_result_totext(result));
+		/*
+		 * The origin was handled by signapex().
+		 */
+		if (dns_name_equal(name, gorigin)) {
+			dns_db_detachnode(gdb, &node);
+			goto next;
+		}
 		dns_rdataset_init(&nsec);
 		result = dns_db_findrdataset(gdb, node, gversion,
 					     dns_rdatatype_nsec, 0, 0,
@@ -1269,7 +1278,7 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 			dns_rdataset_disassociate(&nsec);
 		if (!found)
 			dns_db_detachnode(gdb, &node);
-
+ next:
 		result = dns_dbiterator_next(gdbiter);
 		if (result == ISC_R_NOMORE) {
 			finished = ISC_TRUE;
@@ -1381,6 +1390,15 @@ nsecify(void) {
 
 	while (!done) {
 		dns_dbiterator_current(dbiter, &node, name);
+		if (!dns_name_issubdomain(name, gorigin)) {
+			dns_db_detachnode(gdb, &node);
+			result = dns_dbiterator_next(dbiter);
+			if (result == ISC_R_NOMORE)
+				done = ISC_TRUE;
+			else
+				check_result(result, "dns_dbiterator_next()");
+			continue;
+		}
 		if (delegation(name, node, NULL)) {
 			zonecut = dns_fixedname_name(&fzonecut);
 			dns_name_copy(name, zonecut, NULL);

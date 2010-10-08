@@ -35,7 +35,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: $Id: Bv9ARM-book.xml,v 1.340.24.43.2.2 2010/02/25 10:56:01 tbox Exp $ -->
+<!-- File: $Id: Bv9ARM-book.xml,v 1.340.24.52 2010/07/09 05:16:01 each Exp $ -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -1678,6 +1678,11 @@ controls {
           each dynamic update, because that would be too slow when a large
           zone is updated frequently.  Instead, the dump is delayed by
           up to 15 minutes, allowing additional updates to take place.
+          During the dump process, transient files will be created
+          with the extensions <filename>.jnw</filename> and
+          <filename>.jbk</filename>; under ordinary circumstances, these
+          will be removed when the dump is complete, and can be safely
+          ignored.
         </para>
 
         <para>
@@ -2052,17 +2057,16 @@ nameserver 172.16.72.4
         <sect3>
           <title>Automatic Generation</title>
           <para>
-            The following command will generate a 128-bit (16 byte) HMAC-MD5
+            The following command will generate a 128-bit (16 byte) HMAC-SHA256
             key as described above. Longer keys are better, but shorter keys
-            are easier to read. Note that the maximum key length is 512 bits;
-            keys longer than that will be digested with MD5 to produce a
-            128-bit key.
+            are easier to read. Note that the maximum key length is the digest
+            length, here 256 bits.
           </para>
           <para>
-            <userinput>dnssec-keygen -a hmac-md5 -b 128 -n HOST host1-host2.</userinput>
+            <userinput>dnssec-keygen -a hmac-sha256 -b 128 -n HOST host1-host2.</userinput>
           </para>
           <para>
-            The key is in the file <filename>Khost1-host2.+157+00000.private</filename>.
+            The key is in the file <filename>Khost1-host2.+163+00000.private</filename>.
             Nothing directly uses this file, but the base-64 encoded string
             following "<literal>Key:</literal>"
             can be extracted from the file and used as a shared secret:
@@ -2104,18 +2108,16 @@ nameserver 172.16.72.4
 
 <programlisting>
 key host1-host2. {
-  algorithm hmac-md5;
+  algorithm hmac-sha256;
   secret "La/E5CjG9O+os1jq0a2jdA==";
 };
 </programlisting>
 
         <para>
-          The algorithm, <literal>hmac-md5</literal>, is the only one supported by <acronym>BIND</acronym>.
           The secret is the one generated above. Since this is a secret, it
-          is recommended that either <filename>named.conf</filename> be non-world
-          readable, or the key directive be added to a non-world readable
-          file that is included by
-          <filename>named.conf</filename>.
+          is recommended that either <filename>named.conf</filename> be
+          non-world readable, or the key directive be added to a non-world
+          readable file that is included by <filename>named.conf</filename>.
         </para>
         <para>
           At this point, the key is recognized. This means that if the
@@ -2440,14 +2442,17 @@ allow-update { key host1-host2. ;};
 	  To enable <command>named</command> to respond appropriately
 	  to DNS requests from DNSSEC aware clients,
 	  <command>dnssec-enable</command> must be set to yes.
+          (This is the default setting.)
         </para>
 
 	<para>
 	  To enable <command>named</command> to validate answers from
-	  other servers both <command>dnssec-enable</command> and
-	  <command>dnssec-validation</command> must be set and some
-	  <command>trusted-keys</command> must be configured
-	  into <filename>named.conf</filename>.
+	  other servers, the <command>dnssec-enable</command> and
+	  <command>dnssec-validation</command> options must both be
+          set to yes (the default setting in <acronym>BIND</acronym> 9.5
+          and later), and at least one trust anchor must be configured
+          with a <command>trusted-keys</command> statement in
+          <filename>named.conf</filename>.
         </para>
 	  
 	<para>
@@ -2526,6 +2531,41 @@ options {
 	  the root key is not valid.
 	</note>
 
+	<para>
+	  When DNSSEC validation is enabled and properly configured,
+	  the resolver will reject any answers from signed, secure zones
+	  which fail to validate, and will return SERVFAIL to the client.
+	</para>
+
+	<para>
+	  Responses may fail to validate for any of several reasons,
+	  including missing, expired, or invalid signatures, a key which
+	  does not match the DS RRset in the parent zone, or an insecure
+	  response from a zone which, according to its parent, should have
+	  been secure.  
+	</para>
+
+	<note>
+	  <para>
+	    When the validator receives a response from an unsigned zone
+	    that has a signed parent, it must confirm with the parent
+	    that the zone was intentionally left unsigned.  It does
+	    this by verifying, via signed and validated NSEC/NSEC3 records,
+	    that the parent zone contains no DS records for the child.
+	  </para>
+	  <para>
+	    If the validator <emphasis>can</emphasis> prove that the zone
+	    is insecure, then the response is accepted.  However, if it
+	    cannot, then it must assume an insecure response to be a
+	    forgery; it rejects the response and logs an error.
+	  </para>
+	  <para>
+            The logged error reads "insecurity proof failed" and
+            "got insecure response; parent indicates it should be secure".
+	    (Prior to BIND 9.7, the logged error was "not insecure".
+            This referred to the zone, not the response.)
+	  </para>
+	</note>
       </sect2>
 
     </sect1>
@@ -2534,10 +2574,9 @@ options {
 
       <para>
         <acronym>BIND</acronym> 9 fully supports all currently
-        defined forms of IPv6
-        name to address and address to name lookups.  It will also use
-        IPv6 addresses to make queries when running on an IPv6 capable
-        system.
+        defined forms of IPv6 name to address and address to name
+        lookups.  It will also use IPv6 addresses to make queries when
+        running on an IPv6 capable system.
       </para>
 
       <para>
@@ -4319,8 +4358,7 @@ category notify { null; };
                     <para>
                       Lame servers.  These are misconfigurations
                       in remote servers, discovered by BIND 9 when trying to
-                      query
-                      those servers during resolution.
+                      query those servers during resolution.
                     </para>
                   </entry>
                 </row>
@@ -4780,7 +4818,7 @@ category notify { null; };
 	<optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional> ) ; </optional>
     <optional> use-queryport-pool <replaceable>yes_or_no</replaceable>; </optional>
     <optional> queryport-pool-ports <replaceable>number</replaceable>; </optional>
-    <optional> queryport-pool-interval <replaceable>number</replaceable>; </optional>
+    <optional> queryport-pool-updateinterval <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-time-in <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-time-out <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-idle-in <replaceable>number</replaceable>; </optional>
@@ -4936,7 +4974,7 @@ category notify { null; };
 		the server can acquire through the default system
 		key file, normally <filename>/etc/krb5.keytab</filename>.
 		Normally this principal is of the form
-		"<userinput>dns/</userinput><varname>server.domain</varname>".
+		"<userinput>DNS/</userinput><varname>server.domain</varname>".
 		To use GSS-TSIG, <command>tkey-domain</command>
 		must also be set.
 	      </para>
@@ -5866,13 +5904,15 @@ options {
                   If <userinput>yes</userinput>, then an
                   IPv4-mapped IPv6 address will match any address match
                   list entries that match the corresponding IPv4 address.
-                  Enabling this option is sometimes useful on IPv6-enabled
-                  Linux
-                  systems, to work around a kernel quirk that causes IPv4
-                  TCP connections such as zone transfers to be accepted
-                  on an IPv6 socket using mapped addresses, causing
-                  address match lists designed for IPv4 to fail to match.
-                  The use of this option for any other purpose is discouraged.
+                </para>
+                <para>
+                  This option was introduced to work around a kernel quirk
+                  in some operating systems that causes IPv4 TCP
+                  connections, such as zone transfers, to be accepted on an
+                  IPv6 socket using mapped addresses.  This caused address
+                  match lists designed for IPv4 to fail to match.  However,
+                  <command>named</command> now solves this problem
+                  internally.  The use of this option is discouraged.
                 </para>
               </listitem>
             </varlistentry>
@@ -7862,7 +7902,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
               <listitem>
                 <para>
                   The delay, in seconds, between sending sets of notify
-                  messages for a zone.  The default is zero.
+                  messages for a zone.  The default is five (5) seconds.
                 </para>
               </listitem>
             </varlistentry>
@@ -8214,7 +8254,7 @@ XXX: end of RFC1918 addresses #defined out -->
     <optional> query-source-v6 <optional> address ( <replaceable>ip_addr</replaceable> | <replaceable>*</replaceable> ) </optional> <optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional>; </optional>
     <optional> use-queryport-pool <replaceable>yes_or_no</replaceable>; </optional>
     <optional> queryport-pool-ports <replaceable>number</replaceable>; </optional>
-    <optional> queryport-pool-interval <replaceable>number</replaceable>; </optional>
+    <optional> queryport-pool-updateinterval <replaceable>number</replaceable>; </optional>
 };
 </programlisting>
 
@@ -11033,6 +11073,16 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
             and <command>$TTL.</command>
           </para>
           <sect3>
+            <title>The <command>@</command> (at-sign)</title>
+            <para>
+              When used in the label (or name) field, the asperand or
+              at-sign (@) symbol represents the current origin.
+              At the start of the zone file, it is the 
+              &lt;<varname>zone_name</varname>&gt; (followed by
+              trailing dot).
+            </para>
+          </sect3>
+          <sect3>
             <title>The <command>$ORIGIN</command> Directive</title>
             <para>
               Syntax: <command>$ORIGIN</command>
@@ -11043,7 +11093,8 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
 	      sets the domain name that will be appended to any
               unqualified records. When a zone is first read in there
               is an implicit <command>$ORIGIN</command>
-              &lt;<varname>zone-name</varname>&gt;<command>.</command>
+              &lt;<varname>zone_name</varname>&gt;<command>.</command>
+              (followed by trailing dot).
               The current <command>$ORIGIN</command> is appended to
               the domain specified in the <command>$ORIGIN</command>
               argument if it is not absolute.

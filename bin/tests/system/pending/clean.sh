@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.4.6.1 2009/12/31 21:02:44 each Exp $
+# $Id: clean.sh,v 1.2.2.3 2009/12/30 08:35:52 jinmei Exp $
 
 rm -rf */*.signed
 rm -rf */*.jnl

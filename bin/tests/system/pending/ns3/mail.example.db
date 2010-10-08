@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: mail.example.db,v 1.2.46.1 2009/12/31 21:02:44 each Exp $
+; $Id: mail.example.db,v 1.2.2.1 2009/11/18 00:08:59 marka Exp $
 
 $TTL 30
 @			IN SOA	mname1. . (
