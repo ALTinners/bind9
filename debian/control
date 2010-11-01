@@ -90,9 +90,10 @@ Package: libisc52
 Section: libs
 Priority: standard
 Architecture: any
-Conflicts: libbind0, libbind9-41
-Replaces: libbind0
-Depends: ${shlibs:Depends}
+Conflicts: libbind0, libbind9-41, libisc52
+Replaces: libbind0, libisc52
+Provides: libisc52
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: ISC Shared Library used by BIND
  ${Description}
  .
