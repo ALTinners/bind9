@@ -31,6 +31,7 @@ isc__mem_free
 isc__mem_get
 isc__mem_put
 isc__mem_putanddetach
+isc__mem_reallocate
 isc__mem_strdup
 isc__mempool_get
 isc__mempool_put
@@ -46,6 +47,14 @@ isc_app_start
 isc_app_unblock
 isc_assertion_setcallback
 isc_assertion_typetotext
+isc_base32_decoderegion
+isc_base32_decodestring
+isc_base32_tobuffer
+isc_base32_totext
+isc_base32hex_decoderegion
+isc_base32hex_decodestring
+isc_base32hex_tobuffer
+isc_base32hex_totext
 isc_base64_decodestring
 isc_base64_tobuffer
 isc_base64_totext
@@ -179,6 +188,7 @@ isc_interfaceiter_first
 isc_interfaceiter_next
 isc_interval_iszero
 isc_interval_set
+isc_iterated_hash
 isc_keyboard_canceled
 isc_keyboard_close
 isc_keyboard_getchar
@@ -253,6 +263,7 @@ isc_mem_getquota
 isc_mem_gettag
 isc_mem_inuse
 isc_mem_ondestroy
+isc_mem_references
 isc_mem_setdestroycheck
 isc_mem_setname
 isc_mem_setquota
@@ -374,12 +385,14 @@ isc_sha224_init
 isc_sha224_update
 isc_sha256_final
 isc_sha256_init
+isc_sha256_invalidate
 isc_sha256_update
 isc_sha384_final
 isc_sha384_init
 isc_sha384_update
 isc_sha512_final
 isc_sha512_init
+isc_sha512_invalidate
 isc_sha512_update
 isc_sockaddr_any
 isc_sockaddr_any6
@@ -434,6 +447,14 @@ isc_socketmgr_create
 isc_socketmgr_create2
 isc_socketmgr_destroy
 isc_socketmgr_getmaxsockets
+isc_socketmgr_setstats
+isc_stats_create
+isc_stats_attach
+isc_stats_detach
+isc_stats_ncounters
+isc_stats_increment
+isc_stats_decrement
+isc_stats_dump
 isc_stdio_close
 isc_stdio_flush
 isc_stdio_open
@@ -498,6 +519,7 @@ isc_time_nanoseconds
 isc_time_now
 isc_time_nowplusinterval
 isc_time_seconds
+isc_time_set
 isc_time_settoepoch
 isc_time_subtract
 isc_timer_attach
@@ -515,7 +537,6 @@ isc_win32os_servicepackminor
 isc_win32os_versioncheck
 openlog
 syslog
-
 
 ; Exported Data
 

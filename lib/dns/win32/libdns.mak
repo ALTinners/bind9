@@ -158,6 +158,7 @@ CLEAN :
 	-@erase "$(INTDIR)\name.obj"
 	-@erase "$(INTDIR)\ncache.obj"
 	-@erase "$(INTDIR)\nsec.obj"
+	-@erase "$(INTDIR)\nsec3.obj"
 	-@erase "$(INTDIR)\openssl_link.obj"
 	-@erase "$(INTDIR)\openssldh_link.obj"
 	-@erase "$(INTDIR)\openssldsa_link.obj"
@@ -279,6 +280,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\name.obj" \
 	"$(INTDIR)\ncache.obj" \
 	"$(INTDIR)\nsec.obj" \
+	"$(INTDIR)\nsec3.obj" \
 	"$(INTDIR)\order.obj" \
 	"$(INTDIR)\peer.obj" \
 	"$(INTDIR)\portlist.obj" \
@@ -433,6 +435,8 @@ CLEAN :
 	-@erase "$(INTDIR)\ncache.sbr"
 	-@erase "$(INTDIR)\nsec.obj"
 	-@erase "$(INTDIR)\nsec.sbr"
+	-@erase "$(INTDIR)\nsec3.obj"
+	-@erase "$(INTDIR)\nsec3.sbr"
 	-@erase "$(INTDIR)\openssl_link.obj"
 	-@erase "$(INTDIR)\openssl_link.sbr"
 	-@erase "$(INTDIR)\openssldh_link.obj"
@@ -591,6 +595,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\name.sbr" \
 	"$(INTDIR)\ncache.sbr" \
 	"$(INTDIR)\nsec.sbr" \
+	"$(INTDIR)\nsec3.sbr" \
 	"$(INTDIR)\order.sbr" \
 	"$(INTDIR)\peer.sbr" \
 	"$(INTDIR)\portlist.sbr" \
@@ -678,6 +683,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\name.obj" \
 	"$(INTDIR)\ncache.obj" \
 	"$(INTDIR)\nsec.obj" \
+	"$(INTDIR)\nsec3.obj" \
 	"$(INTDIR)\order.obj" \
 	"$(INTDIR)\peer.obj" \
 	"$(INTDIR)\portlist.obj" \
@@ -1265,6 +1271,24 @@ SOURCE=..\nsec.c
 
 
 "$(INTDIR)\nsec.obj"	"$(INTDIR)\nsec.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\nsec3.c
+
+!IF  "$(CFG)" == "libdns - Win32 Release"
+
+
+"$(INTDIR)\nsec3.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
+
+
+"$(INTDIR)\nsec3.obj"	"$(INTDIR)\nsec3.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

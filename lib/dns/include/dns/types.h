@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.126.62.3 2008/04/03 06:10:21 marka Exp $ */
+/* $Id: types.h,v 1.130.50.5 2009/12/30 08:34:30 jinmei Exp $ */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -69,6 +69,7 @@ typedef struct dns_fixedname			dns_fixedname_t;
 typedef struct dns_forwarders			dns_forwarders_t;
 typedef struct dns_fwdtable			dns_fwdtable_t;
 typedef struct dns_iptable			dns_iptable_t;
+typedef isc_uint32_t				dns_iterations_t;
 typedef isc_uint16_t				dns_keyflags_t;
 typedef struct dns_keynode			dns_keynode_t;
 typedef struct dns_keytable			dns_keytable_t;
@@ -107,7 +108,6 @@ typedef struct dns_signature			dns_signature_t;
 typedef struct dns_ssurule			dns_ssurule_t;
 typedef struct dns_ssutable			dns_ssutable_t;
 typedef struct dns_stats			dns_stats_t;
-typedef int					dns_statscounter_t;
 typedef isc_uint32_t				dns_rdatastatstype_t;
 typedef struct dns_tkeyctx			dns_tkeyctx_t;
 typedef isc_uint16_t				dns_trust_t;
@@ -130,6 +130,10 @@ typedef struct not_defined_gss_cred_id *gss_cred_id_t;
 typedef struct not_defined_gss_ctx *gss_ctx_id_t;
 #endif
 typedef struct dst_gssapi_signverifyctx dst_gssapi_signverifyctx_t;
+
+typedef enum {
+	dns_hash_sha1 = 1
+} dns_hash_t;
 
 typedef enum {
 	dns_fwdpolicy_none = 0,
@@ -273,7 +277,7 @@ enum {
 	dns_trust_glue = 4,
 #define dns_trust_glue			((dns_trust_t)dns_trust_glue)
 
-	/* Answser from a non-authoritative server */
+	/* Answer from a non-authoritative server */
 	dns_trust_answer = 5,
 #define dns_trust_answer		((dns_trust_t)dns_trust_answer)
 
@@ -282,7 +286,7 @@ enum {
 	dns_trust_authauthority = 6,
 #define dns_trust_authauthority		((dns_trust_t)dns_trust_authauthority)
 
-	/* Answser from an authoritative server */
+	/* Answer from an authoritative server */
 	dns_trust_authanswer = 7,
 #define dns_trust_authanswer		((dns_trust_t)dns_trust_authanswer)
 
@@ -297,11 +301,13 @@ enum {
 
 #define DNS_TRUST_PENDING(x)		((x) == dns_trust_pending_answer || \
 					 (x) == dns_trust_pending_additional)
+#define DNS_TRUST_ADDITIONAL(x)		((x) == dns_trust_additional || \
+					 (x) == dns_trust_pending_additional)
 #define DNS_TRUST_GLUE(x)		((x) == dns_trust_glue)
 
 
 /*%
- * Name checking severites.
+ * Name checking severities.
  */
 typedef enum {
 	dns_severity_ignore,

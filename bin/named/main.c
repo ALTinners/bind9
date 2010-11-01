@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: main.c,v 1.158.48.5 2008/10/24 01:28:28 marka Exp $ */
+/* $Id: main.c,v 1.166.34.3 2009/04/03 20:18:59 marka Exp $ */
 
 /*! \file */
 
@@ -139,7 +139,7 @@ assertion_failed(const char *file, int line, isc_assertiontype_t type,
 
 	if (ns_g_lctx != NULL) {
 		/*
-		 * Reset the assetion callback in case it is the log
+		 * Reset the assertion callback in case it is the log
 		 * routines causing the assertion.
 		 */
 		isc_assertion_setcallback(NULL);
@@ -359,7 +359,7 @@ parse_command_line(int argc, char *argv[]) {
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
 					   "46c:C:d:fgi:lm:n:N:p:P:"
-					   "sS:t:u:vx:")) != -1) {
+					   "sS:t:T:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -446,11 +446,26 @@ parse_command_line(int argc, char *argv[]) {
 			/* XXXJAB should we make a copy? */
 			ns_g_chrootdir = isc_commandline_argument;
 			break;
+		case 'T':
+			/*
+			 * clienttest: make clients single shot with their
+			 * 	       own memory context.
+			 */
+			if (strcmp(isc_commandline_argument, "clienttest") == 0)
+				ns_g_clienttest = ISC_TRUE;
+			else
+				fprintf(stderr, "unknown -T flag '%s\n",
+					isc_commandline_argument);
+			break;
 		case 'u':
 			ns_g_username = isc_commandline_argument;
 			break;
 		case 'v':
 			printf("BIND %s\n", ns_g_version);
+			exit(0);
+		case 'V':
+			printf("BIND %s built with %s\n", ns_g_version,
+				ns_g_configargs);
 			exit(0);
 		case '?':
 			usage();
@@ -663,6 +678,9 @@ setup(void) {
 		      ISC_LOG_NOTICE, "starting BIND %s%s", ns_g_version,
 		      saved_command_line);
 
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
+
 	/*
 	 * Get the initial resource limits.
 	 */
@@ -729,7 +747,7 @@ setup(void) {
 
 #ifdef DLZ
 	/*
-	 * Registyer any DLZ drivers.
+	 * Register any DLZ drivers.
 	 */
 	result = dlz_drivers_init();
 	if (result != ISC_R_SUCCESS)
@@ -861,10 +879,10 @@ main(int argc, char *argv[]) {
 	 * strings named.core | grep "named version:"
 	 */
 	strlcat(version,
-#ifdef __DATE__
-		"named version: BIND " VERSION " (" __DATE__ ")",
-#else
+#if defined(NO_VERSION_DATE) || !defined(__DATE__)
 		"named version: BIND " VERSION,
+#else
+		"named version: BIND " VERSION " (" __DATE__ ")",
 #endif
 		sizeof(version));
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));

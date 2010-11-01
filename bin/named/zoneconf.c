@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zoneconf.c,v 1.139.56.5 2008/05/29 23:46:34 tbox Exp $ */
+/* $Id: zoneconf.c,v 1.147.50.2 2009/01/29 23:47:44 tbox Exp $ */
 
 /*% */
 
@@ -25,6 +25,7 @@
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/stats.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
@@ -232,6 +233,10 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 			mtype = DNS_SSUMATCHTYPE_SUBDOMAINMS;
 		else if (strcasecmp(str, "krb5-subdomain") == 0)
 			mtype = DNS_SSUMATCHTYPE_SUBDOMAINKRB5;
+		else if (strcasecmp(str, "tcp-self") == 0)
+			mtype = DNS_SSUMATCHTYPE_TCPSELF;
+		else if (strcasecmp(str, "6to4-self") == 0)
+			mtype = DNS_SSUMATCHTYPE_6TO4SELF;
 		else
 			INSIST(0);
 
@@ -427,8 +432,9 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	isc_boolean_t warn = ISC_FALSE, ignore = ISC_FALSE;
 	isc_boolean_t ixfrdiff;
 	dns_masterformat_t masterformat;
-	dns_stats_t *zoneqrystats;
+	isc_stats_t *zoneqrystats;
 	isc_boolean_t zonestats_on;
+	int seconds;
 
 	i = 0;
 	if (zconfig != NULL) {
@@ -559,12 +565,12 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	zonestats_on = cfg_obj_asboolean(obj);
 	zoneqrystats = NULL;
 	if (zonestats_on) {
-		RETERR(dns_generalstats_create(mctx, &zoneqrystats,
-					       dns_nsstatscounter_max));
+		RETERR(isc_stats_create(mctx, &zoneqrystats,
+					dns_nsstatscounter_max));
 	}
 	dns_zone_setrequeststats(zone, zoneqrystats);
 	if (zoneqrystats != NULL)
-		dns_stats_detach(&zoneqrystats);
+		isc_stats_detach(&zoneqrystats);
 
 	/*
 	 * Configure master functionality.  This applies
@@ -711,6 +717,12 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		result = ns_config_get(maps, "zero-no-soa-ttl", &obj);
 		INSIST(result == ISC_R_SUCCESS);
 		dns_zone_setzeronosoattl(zone, cfg_obj_asboolean(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "nsec3-test-zone", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setoption(zone, DNS_ZONEOPT_NSEC3TESTZONE,
+				   cfg_obj_asboolean(obj));
 	}
 
 	/*
@@ -737,8 +749,26 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		obj = NULL;
 		result = ns_config_get(maps, "sig-validity-interval", &obj);
 		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setsigvalidityinterval(zone,
-						cfg_obj_asuint32(obj) * 86400);
+		{
+			const cfg_obj_t *validity, *resign;
+
+			validity = cfg_tuple_get(obj, "validity");
+			seconds = cfg_obj_asuint32(validity) * 86400;
+			dns_zone_setsigvalidityinterval(zone, seconds);
+
+			resign = cfg_tuple_get(obj, "re-sign");
+			if (cfg_obj_isvoid(resign)) {
+				seconds /= 4;
+			} else {
+				if (seconds > 7 * 86400)
+					seconds = cfg_obj_asuint32(resign) *
+							86400;
+				else
+					seconds = cfg_obj_asuint32(resign) *
+							3600;
+			}
+			dns_zone_setsigresigninginterval(zone, seconds);
+		}
 
 		obj = NULL;
 		result = ns_config_get(maps, "key-directory", &obj);
@@ -753,6 +783,39 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			RETERR(dns_zone_setkeydirectory(zone, filename));
 		}
 
+		obj = NULL;
+		result = ns_config_get(maps, "sig-signing-signatures", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setsignatures(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "sig-signing-nodes", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setnodes(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "sig-signing-type", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setprivatetype(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "update-check-ksk", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK,
+				   cfg_obj_asboolean(obj));
+
+	} else if (ztype == dns_zone_slave) {
+		RETERR(configure_zone_acl(zconfig, vconfig, config,
+					  allow_update_forwarding, ac, zone,
+					  dns_zone_setforwardacl,
+					  dns_zone_clearforwardacl));
+	}
+
+
+	/*%
+	 * Primary master functionality.
+	 */
+	if (ztype == dns_zone_master) {
 		obj = NULL;
 		result = ns_config_get(maps, "check-wildcard", &obj);
 		if (result == ISC_R_SUCCESS)
@@ -811,17 +874,6 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			INSIST(0);
 		dns_zone_setoption(zone, DNS_ZONEOPT_WARNSRVCNAME, warn);
 		dns_zone_setoption(zone, DNS_ZONEOPT_IGNORESRVCNAME, ignore);
-
-		obj = NULL;
-		result = ns_config_get(maps, "update-check-ksk", &obj);
-		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK,
-				   cfg_obj_asboolean(obj));
-	} else if (ztype == dns_zone_slave) {
-		RETERR(configure_zone_acl(zconfig, vconfig, config,
-					  allow_update_forwarding, ac, zone,
-					  dns_zone_setforwardacl,
-					  dns_zone_clearforwardacl));
 	}
 
 	/*

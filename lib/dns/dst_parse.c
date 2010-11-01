@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.10.92.2 2008/01/22 23:27:35 tbox Exp $
+ * $Id: dst_parse.c,v 1.14.120.6 2010/01/15 19:38:53 each Exp $
  */
 
 #include <config.h>
@@ -67,6 +67,9 @@ static struct parse_map map[] = {
 	{TAG_RSA_EXPONENT1, "Exponent1:"},
 	{TAG_RSA_EXPONENT2, "Exponent2:"},
 	{TAG_RSA_COEFFICIENT, "Coefficient:"},
+	{TAG_RSA_ENGINE, "Engine:" },
+	{TAG_RSA_LABEL, "Label:" },
+	{TAG_RSA_PIN, "PIN:" },
 
 	{TAG_DH_PRIME, "Prime(p):"},
 	{TAG_DH_GENERATOR, "Generator(g):"},
@@ -128,16 +131,39 @@ find_tag(const int value) {
 static int
 check_rsa(const dst_private_t *priv) {
 	int i, j;
-	if (priv->nelements != RSA_NTAGS)
-		return (-1);
-	for (i = 0; i < RSA_NTAGS; i++) {
-		for (j = 0; j < priv->nelements; j++)
+	isc_boolean_t have[RSA_NTAGS];
+	isc_boolean_t ok;
+	unsigned int mask;
+
+	for (i = 0; i < RSA_NTAGS; i++)
+		have[i] = ISC_FALSE;
+	for (j = 0; j < priv->nelements; j++) {
+		for (i = 0; i < RSA_NTAGS; i++)
 			if (priv->elements[j].tag == TAG(DST_ALG_RSAMD5, i))
 				break;
-		if (j == priv->nelements)
+		if (i == RSA_NTAGS)
 			return (-1);
+		have[i] = ISC_TRUE;
 	}
-	return (0);
+
+	mask = ~0;
+	mask <<= sizeof(mask) * 8 - TAG_SHIFT;
+	mask >>= sizeof(mask) * 8 - TAG_SHIFT;
+
+	if (have[TAG_RSA_ENGINE & mask])
+		ok = have[TAG_RSA_MODULUS & mask] &&
+		     have[TAG_RSA_PUBLICEXPONENT & mask] &&
+		     have[TAG_RSA_LABEL & mask];
+	else
+		ok = have[TAG_RSA_MODULUS & mask] &&
+		     have[TAG_RSA_PUBLICEXPONENT & mask] &&
+		     have[TAG_RSA_PRIVATEEXPONENT & mask] &&
+		     have[TAG_RSA_PRIME1 & mask] &&
+		     have[TAG_RSA_PRIME2 & mask] &&
+		     have[TAG_RSA_EXPONENT1 & mask] &&
+		     have[TAG_RSA_EXPONENT2 & mask] &&
+		     have[TAG_RSA_COEFFICIENT & mask];
+	return (ok ? 0 : -1 );
 }
 
 static int
@@ -454,6 +480,18 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 	case DST_ALG_RSASHA1:
 		fprintf(fp, "(RSASHA1)\n");
 		break;
+	case DST_ALG_NSEC3DSA:
+		fprintf(fp, "(NSEC3DSA)\n");
+		break;
+	case DST_ALG_NSEC3RSASHA1:
+		fprintf(fp, "(NSEC3RSASHA1)\n");
+		break;
+	case DST_ALG_RSASHA256:
+		fprintf(fp, "(RSASHA256)\n");
+		break;
+	case DST_ALG_RSASHA512:
+		fprintf(fp, "(RSASHA512)\n");
+		break;
 	case DST_ALG_HMACMD5:
 		fprintf(fp, "(HMAC_MD5)\n");
 		break;
@@ -495,12 +533,14 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		isc_buffer_usedregion(&b, &r);
 
 		fprintf(fp, "%s ", s);
-		fwrite(r.base, 1, r.length, fp);
+		isc_util_fwrite(r.base, 1, r.length, fp);
 		fprintf(fp, "\n");
 	}
 
+	fflush(fp);
+	iret = ferror(fp) ? DST_R_WRITEERROR : ISC_R_SUCCESS;
 	fclose(fp);
-	return (ISC_R_SUCCESS);
+	return (iret);
 }
 
 /*! \file */

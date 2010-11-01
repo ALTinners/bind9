@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: check.c,v 1.86.10.7 2008/11/19 05:39:32 marka Exp $ */
+/* $Id: check.c,v 1.95.12.4 2009/06/03 00:06:01 marka Exp $ */
 
 /*! \file */
 
@@ -503,6 +503,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 	isc_result_t tresult;
 	unsigned int i;
 	const cfg_obj_t *obj = NULL;
+	const cfg_obj_t *resignobj = NULL;
 	const cfg_listelt_t *element;
 	isc_symtab_t *symtab = NULL;
 	dns_fixedname_t fixed;
@@ -518,7 +519,6 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 	{ "max-transfer-idle-out", 60, 28 * 24 * 60 },	/* 28 days */
 	{ "max-transfer-time-in", 60, 28 * 24 * 60 },	/* 28 days */
 	{ "max-transfer-time-out", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "sig-validity-interval", 86400, 10 * 366 },	/* 10 years */
 	{ "statistics-interval", 60, 28 * 24 * 60 },	/* 28 days */
 	};
 
@@ -546,6 +546,43 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 			result = ISC_R_RANGE;
 		}
 	}
+
+	obj = NULL;
+	cfg_map_get(options, "sig-validity-interval", &obj);
+	if (obj != NULL) {
+		isc_uint32_t validity, resign = 0;
+
+		validity = cfg_obj_asuint32(cfg_tuple_get(obj, "validity"));
+		resignobj = cfg_tuple_get(obj, "re-sign");
+		if (!cfg_obj_isvoid(resignobj))
+			resign = cfg_obj_asuint32(resignobj);
+
+		if (validity > 3660 || validity == 0) { /* 10 years */
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "%s '%u' is out of range (1..3660)",
+				    "sig-validity-interval", validity);
+			result = ISC_R_RANGE;
+		}
+
+		if (!cfg_obj_isvoid(resignobj)) {
+			if (resign > 3660 || resign == 0) { /* 10 years */
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "%s '%u' is out of range (1..3660)",
+					    "sig-validity-interval (re-sign)",
+					    validity);
+				result = ISC_R_RANGE;
+			} else if ((validity > 7 && validity < resign) ||
+				   (validity <= 7 && validity * 24 < resign)) {
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "validity interval (%u days) "
+					    "less than re-signing interval "
+					    "(%u %s)", validity, resign,
+					    (validity > 7) ? "days" : "hours");
+				result = ISC_R_RANGE;
+			}
+		}
+	}
+
 	obj = NULL;
 	(void)cfg_map_get(options, "preferred-glue", &obj);
 	if (obj != NULL) {
@@ -558,6 +595,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 				    "preferred-glue unexpected value '%s'",
 				    str);
 	}
+
 	obj = NULL;
 	(void)cfg_map_get(options, "root-delegation-only", &obj);
 	if (obj != NULL) {
@@ -872,8 +910,11 @@ validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
 			if (new == NULL)
 				goto cleanup;
 			if (stackcount != 0) {
+				void *ptr;
+
+				DE_CONST(stack, ptr);
 				memcpy(new, stack, oldsize);
-				isc_mem_put(mctx, stack, oldsize);
+				isc_mem_put(mctx, ptr, oldsize);
 			}
 			stack = new;
 			stackcount = newlen;
@@ -886,8 +927,12 @@ validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
 		goto resume;
 	}
  cleanup:
-	if (stack != NULL)
-		isc_mem_put(mctx, stack, stackcount * sizeof(*stack));
+	if (stack != NULL) {
+		void *ptr;
+
+		DE_CONST(stack, ptr);
+		isc_mem_put(mctx, ptr, stackcount * sizeof(*stack));
+	}
 	isc_symtab_destroy(&symtab);
 	*countp = count;
 	return (result);
@@ -1006,9 +1051,9 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	{ "notify", MASTERZONE | SLAVEZONE },
 	{ "also-notify", MASTERZONE | SLAVEZONE },
 	{ "dialup", MASTERZONE | SLAVEZONE | STUBZONE },
-	{ "delegation-only", HINTZONE | STUBZONE },
-	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE},
-	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE},
+	{ "delegation-only", HINTZONE | STUBZONE | DELEGATIONZONE },
+	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE },
+	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE },
 	{ "maintain-ixfr-base", MASTERZONE | SLAVEZONE },
 	{ "max-ixfr-log-size", MASTERZONE | SLAVEZONE },
 	{ "notify-source", MASTERZONE | SLAVEZONE },
@@ -1024,6 +1069,10 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	{ "max-refresh-time", SLAVEZONE | STUBZONE },
 	{ "min-refresh-time", SLAVEZONE | STUBZONE },
 	{ "sig-validity-interval", MASTERZONE },
+	{ "sig-re-signing-interval", MASTERZONE },
+	{ "sig-signing-nodes", MASTERZONE },
+	{ "sig-signing-type", MASTERZONE },
+	{ "sig-signing-signatures", MASTERZONE },
 	{ "zone-statistics", MASTERZONE | SLAVEZONE | STUBZONE },
 	{ "allow-update", MASTERZONE | CHECKACL },
 	{ "allow-update-forwarding", SLAVEZONE | CHECKACL },
@@ -1109,7 +1158,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 
 	/*
 	 * Look for an already existing zone.
-	 * We need to make this cannonical as isc_symtab_define()
+	 * We need to make this canonical as isc_symtab_define()
 	 * deals with strings.
 	 */
 	dns_fixedname_init(&fixedname);
@@ -1214,6 +1263,17 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		} else if (res2 == ISC_R_SUCCESS &&
 			   check_update_policy(obj, logctx) != ISC_R_SUCCESS)
 			result = ISC_R_FAILURE;
+		obj = NULL;
+		res1 = cfg_map_get(zoptions, "sig-signing-type", &obj);
+		if (res1 == ISC_R_SUCCESS) {
+			isc_uint32_t type = cfg_obj_asuint32(obj);
+			if (type < 0xff00U || type > 0xffffU)
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "sig-signing-type: %u out of "
+					    "range [%u..%u]", type,
+					    0xff00U, 0xffffU);
+			result = ISC_R_FAILURE;
+		}
 	}
 
 	/*

@@ -1,3 +1,30 @@
+bind9 (1:9.6.ESV.R1+dfsg-0+lenny2) stable-security; urgency=medium
+
+  * Use old location of the PID files.  Closes: #585004.
+  * Log warning if openssl.cnf is not readable.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Wed, 09 Jun 2010 06:53:48 +0200
+
+bind9 (1:9.6.ESV.R1+dfsg-0+lenny1) stable-security; urgency=high
+
+  * New upstream version: BIND 9.6-ESV-R1.
+  * Restore Debian-specific feature patches.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Sun, 23 May 2010 14:45:30 +0200
+
+bind9 (1:9.6.ESV+dfsg-0+lenny1) stable-security; urgency=high
+
+  * New upstream version: BIND 9.6-ESV.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Sun, 16 May 2010 19:43:10 +0200
+
+bind9 (1:9.5.1.dfsg.P3-1+lenny1) stable-security; urgency=high
+
+  * Fix cache poisoning through additional section for secure delegations
+    (CVE-2009-4022).  Backport of ISC changes between 9.5.2 and 9.5.2-P1.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Sun, 20 Dec 2009 20:14:35 +0100
+
 bind9 (1:9.5.1.dfsg.P3-1) stable-security; urgency=low
 
   [Internet Software Consortium, Inc]

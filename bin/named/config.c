@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.c,v 1.82.38.8 2008/09/27 23:39:42 jinmei Exp $ */
+/* $Id: config.c,v 1.93.14.2 2009/03/17 23:47:28 tbox Exp $ */
 
 /*! \file */
 
@@ -69,7 +69,7 @@ options {\n\
 	memstatistics-file \"named.memstats\";\n\
 	multiple-cnames no;\n\
 #	named-xfer <obsolete>;\n\
-#	pid-file \"" NS_LOCALSTATEDIR "/named.pid\"; /* or /lwresd.pid */\n\
+#	pid-file \"" NS_LOCALSTATEDIR "/run/named/named.pid\"; /* or /lwresd.pid */\n\
 	port 53;\n\
 	recursing-file \"named.recursing\";\n\
 "
@@ -147,6 +147,7 @@ options {\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
 	zero-no-soa-ttl-cache no;\n\
+	nsec3-test-zone no;\n\
 "
 
 "	/* zone */\n\
@@ -176,6 +177,9 @@ options {\n\
 	min-refresh-time 300;\n\
 	multi-master no;\n\
 	sig-validity-interval 30; /* days */\n\
+	sig-signing-nodes 100;\n\
+	sig-signing-signatures 10;\n\
+	sig-signing-type 65534;\n\
 	zone-statistics false;\n\
 	max-journal-size unlimited;\n\
 	ixfr-from-differences false;\n\
