@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.53.48.4 2010/01/15 23:47:33 tbox Exp $
+# $Id: tests.sh,v 1.53.48.4.4.3 2010/08/13 07:25:21 marka Exp $
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -841,6 +841,30 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking a non-cachable NODATA works ($n)"
+ret=0
+$DIG $DIGOPTS +noauth a.nosoa.secure.example. txt @10.53.0.7 \
+	> dig.out.ns7.test$n || ret=1
+grep "AUTHORITY: 0" dig.out.ns7.test$n > /dev/null || ret=1
+$DIG $DIGOPTS +noauth a.nosoa.secure.example. txt @10.53.0.4 \
+	> dig.out.ns4.test$n || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking a non-cachable NXDOMAIN works ($n)"
+ret=0
+$DIG $DIGOPTS +noauth b.nosoa.secure.example. txt @10.53.0.7 \
+	> dig.out.ns7.test$n || ret=1
+grep "AUTHORITY: 0" dig.out.ns7.test$n > /dev/null || ret=1
+$DIG $DIGOPTS +noauth b.nosoa.secure.example. txt @10.53.0.4 \
+	> dig.out.ns4.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 #
 # private.secure.example is served by the same server as its
 # grand parent and there is not a secure delegation from secure.example
@@ -870,6 +894,17 @@ ret=0
 $DIG $DIGOPTS rfc2535.example. SOA @10.53.0.3 \
 	> dig.out.ns3.test$n || ret=1
 grep "status: NOERROR" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+#
+# RT21868 regression test.
+#
+echo "I:checking NSEC3 zone with mismatched NSEC3PARAM / NSEC parameters ($n)"
+ret=0
+$DIG $DIGOPTS non-exist.badparam. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
