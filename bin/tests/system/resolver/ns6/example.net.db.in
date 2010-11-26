@@ -1,5 +1,4 @@
-; Copyright (C) 2004, 2010  Internet Systems Consortium, Inc. ("ISC")
-; Copyright (C) 2000, 2001  Internet Software Consortium.
+; Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -13,22 +12,11 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: root.db.in,v 1.8.18.2 2010/11/16 23:45:23 tbox Exp $
+; $Id: example.net.db.in,v 1.2.12.3 2010/11/16 23:45:23 tbox Exp $
 
-$TTL 300
-. 			IN SOA	gson.nominum.com. a.root.servers.nil. (
-				2000042100   	; serial
-				600         	; refresh
-				600         	; retry
-				1200    	; expire
-				600       	; minimum
-				)
-.			NS	a.root-servers.nil.
-a.root-servers.nil.	A	10.53.0.1
-
-example.		NS	ns2.example.
-ns2.example.		A	10.53.0.2
-dlv.			NS	ns2.dlv.
-ns2.dlv.		A	10.53.0.2
-algroll			NS	ns2.algroll
-ns2.algroll.		A	10.53.0.2
+$TTL 600
+@	IN SOA	ns hostmaster 1 1800 900 604800 600
+@	IN NS	ns
+@	IN MX	0 mail
+ns	IN A	10.53.0.6
+mail	IN A	10.53.0.6
