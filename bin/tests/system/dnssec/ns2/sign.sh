@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: sign.sh,v 1.30.48.8.4.1 2010/08/13 07:25:22 marka Exp $
+# $Id: sign.sh,v 1.30.48.8.4.5 2010/11/17 10:45:39 marka Exp $
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -115,7 +115,6 @@ cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
 
 $SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
 
-
 # Sign the badparam secure file
 
 zone=badparam.
@@ -130,3 +129,34 @@ cat $infile $keyname1.key $keyname2.key >$zonefile
 $SIGNER -P -3 - -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 sed 's/IN NSEC3 1 0 1 /IN NSEC3 1 0 10 /' $zonefile.signed > $zonefile.bad
+
+# Sign the single-nsec3 secure zone with optout
+
+zone=single-nsec3.
+infile=single-nsec3.db.in
+zonefile=single-nsec3.db
+
+keyname1=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname2=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -P -3 - -A -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+
+#
+# algroll has just has the old DNSKEY records removed and is waiting
+# for them to be flushed from caches.  We still need to generate
+# RRSIGs for the old DNSKEY.
+#
+zone=algroll.
+infile=algroll.db.in
+zonefile=algroll.db
+
+keyold1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyold2=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+keynew1=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keynew2=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+
+cat $infile $keynew1.key $keynew2.key >$zonefile
+
+$SIGNER -P -r $RANDFILE -o $zone -k $keyold1 -k $keynew1 $zonefile $keyold1 $keyold2 $keynew1 $keynew2 > /dev/null
