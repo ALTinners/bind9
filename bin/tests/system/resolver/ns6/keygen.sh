@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh -e
 #
-# Copyright (C) 2008, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,12 +14,18 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.1.170.2 2010/11/16 23:46:26 tbox Exp $
+# $Id: keygen.sh,v 1.2.8.3 2010/11/17 10:34:40 marka Exp $
 
-#
-# Clean up after resolver tests.
-#
-rm -f */named.memstats
-rm -f ns6/K*
-rm -f ns6/example.net.db.signed ns6/example.net.db
+SYSTEMTESTTOP=../..
+. $SYSTEMTESTTOP/conf.sh
 
+RANDFILE=../random.data
+
+zone=example.net
+zonefile="${zone}.db"
+infile="${zonefile}.in"
+cp $infile $zonefile
+ksk=`$KEYGEN -a RSASHA256 -b 1024 -r $RANDFILE -f KSK $zone`
+zsk=`$KEYGEN -a RSASHA256 -b 1024 -r $RANDFILE $zone`
+cat $ksk.key $zsk.key >> $zonefile
+$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1

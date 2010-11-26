@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rbtdb.c,v 1.270.12.16.8.3 2010/02/26 00:24:39 marka Exp $ */
+/* $Id: rbtdb.c,v 1.270.12.16.8.5 2010/11/17 06:47:10 marka Exp $ */
 
 /*! \file */
 
@@ -411,7 +411,6 @@ typedef struct {
 	rbtdb_version_t *               current_version;
 	rbtdb_version_t *               future_version;
 	rbtdb_versionlist_t             open_versions;
-	isc_boolean_t                   overmem;
 	isc_task_t *                    task;
 	dns_dbnode_t                    *soanode;
 	dns_dbnode_t                    *nsnode;
@@ -4928,7 +4927,7 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 	if (now == 0)
 		isc_stdtime_get(&now);
 
-	if (rbtdb->overmem) {
+	if (isc_mem_isovermem(rbtdb->common.mctx)) {
 		isc_uint32_t val;
 
 		isc_random_get(&val);
@@ -4938,8 +4937,8 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 		force_expire = ISC_TF(rbtnode->down == NULL && val % 4 == 0);
 
 		/*
-		 * Note that 'log' can be true IFF rbtdb->overmem is also true.
-		 * rbtdb->overmem can currently only be true for cache
+		 * Note that 'log' can be true IFF overmem is also true.
+		 * overmem can currently only be true for cache
 		 * databases -- hence all of the "overmem cache" log strings.
 		 */
 		log = ISC_TF(isc_log_wouldlog(dns_lctx, level));
@@ -4984,7 +4983,7 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 					      "reprieve by RETAIN() %s",
 					      printname);
 			}
-		} else if (rbtdb->overmem && log)
+		} else if (isc_mem_isovermem(rbtdb->common.mctx) && log)
 			isc_log_write(dns_lctx, category, module, level,
 				      "overmem cache: saved %s", printname);
 
@@ -4996,10 +4995,12 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 
 static void
 overmem(dns_db_t *db, isc_boolean_t overmem) {
-	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *)db;
+	/* This is an empty callback.  See adb.c:water() */
 
-	if (IS_CACHE(rbtdb))
-		rbtdb->overmem = overmem;
+	UNUSED(db);
+	UNUSED(overmem);
+
+	return;
 }
 
 static void
@@ -5417,14 +5418,14 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
     dns_rdataset_t *addedrdataset, isc_stdtime_t now)
 {
 	rbtdb_changed_t *changed = NULL;
-	rdatasetheader_t *topheader, *topheader_prev, *header;
+	rdatasetheader_t *topheader, *topheader_prev, *header, *sigheader;
 	unsigned char *merged;
 	isc_result_t result;
 	isc_boolean_t header_nx;
 	isc_boolean_t newheader_nx;
 	isc_boolean_t merge;
 	dns_rdatatype_t rdtype, covers;
-	rbtdb_rdatatype_t negtype;
+	rbtdb_rdatatype_t negtype, sigtype;
 	dns_trust_t trust;
 	int idx;
 
@@ -5462,7 +5463,7 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 
 	newheader_nx = NONEXISTENT(newheader) ? ISC_TRUE : ISC_FALSE;
 	topheader_prev = NULL;
-
+	sigheader = NULL;
 	negtype = 0;
 	if (rbtversion == NULL && !newheader_nx) {
 		rdtype = RBTDB_RDATATYPE_BASE(newheader->type);
@@ -5471,26 +5472,34 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 			 * We're adding a negative cache entry.
 			 */
 			covers = RBTDB_RDATATYPE_EXT(newheader->type);
-			if (covers == dns_rdatatype_any) {
+			sigtype = RBTDB_RDATATYPE_VALUE(dns_rdatatype_rrsig,
+							covers);
+			for (topheader = rbtnode->data;
+			     topheader != NULL;
+			     topheader = topheader->next) {
 				/*
-				 * We're adding an negative cache entry
+				 * If we're adding an negative cache entry
 				 * which covers all types (NXDOMAIN,
 				 * NODATA(QTYPE=ANY)).
 				 *
 				 * We make all other data stale so that the
 				 * only rdataset that can be found at this
 				 * node is the negative cache entry.
+				 *
+				 * Otherwise look for any RRSIGs of the
+				 * given type so they can be marked stale
+				 * later.
 				 */
-				for (topheader = rbtnode->data;
-				     topheader != NULL;
-				     topheader = topheader->next) {
+				if (covers == dns_rdatatype_any) {
 					set_ttl(rbtdb, topheader, 0);
 					topheader->attributes |=
 						RDATASET_ATTR_STALE;
-				}
-				rbtnode->dirty = 1;
-				goto find_header;
+					rbtnode->dirty = 1;
+				} else if (topheader->type == sigtype)
+					sigheader = topheader;
 			}
+			if (covers == dns_rdatatype_any)
+				goto find_header;
 			negtype = RBTDB_RDATATYPE_VALUE(covers, 0);
 		} else {
 			/*
@@ -5728,6 +5737,11 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 			if (rbtversion == NULL) {
 				set_ttl(rbtdb, header, 0);
 				header->attributes |= RDATASET_ATTR_STALE;
+				if (sigheader != NULL) {
+					set_ttl(rbtdb, sigheader, 0);
+					sigheader->attributes |=
+						 RDATASET_ATTR_STALE;
+				}
 			}
 			idx = newheader->node->locknum;
 			if (IS_CACHE(rbtdb)) {
@@ -5943,6 +5957,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	isc_result_t result;
 	isc_boolean_t delegating;
 	isc_boolean_t tree_locked = ISC_FALSE;
+	isc_boolean_t cache_is_overmem = ISC_FALSE;
 
 	REQUIRE(VALID_RBTDB(rbtdb));
 
@@ -6030,12 +6045,14 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	 * the lock does not necessarily have to be acquired but it will help
 	 * purge stale entries more effectively.
 	 */
-	if (delegating || (IS_CACHE(rbtdb) && rbtdb->overmem)) {
+	if (IS_CACHE(rbtdb) && isc_mem_isovermem(rbtdb->common.mctx))
+		cache_is_overmem = ISC_TRUE;
+	if (delegating || cache_is_overmem) {
 		tree_locked = ISC_TRUE;
 		RWLOCK(&rbtdb->tree_lock, isc_rwlocktype_write);
 	}
 
-	if (IS_CACHE(rbtdb) && rbtdb->overmem)
+	if (cache_is_overmem)
 		overmem_purge(rbtdb, rbtnode->locknum, now, tree_locked);
 
 	NODE_LOCK(&rbtdb->node_locks[rbtnode->locknum].lock,
@@ -7098,7 +7115,6 @@ dns_rbtdb_create
 		return (result);
 	}
 	rbtdb->attributes = 0;
-	rbtdb->overmem = ISC_FALSE;
 	rbtdb->task = NULL;
 
 	/*
