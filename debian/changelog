@@ -1,3 +1,19 @@
+bind9 (1:9.7.1.dfsg.P2-2ubuntu0.1) maverick-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via ncache entry and a rrsig for the
+    same type
+    - debian/patches/CVE-2010-3613-3614.patch: properly mark existing RRSIG
+      records as stale in lib/dns/rbtdb.c. Added tests to
+      bin/tests/system/resolver/*.
+    - CVE-2010-3613
+  * SECURITY UPDATE: answers incorrectly marked as insecure during key
+    algorithm rollover
+    - debian/patches/CVE-2010-3613-3614.patch: improve logic in
+      lib/dns/validator.c. Added tests to bin/tests/system/dnssec/*.
+    - CVE-2010-3614
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 30 Nov 2010 08:39:45 -0500
+
 bind9 (1:9.7.1.dfsg.P2-2) unstable; urgency=low
 
   * Correct conflicts for bind9-host
