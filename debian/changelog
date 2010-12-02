@@ -1,3 +1,17 @@
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.5) hardy-security; urgency=low
+
+  * SECURITY UPDATE: incorrect cache update from additional section
+    - bin/named/query.c, lib/dns/include/dns/types.h,
+      lib/dns/{resolver.c,validator.c}: further fixes backported from
+      9.4.3-P5
+    - CVE-2009-4022
+  * SECURITY UPDATE: incorrect caching of bogus NXDOMAIN responses
+    - bin/named/query.c, lib/dns/include/dns/types.h,
+      lib/dns/{resolver.c,validator.c}: fixes backported from 9.4.3-P5
+    - CVE-2010-0097
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 19 Jan 2010 13:15:01 -0500
+
 bind9 (1:9.4.2.dfsg.P2-2ubuntu0.4) hardy-security; urgency=low
 
   * SECURITY UPDATE: incorrect cache update from additional section
