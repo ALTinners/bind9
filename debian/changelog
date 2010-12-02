@@ -1,3 +1,18 @@
+bind9 (1:9.6.1.dfsg.P1-3ubuntu0.3) karmic-security; urgency=low
+
+  * SECURITY UPDATE: incorrect cache update from additional section
+    - bin/named/query.c, lib/dns/include/dns/{db.h,types.h},
+      lib/dns/{rbtdb.c,resolver.c,validator.c}: further fixes backported
+      from 9.6.1-P3
+    - CVE-2009-4022
+  * SECURITY UPDATE: incorrect caching of bogus NXDOMAIN responses
+    - bin/named/query.c, lib/dns/include/dns/{db.h,types.h},
+      lib/dns/{rbtdb.c,resolver.c,validator.c}: fixes backported from
+      9.6.1-P3
+    - CVE-2010-0097
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 19 Jan 2010 12:59:27 -0500
+
 bind9 (1:9.6.1.dfsg.P1-3ubuntu0.2) karmic-security; urgency=low
 
   * SECURITY UPDATE: incorrect cache update from additional section
