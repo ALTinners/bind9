@@ -1,3 +1,17 @@
+bind9 (1:9.3.2-2ubuntu1.11) dapper-security; urgency=low
+
+  * SECURITY UPDATE: incorrect cache update from additional section
+    - bin/named/query.c, lib/dns/include/dns/types.h,
+      lib/dns/{resolver.c,validator.c}: further fixes backported from
+      9.4.3-P5
+    - CVE-2009-4022
+  * SECURITY UPDATE: incorrect caching of bogus NXDOMAIN responses
+    - bin/named/query.c, lib/dns/include/dns/types.h,
+      lib/dns/{resolver.c,validator.c}: fixes backported from 9.4.3-P5
+    - CVE-2010-0097
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 19 Jan 2010 19:19:45 -0500
+
 bind9 (1:9.3.2-2ubuntu1.9) dapper-security; urgency=low
 
   * SECURITY UPDATE: incorrect cache update from additional section
