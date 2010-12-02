@@ -1,3 +1,17 @@
+bind9 (1:9.3.2-2ubuntu1.12) dapper-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via ncache entry and a rrsig for the
+    same type
+    - lib/dns/rbtdb.c: properly mark existing RRSIG records as stale. Also
+      required backport of change #1997.
+    - CVE-2010-3613
+  * SECURITY UPDATE: answers incorrectly marked as insecure during key
+    algorithm rollover
+    - lib/dns/include/dns/types.h, lib/dns/validator.c: improve logic.
+    - CVE-2010-3614
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 26 Nov 2010 12:54:23 -0500
+
 bind9 (1:9.3.2-2ubuntu1.11) dapper-security; urgency=low
 
   * SECURITY UPDATE: incorrect cache update from additional section
