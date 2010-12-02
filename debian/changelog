@@ -1,3 +1,18 @@
+bind9 (1:9.6.1.dfsg.P1-3ubuntu0.4) karmic-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via ncache entry and a rrsig for the
+    same type
+    - lib/dns/rbtdb.c: properly mark existing RRSIG records as stale.
+    - bin/tests/system/resolver/*: added tests.
+    - CVE-2010-3613
+  * SECURITY UPDATE: answers incorrectly marked as insecure during key
+    algorithm rollover
+    - lib/dns/include/dns/types.h, lib/dns/validator.c: improve logic.
+    - bin/tests/system/dnssec/*: added tests.
+    - CVE-2010-3614
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 26 Nov 2010 17:04:49 -0500
+
 bind9 (1:9.6.1.dfsg.P1-3ubuntu0.3) karmic-security; urgency=low
 
   * SECURITY UPDATE: incorrect cache update from additional section
