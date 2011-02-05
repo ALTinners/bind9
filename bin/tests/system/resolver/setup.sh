@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: setup.sh,v 1.2.8.4 2010/11/17 10:34:40 marka Exp $
+# $Id: setup.sh,v 1.2.6.4 2010/11/17 23:45:45 tbox Exp $
 
 ../../genrandom 400 random.data
 

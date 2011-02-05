@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.1.170.2 2010/11/16 23:46:26 tbox Exp $
+# $Id: clean.sh,v 1.1.84.2 2010/11/17 23:45:45 tbox Exp $
 
 #
 # Clean up after resolver tests.

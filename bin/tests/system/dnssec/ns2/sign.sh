@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: sign.sh,v 1.30.48.8.2.2 2010/11/17 10:44:44 marka Exp $
+# $Id: sign.sh,v 1.30.48.13 2010/11/17 10:43:14 marka Exp $
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -114,6 +114,34 @@ dlvkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
 
 $SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+
+# Sign the badparam secure file
+
+zone=badparam.
+infile=badparam.db.in
+zonefile=badparam.db
+
+keyname1=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname2=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -P -3 - -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+
+sed 's/IN NSEC3 1 0 1 /IN NSEC3 1 0 10 /' $zonefile.signed > $zonefile.bad
+
+# Sign the single-nsec3 secure zone with optout
+
+zone=single-nsec3.
+infile=single-nsec3.db.in
+zonefile=single-nsec3.db
+
+keyname1=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname2=`$KEYGEN -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -P -3 - -A -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 #
 # algroll has just has the old DNSKEY records removed and is waiting
