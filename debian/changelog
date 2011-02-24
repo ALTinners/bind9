@@ -1,3 +1,12 @@
+bind9 (1:9.7.1.dfsg.P2-2ubuntu0.2) maverick-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via IXFR or DDNS update
+    - debian/patches/CVE-2011-0414.patch: Use correct lock in
+      lib/dns/rbtdb.c.
+    - CVE-2011-0414
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 23 Feb 2011 08:30:32 -0500
+
 bind9 (1:9.7.1.dfsg.P2-2ubuntu0.1) maverick-security; urgency=low
 
   * SECURITY UPDATE: denial of service via ncache entry and a rrsig for the
