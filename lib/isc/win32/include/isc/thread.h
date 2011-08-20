@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: thread.h,v 1.16.18.6 2009/09/25 23:46:13 tbox Exp $ */
+/* $Id: thread.h,v 1.16.18.6 2009-09-25 23:46:13 tbox Exp $ */
 
 #ifndef ISC_THREAD_H
 #define ISC_THREAD_H 1

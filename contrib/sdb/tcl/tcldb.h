@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tcldb.h,v 1.5 2004/03/05 05:04:35 marka Exp $ */
+/* $Id: tcldb.h,v 1.5 2004-03-05 05:04:35 marka Exp $ */
 
 #include <isc/types.h>
 

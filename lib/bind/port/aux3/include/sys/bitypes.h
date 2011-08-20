@@ -1,5 +1,5 @@
 /*
- * $Id: bitypes.h,v 1.1 2001/05/17 06:25:46 marka Exp $
+ * $Id: bitypes.h,v 1.1 2001-05-17 06:25:46 marka Exp $
  */
 
 /*

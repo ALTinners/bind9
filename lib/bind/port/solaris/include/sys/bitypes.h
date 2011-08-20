@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bitypes.h,v 1.3 2004/03/16 05:22:28 marka Exp $ */
+/* $Id: bitypes.h,v 1.3 2004-03-16 05:22:28 marka Exp $ */
 
 #ifndef __BIT_TYPES_DEFINED__
 #define __BIT_TYPES_DEFINED__

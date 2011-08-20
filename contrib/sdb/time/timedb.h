@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timedb.h,v 1.3 2004/03/05 05:04:38 marka Exp $ */
+/* $Id: timedb.h,v 1.3 2004-03-05 05:04:38 marka Exp $ */
 
 #include <isc/types.h>
 

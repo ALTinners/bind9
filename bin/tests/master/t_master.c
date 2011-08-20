@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_master.c,v 1.32.18.4 2009/01/22 23:46:00 tbox Exp $ */
+/* $Id: t_master.c,v 1.32.18.4 2009-01-22 23:46:00 tbox Exp $ */
 
 #include <config.h>
 

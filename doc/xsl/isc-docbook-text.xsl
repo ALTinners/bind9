@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id: isc-docbook-text.xsl,v 1.1.10.1 2005/09/05 03:01:47 marka Exp $ -->
+<!-- $Id: isc-docbook-text.xsl,v 1.1.10.1 2005-09-05 03:01:47 marka Exp $ -->
 
 <!-- Tweaks to Docbook-XSL HTML for producing flat ASCII text. --> 
 

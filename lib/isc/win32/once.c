@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: once.c,v 1.10.18.3 2007/08/28 07:20:06 tbox Exp $ */
+/* $Id: once.c,v 1.10.18.3 2007-08-28 07:20:06 tbox Exp $ */
 
 /* Principal Authors: DCL */
 

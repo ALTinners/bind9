@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: makedefs.pl,v 1.6.18.2 2009/01/19 23:46:17 tbox Exp $
+# $Id: makedefs.pl,v 1.6.18.2 2009-01-19 23:46:17 tbox Exp $
 
 # makedefs.pl
 # This script goes through all of the lib header files and creates a .def file

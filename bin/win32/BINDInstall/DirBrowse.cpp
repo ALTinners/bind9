@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: DirBrowse.cpp,v 1.4 2004/03/05 05:04:17 marka Exp $ */
+/* $Id: DirBrowse.cpp,v 1.4 2004-03-05 05:04:17 marka Exp $ */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

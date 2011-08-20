@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.8 2004/03/05 05:03:24 marka Exp $ 
+# $Id: tests.sh,v 1.8 2004-03-05 05:03:24 marka Exp $ 
 
 # ns1 = stealth master
 # ns2 = slave with update forwarding disabled; not currently used

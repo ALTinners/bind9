@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dirdb.h,v 1.3 2004/03/05 05:04:30 marka Exp $ */
+/* $Id: dirdb.h,v 1.3 2004-03-05 05:04:30 marka Exp $ */
 
 #include <isc/types.h>
 

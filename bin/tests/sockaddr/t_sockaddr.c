@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_sockaddr.c,v 1.12 2004/03/05 04:59:08 marka Exp $ */
+/* $Id: t_sockaddr.c,v 1.12 2004-03-05 04:59:08 marka Exp $ */
 
 #include <config.h>
 

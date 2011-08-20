@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zonetodb.c,v 1.13.18.7 2008/11/27 23:46:02 tbox Exp $ */
+/* $Id: zonetodb.c,v 1.13.18.7 2008-11-27 23:46:02 tbox Exp $ */
 
 #include <stdlib.h>
 #include <string.h>

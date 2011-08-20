@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: validator.c,v 1.119.18.60.6.1 2011-05-26 23:56:27 each Exp $ */
+/* $Id: validator.c,v 1.119.18.62 2011-02-27 23:45:16 tbox Exp $ */
 
 /*! \file */
 
@@ -331,8 +331,7 @@ fetch_callback_validator(isc_task_t *task, isc_event_t *event) {
 		validator_done(val, ISC_R_CANCELED);
 	} else if (eresult == ISC_R_SUCCESS) {
 		validator_log(val, ISC_LOG_DEBUG(3),
-			      "keyset with trust %s",
-			      dns_trust_totext(rdataset->trust));
+			      "keyset with trust %d", rdataset->trust);
 		/*
 		 * Only extract the dst key if the keyset is secure.
 		 */
@@ -409,13 +408,13 @@ dsfetched(isc_task_t *task, isc_event_t *event) {
 		validator_done(val, ISC_R_CANCELED);
 	} else if (eresult == ISC_R_SUCCESS) {
 		validator_log(val, ISC_LOG_DEBUG(3),
-			      "dsset with trust %s",
-			       dns_trust_totext(rdataset->trust));
+			      "dsset with trust %d", rdataset->trust);
 		val->dsset = &val->frdataset;
 		result = validatezonekey(val);
 		if (result != DNS_R_WAIT)
 			validator_done(val, result);
-	} else if (eresult == DNS_R_NXRRSET ||
+	} else if (eresult == DNS_R_CNAME ||
+		   eresult == DNS_R_NXRRSET ||
 		   eresult == DNS_R_NCACHENXRRSET ||
 		   eresult == DNS_R_SERVFAIL)	/* RFC 1034 parent? */
 	{
@@ -483,12 +482,16 @@ dsfetched2(isc_task_t *task, isc_event_t *event) {
 	LOCK(&val->lock);
 	if (CANCELED(val)) {
 		validator_done(val, ISC_R_CANCELED);
-	} else if (eresult == DNS_R_NXRRSET || eresult == DNS_R_NCACHENXRRSET) {
+	} else if (eresult == DNS_R_CNAME ||
+		   eresult == DNS_R_NXRRSET ||
+		   eresult == DNS_R_NCACHENXRRSET)
+	{
 		/*
 		 * There is no DS.  If this is a delegation, we're done.
 		 */
 		tname = dns_fixedname_name(&devent->foundname);
-		if (isdelegation(tname, &val->frdataset, eresult)) {
+		if (eresult != DNS_R_CNAME &&
+		    isdelegation(tname, &val->frdataset, eresult)) {
 			if (val->mustbesecure) {
 				validator_log(val, ISC_LOG_WARNING,
 					      "must be secure failure");
@@ -564,8 +567,7 @@ keyvalidated(isc_task_t *task, isc_event_t *event) {
 		validator_done(val, ISC_R_CANCELED);
 	} else if (eresult == ISC_R_SUCCESS) {
 		validator_log(val, ISC_LOG_DEBUG(3),
-			      "keyset with trust %s",
-			      dns_trust_totext(val->frdataset.trust));
+			      "keyset with trust %d", val->frdataset.trust);
 		/*
 		 * Only extract the dst key if the keyset is secure.
 		 */
@@ -636,10 +638,10 @@ dsvalidated(isc_task_t *task, isc_event_t *event) {
 		isc_boolean_t have_dsset;
 		dns_name_t *name;
 		validator_log(val, ISC_LOG_DEBUG(3),
-			      "%s with trust %s",
+			      "%s with trust %d",
 			      val->frdataset.type == dns_rdatatype_ds ?
 			      "dsset" : "ds non-existance",
-			      dns_trust_totext(val->frdataset.trust));
+			      val->frdataset.trust);
 		have_dsset = ISC_TF(val->frdataset.type == dns_rdatatype_ds);
 		name = dns_fixedname_name(&val->fname);
 		if ((val->attributes & VALATTR_INSECURITY) != 0 &&
@@ -671,6 +673,60 @@ dsvalidated(isc_task_t *task, isc_event_t *event) {
 		}
 		validator_log(val, ISC_LOG_DEBUG(3),
 			      "dsvalidated: got %s",
+			      isc_result_totext(eresult));
+		validator_done(val, DNS_R_BROKENCHAIN);
+	}
+	want_destroy = exit_check(val);
+	UNLOCK(&val->lock);
+	if (want_destroy)
+		destroy(val);
+}
+
+/*%
+ * Callback when the CNAME record has been validated.
+ *
+ * Resumes validation of the unsecure zone proof.
+ */
+static void
+cnamevalidated(isc_task_t *task, isc_event_t *event) {
+	dns_validatorevent_t *devent;
+	dns_validator_t *val;
+	isc_boolean_t want_destroy;
+	isc_result_t result;
+	isc_result_t eresult;
+
+	UNUSED(task);
+	INSIST(event->ev_type == DNS_EVENT_VALIDATORDONE);
+
+	devent = (dns_validatorevent_t *)event;
+	val = devent->ev_arg;
+	eresult = devent->result;
+
+	isc_event_free(&event);
+	dns_validator_destroy(&val->subvalidator);
+
+	INSIST(val->event != NULL);
+	INSIST((val->attributes & VALATTR_INSECURITY) != 0);
+
+	validator_log(val, ISC_LOG_DEBUG(3), "in cnamevalidated");
+	LOCK(&val->lock);
+	if (CANCELED(val)) {
+		validator_done(val, ISC_R_CANCELED);
+	} else if (eresult == ISC_R_SUCCESS) {
+		validator_log(val, ISC_LOG_DEBUG(3), "cname with trust %d",
+			      val->frdataset.trust);
+		result = proveunsecure(val, ISC_FALSE, ISC_TRUE);
+		if (result != DNS_R_WAIT)
+			validator_done(val, result);
+	} else {
+		if (eresult != DNS_R_BROKENCHAIN) {
+			if (dns_rdataset_isassociated(&val->frdataset))
+				dns_rdataset_expire(&val->frdataset);
+			if (dns_rdataset_isassociated(&val->fsigrdataset))
+				dns_rdataset_expire(&val->fsigrdataset);
+		}
+		validator_log(val, ISC_LOG_DEBUG(3),
+			      "cnamevalidated: got %s",
 			      isc_result_totext(eresult));
 		validator_done(val, DNS_R_BROKENCHAIN);
 	}
@@ -996,8 +1052,8 @@ view_find(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type) {
 		INSIST(type == dns_rdatatype_dlv);
 		if (val->frdataset.trust != dns_trust_secure) {
 			validator_log(val, ISC_LOG_DEBUG(3),
-				      "covering nsec: trust %s",
-				      dns_trust_totext(val->frdataset.trust));
+				      "covering nsec: trust %u",
+				      val->frdataset.trust);
 			goto notfound;
 		}
 		result = dns_rdataset_first(&val->frdataset);
@@ -1314,8 +1370,8 @@ get_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo) {
 			 * See if we've got the key used in the signature.
 			 */
 			validator_log(val, ISC_LOG_DEBUG(3),
-				      "keyset with trust %s",
-				      dns_trust_totext(val->frdataset.trust));
+				      "keyset with trust %d",
+				      val->frdataset.trust);
 			result = get_dst_key(val, siginfo, val->keyset);
 			if (result != ISC_R_SUCCESS) {
 				/*
@@ -1989,11 +2045,12 @@ validatezonekey(dns_validator_t *val) {
 			if (result != ISC_R_SUCCESS)
 				return (result);
 			return (DNS_R_WAIT);
-		} else if (result ==  DNS_R_NCACHENXDOMAIN ||
+		} else if (result == DNS_R_NCACHENXDOMAIN ||
 			   result == DNS_R_NCACHENXRRSET ||
 			   result == DNS_R_EMPTYNAME ||
 			   result == DNS_R_NXDOMAIN ||
-			   result == DNS_R_NXRRSET)
+			   result == DNS_R_NXRRSET ||
+			   result == DNS_R_CNAME)
 		{
 			/*
 			 * The DS does not exist.
@@ -2019,11 +2076,8 @@ validatezonekey(dns_validator_t *val) {
 				      "must be secure failure");
 			return (DNS_R_MUSTBESECURE);
 		}
-		if (val->view->dlv == NULL || DLVTRIED(val)) {
-			markanswer(val, "validatezonekey (2)");
-			return (ISC_R_SUCCESS);
-		}
-		return (startfinddlvsep(val, val->event->name));
+		markanswer(val, "validatezonekey (2)");
+		return (ISC_R_SUCCESS);
 	}
 
 	/*
@@ -2631,8 +2685,7 @@ dlvvalidated(isc_task_t *task, isc_event_t *event) {
 		validator_done(val, ISC_R_CANCELED);
 	} else if (eresult == ISC_R_SUCCESS) {
 		validator_log(val, ISC_LOG_DEBUG(3),
-			      "dlvset with trust %s",
-			      dns_trust_totext(val->frdataset.trust));
+			      "dlvset with trust %d", val->frdataset.trust);
 		dns_rdataset_clone(&val->frdataset, &val->dlv);
 		val->havedlvsep = ISC_TRUE;
 		if (dlv_algorithm_supported(val))
@@ -3092,6 +3145,20 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 					return (ISC_R_SUCCESS);
 				}
 				return (startfinddlvsep(val, tname));
+			}
+			continue;
+		} else if (result == DNS_R_CNAME) {
+			if (DNS_TRUST_PENDING(val->frdataset.trust) ||
+			    DNS_TRUST_ANSWER(val->frdataset.trust)) {
+				result = create_validator(val, tname,
+							  dns_rdatatype_cname,
+							  &val->frdataset,
+							  NULL, cnamevalidated,
+							  "proveunsecure "
+							  "(cname)");
+				if (result != ISC_R_SUCCESS)
+					goto out;
+				return (DNS_R_WAIT);
 			}
 			continue;
 		} else if (result == ISC_R_SUCCESS) {

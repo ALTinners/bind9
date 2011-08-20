@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log_test.c,v 1.24 2004/03/05 04:58:38 marka Exp $ */
+/* $Id: log_test.c,v 1.24.18.2 2011-01-14 00:49:54 tbox Exp $ */
 
 /* Principal Authors: DCL */
 
@@ -306,16 +306,16 @@ main(int argc, char **argv) {
 	isc_log_write1(lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_RBTDB,
 		       ISC_LOG_CRITICAL, "%s", message);
 	isc_log_write1(lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_RBTDB,
-		       ISC_LOG_CRITICAL, message);
+		       ISC_LOG_CRITICAL, "%s", message);
 
 	isc_log_setduplicateinterval(lcfg, 1);
 	message = "This message should appear twice on stderr";
 
 	isc_log_write1(lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_RBTDB,
-		       ISC_LOG_CRITICAL, message);
+		       ISC_LOG_CRITICAL, "%s", message);
 	sleep(2);
 	isc_log_write1(lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_RBTDB,
-		       ISC_LOG_CRITICAL, message);
+		       ISC_LOG_CRITICAL, "%s", message);
 
 	/*
 	 * Review where everything went.

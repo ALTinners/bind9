@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.3.4.2 2008/01/11 23:45:59 tbox Exp $
+# $Id: clean.sh,v 1.3.4.2 2008-01-11 23:45:59 tbox Exp $
 
 #
 # Clean up after zone transfer tests.

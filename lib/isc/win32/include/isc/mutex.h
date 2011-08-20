@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mutex.h,v 1.17.18.5 2009/01/19 23:46:17 tbox Exp $ */
+/* $Id: mutex.h,v 1.17.18.5 2009-01-19 23:46:17 tbox Exp $ */
 
 #ifndef ISC_MUTEX_H
 #define ISC_MUTEX_H 1

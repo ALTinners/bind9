@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bindevt.c,v 1.3 2004/03/05 05:14:03 marka Exp $ */
+/* $Id: bindevt.c,v 1.3 2004-03-05 05:14:03 marka Exp $ */
 
 /*
  * bindevt.c : Defines the entry point for event log viewer DLL.

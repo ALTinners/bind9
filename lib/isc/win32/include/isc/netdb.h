@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netdb.h,v 1.7 2004/03/05 05:12:05 marka Exp $ */
+/* $Id: netdb.h,v 1.7 2004-03-05 05:12:05 marka Exp $ */
 
 #ifndef ISC_NETDB_H
 #define ISC_NETDB_H 1

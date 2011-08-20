@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr_multicast.c,v 1.10 2004/03/05 04:59:00 marka Exp $ */
+/* $Id: netaddr_multicast.c,v 1.10 2004-03-05 04:59:00 marka Exp $ */
 
 #include <config.h>
 

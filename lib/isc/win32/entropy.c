@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.6.18.2 2009/01/19 23:46:17 tbox Exp $ */
+/* $Id: entropy.c,v 1.6.18.2 2009-01-19 23:46:17 tbox Exp $ */
 
 /*
  * This is the system dependent part of the ISC entropy API.

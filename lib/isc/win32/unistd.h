@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: unistd.h,v 1.4.18.2 2008/01/23 03:21:46 tbox Exp $ */
+/* $Id: unistd.h,v 1.4.18.2 2008-01-23 03:21:46 tbox Exp $ */
 
 /* None of these are defined in NT, so define them for our use */
 #define O_NONBLOCK 1

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: journalprint.c,v 1.4.18.8 2007/08/28 07:20:01 tbox Exp $ */
+/* $Id: journalprint.c,v 1.4.18.8 2007-08-28 07:20:01 tbox Exp $ */
 
 /*! \file */
 #include <config.h>

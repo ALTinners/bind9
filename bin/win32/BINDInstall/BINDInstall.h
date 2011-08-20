@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: BINDInstall.h,v 1.4 2004/03/05 05:04:16 marka Exp $ */
+/* $Id: BINDInstall.h,v 1.4 2004-03-05 05:04:16 marka Exp $ */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

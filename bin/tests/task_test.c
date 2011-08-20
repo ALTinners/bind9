@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task_test.c,v 1.49 2004/03/05 04:58:40 marka Exp $ */
+/* $Id: task_test.c,v 1.49 2004-03-05 04:58:40 marka Exp $ */
 
 #include <config.h>
 

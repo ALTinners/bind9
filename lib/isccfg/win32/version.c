@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: version.c,v 1.4 2004/03/05 05:12:42 marka Exp $ */
+/* $Id: version.c,v 1.4 2004-03-05 05:12:42 marka Exp $ */
 
 #include <versions.h>
 

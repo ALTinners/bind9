@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: interfaceiter.c,v 1.8.18.8 2009/01/19 23:46:17 tbox Exp $ */
+/* $Id: interfaceiter.c,v 1.8.18.8 2009-01-19 23:46:17 tbox Exp $ */
 
 /*
  * Note that this code will need to be revisited to support IPv6 Interfaces.

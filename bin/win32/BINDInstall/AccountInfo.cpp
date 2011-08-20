@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: AccountInfo.cpp,v 1.6 2004/03/05 05:04:16 marka Exp $ */
+/* $Id: AccountInfo.cpp,v 1.6 2004-03-05 05:04:16 marka Exp $ */
 
 #ifndef UNICODE
 #define UNICODE

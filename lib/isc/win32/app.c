@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.c,v 1.5 2004/03/05 05:11:56 marka Exp $ */
+/* $Id: app.c,v 1.5 2004-03-05 05:11:56 marka Exp $ */
 
 #include <config.h>
 

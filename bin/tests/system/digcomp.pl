@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: digcomp.pl,v 1.12 2004/03/05 04:59:12 marka Exp $
+# $Id: digcomp.pl,v 1.12 2004-03-05 04:59:12 marka Exp $
 
 # Compare two files, each with the output from dig, for differences.
 # Ignore "unimportant" differences, like ordering of NS lines, TTL's,

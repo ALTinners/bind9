@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: win32os.h,v 1.3.18.2 2009/06/25 23:46:08 tbox Exp $ */
+/* $Id: win32os.h,v 1.3.18.2 2009-06-25 23:46:08 tbox Exp $ */
 
 #ifndef ISC_WIN32OS_H
 #define ISC_WIN32OS_H 1

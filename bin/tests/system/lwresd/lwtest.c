@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwtest.c,v 1.26.18.4 2008/01/14 23:45:59 tbox Exp $ */
+/* $Id: lwtest.c,v 1.26.18.4 2008-01-14 23:45:59 tbox Exp $ */
 
 #include <config.h>
 

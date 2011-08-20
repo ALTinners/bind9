@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: pgsqldb.h,v 1.3 2004/03/05 05:04:32 marka Exp $ */
+/* $Id: pgsqldb.h,v 1.3 2004-03-05 05:04:32 marka Exp $ */
 
 #include <isc/types.h>
 

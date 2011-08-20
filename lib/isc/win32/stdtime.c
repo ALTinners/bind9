@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdtime.c,v 1.10 2004/03/05 05:11:59 marka Exp $ */
+/* $Id: stdtime.c,v 1.10 2004-03-05 05:11:59 marka Exp $ */
 
 #include <config.h>
 

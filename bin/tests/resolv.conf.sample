@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: resolv.conf.sample,v 1.9 2004/03/05 04:58:39 marka Exp $
+# $Id: resolv.conf.sample,v 1.9 2004-03-05 04:58:39 marka Exp $
 
 domain  jab.fr
 nameserver 194.150.1.2     ; ignore that

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_dst.c,v 1.48.18.7 2009/01/22 23:46:00 tbox Exp $ */
+/* $Id: t_dst.c,v 1.48.18.7 2009-01-22 23:46:00 tbox Exp $ */
 
 #include <config.h>
 

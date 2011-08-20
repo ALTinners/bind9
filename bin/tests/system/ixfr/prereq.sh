@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: prereq.sh,v 1.3 2004/03/05 05:01:02 marka Exp $
+# $Id: prereq.sh,v 1.3 2004-03-05 05:01:02 marka Exp $
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then

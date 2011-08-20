@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: strerror.h,v 1.3 2004/03/05 05:12:06 marka Exp $ */
+/* $Id: strerror.h,v 1.3 2004-03-05 05:12:06 marka Exp $ */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H

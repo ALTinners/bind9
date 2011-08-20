@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.c,v 1.30.18.43 2009/01/19 00:36:28 marka Exp $ */
+/* $Id: socket.c,v 1.30.18.43 2009-01-19 00:36:28 marka Exp $ */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.

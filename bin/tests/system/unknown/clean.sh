@@ -15,6 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.4 2004/03/05 05:03:18 marka Exp $
+# $Id: clean.sh,v 1.4 2004-03-05 05:03:18 marka Exp $
 
 rm -f dig.out

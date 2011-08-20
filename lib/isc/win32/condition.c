@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: condition.c,v 1.18.18.5 2007/08/28 07:20:06 tbox Exp $ */
+/* $Id: condition.c,v 1.18.18.5 2007-08-28 07:20:06 tbox Exp $ */
 
 #include <config.h>
 

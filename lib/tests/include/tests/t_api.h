@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_api.h,v 1.15.18.3 2005/04/29 00:17:24 marka Exp $ */
+/* $Id: t_api.h,v 1.15.18.3 2005-04-29 00:17:24 marka Exp $ */
 
 #ifndef TESTS_T_API_H
 #define TESTS_T_API_H 1

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mempool_test.c,v 1.15 2004/03/05 04:58:39 marka Exp $ */
+/* $Id: mempool_test.c,v 1.15 2004-03-05 04:58:39 marka Exp $ */
 
 #include <config.h>
 

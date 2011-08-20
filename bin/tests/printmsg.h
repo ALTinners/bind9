@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: printmsg.h,v 1.10 2004/03/05 04:58:39 marka Exp $ */
+/* $Id: printmsg.h,v 1.10 2004-03-05 04:58:39 marka Exp $ */
 
 #ifndef TEST_PRINTMSG_H
 #define TEST_PRINTMSG_H

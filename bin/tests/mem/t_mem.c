@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_mem.c,v 1.11.18.2 2009/01/22 23:46:00 tbox Exp $ */
+/* $Id: t_mem.c,v 1.11.18.2 2009-01-22 23:46:00 tbox Exp $ */
 
 #include <config.h>
 

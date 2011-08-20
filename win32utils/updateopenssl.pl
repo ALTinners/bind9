@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: updateopenssl.pl,v 1.3.12.6 2007/08/28 07:20:06 tbox Exp $
+# $Id: updateopenssl.pl,v 1.3.12.6 2007-08-28 07:20:06 tbox Exp $
 
 # updateopenssl.pl
 # This script locates the latest version of OpenSSL in the grandparent
