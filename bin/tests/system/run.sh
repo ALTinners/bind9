@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: run.sh,v 1.42 2007/06/19 23:47:00 tbox Exp $
+# $Id: run.sh,v 1.42 2007-06-19 23:47:00 tbox Exp $
 
 #
 # Run a system test.

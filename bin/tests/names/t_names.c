@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_names.c,v 1.46.158.2 2009/01/22 23:47:05 tbox Exp $ */
+/* $Id: t_names.c,v 1.46.158.2 2009-01-22 23:47:05 tbox Exp $ */
 
 #include <config.h>
 
