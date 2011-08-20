@@ -1,3 +1,44 @@
+	--- 9.6-ESV-R5rc1 released ---
+
+3124.	[bug]		Use an rdataset attribute flag to indicate
+			negative-cache records rather than using rrtype 0;
+			this will prevent problems when that rrtype is
+			used in actual DNS packets. [RT #24777]
+
+3123.	[security]	Change #2912 exposed a latent flaw in
+			dns_rdataset_totext() that could cause named to
+			crash with an assertion failure. [RT #24777]
+
+3121.   [security]      An authoritative name server sending a negative
+                        response containing a very large RRset could
+                        trigger an off-by-one error in the ncache code
+                        and crash named. [RT #24650]
+
+3120.	[bug]		Named could fail to validate zones list in a DLV
+			that validated insecure without using DLV and had
+			DS records in the parent zone. [RT #24631]
+
+3118.	[bug]		nsupdate could dump core on shutdown when using
+			SIG(0) keys. [RT #24604]
+
+3113.	[doc]		Document the relationship between serial-query-rate
+			and NOTIFY messages.
+
+3112.	[doc]		Add missing descriptions of the update policy name
+			types "ms-self", "ms-subdomain", "krb5-self" and
+			"krb5-subdomain", which allow machines to update
+			their own records, to the BIND 9 ARM.
+
+3110.	[bug]		dnssec-signzone: Wrong error message could appear
+			when attempting to sign with no KSK. [RT #24369]
+
+3104.	[bug]		Better support for cross-compiling. [RT #24367]
+
+3099.	[test]		"dlz" system test now runs but gives R:SKIPPED if
+			not compiled with --with-dlz-filesystem.  [RT #24146]
+
+3097.	[test]		Add a tool to test handling of malformed packets.
+			[RT #24096]
 
 	--- 9.6-ESV-R5b1 released ---
 
