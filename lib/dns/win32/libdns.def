@@ -57,6 +57,7 @@ dns_cache_attach
 dns_cache_attachdb
 dns_cache_clean
 dns_cache_create
+dns_cache_create3
 dns_cache_detach
 dns_cache_dump
 dns_cache_flush
@@ -607,7 +608,6 @@ dns_tkey_processgssresponse
 dns_tkey_processquery
 dns_tkeyctx_create
 dns_tkeyctx_destroy
-dns_trust_totext
 dns_tsig_sign
 dns_tsig_verify
 dns_tsigkey_attach

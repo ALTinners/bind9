@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.53.48.14 2010-11-16 02:23:43 marka Exp $
+# $Id: tests.sh,v 1.53.48.19 2011-02-24 03:35:39 marka Exp $
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -929,6 +929,24 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that dnsssec-signzone updates originalttl on ttl changes ($n)"
+ret=0
+(
+cd signer
+RANDFILE=../random.data
+zone=example
+key1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -r $RANDFILE -f KSK -a RSASHA1 -b 1024 -n zone $zone`
+cat example.db.in $key1.key $key2.key > example.db
+$SIGNER -o example -f example.db.before example.db > /dev/null 2>&1
+sed 's/60.IN.SOA./50 IN SOA /' example.db.before > example.db.changed
+$SIGNER -o example -f example.db.after example.db.changed > /dev/null 2>&1
+)
+grep "SOA 5 1 50" signer/example.db.after > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 # Check direct query for RRSIG.  If we first ask for normal (non RRSIG)
 # record, the corresponding RRSIG should be cached and subsequent query
 # for RRSIG will be returned with the cached record.
@@ -998,6 +1016,7 @@ ret=0
 $DIG $DIGOPTS ns algroll. @10.53.0.4 > dig.out.ns4.test$n || ret=1
 grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -1011,6 +1030,53 @@ then
 else
     echo "I:The DNSSEC update test requires the Net::DNS library." >&2
 fi
+
+echo "I:checking expired signatures remain with "'"allow-update { none; };"'" and no keys available ($n)"
+ret=0
+$DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns3.test$n || ret=1
+grep "RRSIG.SOA" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC3 record for the apex is properly signed when a DNSKEY is added via UPDATE ($n)"
+ret=0
+(
+cd ns3
+kskname=`$KEYGEN -a RSASHA512 -b 1024 -n zone -r ../random.data -f KSK update-nsec3.example`
+(
+echo zone update-nsec3.example
+echo server 10.53.0.3 5300
+grep DNSKEY ${kskname}.key | sed -e 's/^/update add /' -e 's/IN/300 IN/'
+echo send
+) | $NSUPDATE
+)
+$DIG $DIGOPTS +dnssec a update-nsec3.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "NSEC3 .* TYPE65534" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that a insecure zone beneath a cname resolves ($n)"
+ret=0
+$DIG $DIGOPTS soa insecure.below-cname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that a secure zone beneath a cname resolves ($n)"
+ret=0
+$DIG $DIGOPTS soa secure.below-cname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "ANSWER: 2," dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status

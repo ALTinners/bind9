@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.245.50.7 2010-06-03 05:29:03 marka Exp $ */
+/* $Id: message.c,v 1.245.50.9 2011-03-12 04:57:27 tbox Exp $ */
 
 /*! \file */
 
@@ -1194,7 +1194,6 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
 		skip_name_search = ISC_FALSE;
 		skip_type_search = ISC_FALSE;
-		free_name = ISC_FALSE;
 		free_rdataset = ISC_FALSE;
 
 		name = isc_mempool_get(msg->namepool);
@@ -2883,6 +2882,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 		dns_rdataset_current(msg->tsig, &rdata);
 
 		result = dns_rdata_tostruct(&rdata, &tsig, NULL);
+		INSIST(result == ISC_R_SUCCESS);
 		if (msg->tsigstatus != dns_rcode_noerror)
 			result = DNS_R_TSIGVERIFYFAILURE;
 		else if (tsig.error != dns_rcode_noerror)

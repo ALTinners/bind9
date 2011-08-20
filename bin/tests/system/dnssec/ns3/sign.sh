@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: sign.sh,v 1.25.48.7 2010-01-15 23:47:33 tbox Exp $
+# $Id: sign.sh,v 1.25.48.11 2011-02-23 12:48:21 marka Exp $
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -248,3 +248,38 @@ keyname=`$KEYGEN -r $RANDFILE -a RSASHA512 -b 1024 -n zone $zone`
 cat $infile $keyname.key >$zonefile
 
 $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null
+
+#
+# A zone with the expired signatures
+#
+zone=expired.example.
+infile=expired.example.db.in
+zonefile=expired.example.db
+
+kskname=`$KEYGEN -r $RANDFILE -a RSASHA512 -b 1024 -n zone -f KSK $zone`
+zskname=`$KEYGEN -r $RANDFILE -a RSASHA512 -b 1024 -n zone $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -r $RANDFILE -o $zone -s +-10800 -e +3600 $zonefile > /dev/null 2>&1
+rm -f $kskname.* $zskname.*
+
+#
+# A NSEC3 signed zone that will have a DNSKEY added to it via UPDATE.
+#
+zone=update-nsec3.example.
+infile=update-nsec3.example.db.in
+zonefile=update-nsec3.example.db
+
+kskname=`$KEYGEN -r $RANDFILE -a RSASHA512 -b 1024 -n zone -f KSK $zone`
+zskname=`$KEYGEN -r $RANDFILE -a RSASHA512 -b 1024 -n zone $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -3 - -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# Secure below cname test zone.
+#
+zone=secure.below-cname.example.
+infile=secure.below-cname.example.db.in
+zonefile=secure.below-cname.example.db
+keyname=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+cat $infile $keyname.key >$zonefile
+$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1

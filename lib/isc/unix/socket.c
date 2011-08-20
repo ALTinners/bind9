@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.c,v 1.308.12.17 2010-12-22 03:28:13 marka Exp $ */
+/* $Id: socket.c,v 1.308.12.20 2011-03-11 10:49:59 marka Exp $ */
 
 /*! \file */
 
@@ -1594,6 +1594,7 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 		} else {
 			isc_buffer_add(buffer, actual_count);
 			actual_count = 0;
+			POST(actual_count);
 			break;
 		}
 		buffer = ISC_LIST_NEXT(buffer, link);
@@ -1833,9 +1834,10 @@ destroy(isc_socket_t **sockp) {
 		SIGNAL(&manager->shutdown_ok);
 #endif /* ISC_PLATFORM_USETHREADS */
 
-	UNLOCK(&manager->lock);
-
+	/* can't unlock manager as its memory context is still used */
 	free_socket(sockp);
+
+	UNLOCK(&manager->lock);
 }
 
 static isc_result_t
@@ -1871,7 +1873,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	 */
 	cmsgbuflen = 0;
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
+	cmsgbuflen += cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 #if defined(USE_CMSG) && defined(SO_TIMESTAMP)
 	cmsgbuflen += cmsg_space(sizeof(struct timeval));
@@ -1885,7 +1887,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 
 	cmsgbuflen = 0;
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
+	cmsgbuflen += cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 	sock->sendcmsgbuflen = cmsgbuflen;
 	if (sock->sendcmsgbuflen != 0U) {
@@ -2538,7 +2540,6 @@ isc_result_t
 isc_socket_close(isc_socket_t *sock) {
 	int fd;
 	isc_socketmgr_t *manager;
-	isc_sockettype_t type;
 
 	REQUIRE(VALID_SOCKET(sock));
 
@@ -2558,7 +2559,6 @@ isc_socket_close(isc_socket_t *sock) {
 	INSIST(sock->connect_ev == NULL);
 
 	manager = sock->manager;
-	type = sock->type;
 	fd = sock->fd;
 	sock->fd = -1;
 	memset(sock->name, 0, sizeof(sock->name));
