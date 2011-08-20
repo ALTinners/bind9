@@ -1,6 +1,6 @@
-#!/bin/sh -e
+#!/bin/sh
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,18 +14,31 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: keygen.sh,v 1.2.12.3 2010-11-17 10:11:43 marka Exp $
+# $Id: sign.sh,v 1.3.12.2 2011-05-27 04:03:46 each Exp $
+
+(cd ../ns3 && sh -e ./sign.sh || exit 1)
+
+echo "I:dlv/ns2/sign.sh"
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
 RANDFILE=../random.data
 
-zone=example.net
-zonefile="${zone}.db"
-infile="${zonefile}.in"
-cp $infile $zonefile
-ksk=`$KEYGEN -a RSASHA1 -b 1024 -n zone -r $RANDFILE -f KSK $zone`
-zsk=`$KEYGEN -a RSASHA1 -b 1024 -n zone -r $RANDFILE $zone`
-cat $ksk.key $zsk.key >> $zonefile
-$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+zone=druz.
+infile=druz.db.in
+zonefile=druz.db
+outfile=druz.pre
+dlvzone=utld.
+
+keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
+keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -r $RANDFILE -l $dlvzone -g -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+
+$CHECKZONE -q -D -i none druz druz.pre |
+sed '/IN DNSKEY/s/\([a-z0-9A-Z/]\{10\}\)[a-z0-9A-Z/]\{16\}/\1XXXXXXXXXXXXXXXX/'> druz.signed
+
+echo "I: signed $zone"

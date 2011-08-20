@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.4.2.3 2010/11/16 23:45:23 tbox Exp $
+# $Id: clean.sh,v 1.4.2.3 2010-11-16 23:45:23 tbox Exp $
 
 rm -f ns6/K*
 rm -f ns6/example.net.db.signed ns6/example.net.db

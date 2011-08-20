@@ -1,7 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2006, 2010  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2000-2003  Internet Software Consortium.
+# Copyright (C) 2004, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: sign.sh,v 1.19.18.4 2010-11-16 23:45:23 tbox Exp $
+# $Id: sign.sh,v 1.3.12.2 2011-05-27 04:03:45 each Exp $
+
+(cd ../ns2 && sh -e ./sign.sh || exit 1)
+
+echo "I:dlv/ns1/sign.sh"
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -25,23 +28,18 @@ RANDFILE=../random.data
 zone=.
 infile=root.db.in
 zonefile=root.db
+outfile=root.signed
 
-(cd ../ns2 && sh sign.sh )
+keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
+keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cp ../ns2/dsset-example. .
-cp ../ns2/dsset-dlv. .
-grep "5 [12]" ../ns2/dsset-algroll. > dsset-algroll.
+cat $infile $keyname1.key $keyname2.key >$zonefile
 
-keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
+$SIGNER -r $RANDFILE -g -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 
-cat $infile $keyname.key dsset-example. dsset-dlv. dsset-algroll. > $zonefile
+echo "I: signed $zone"
 
-echo $SIGNER -r $RANDFILE -o $zone $zonefile
-$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null
-
-# Configure the resolving server with a trusted key.
-
-cat $keyname.key | $PERL -n -e '
+grep -v '^;' $keyname2.key | $PERL -n -e '
 local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
 local $key = join("", @rest);
 print <<EOF
@@ -50,7 +48,5 @@ trusted-keys {
 };
 EOF
 ' > trusted.conf
-cp trusted.conf ../ns2/trusted.conf
-cp trusted.conf ../ns3/trusted.conf
-cp trusted.conf ../ns4/trusted.conf
-cp trusted.conf ../ns6/trusted.conf
+cp trusted.conf ../ns5
+
