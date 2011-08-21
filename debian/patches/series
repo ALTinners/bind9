@@ -1,3 +1,5 @@
 CVE-2011-0414.patch
 debian-changes-1:9.7.1.dfsg.P2-2
 CVE-2010-3613-3614.patch
+CVE-2011-1910.patch
+CVE-2011-2464.patch

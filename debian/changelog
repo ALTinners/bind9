@@ -1,3 +1,23 @@
+bind9 (1:9.7.1.dfsg.P2-2ubuntu0.4) maverick-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via specially crafted packet
+    - debian/patches/CVE-2011-2464.patch: Use an rdataset attribute flag to
+      indicate negative-cache records rather than using rrtype 0 in
+      lib/dns/include/dns/rdataset.h, lib/dns/{masterdump,message,ncache,
+      nsec3,rbtdb,rdataset,resolver,validator}.c.
+    - CVE-2011-2464
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 05 Jul 2011 09:07:19 -0400
+
+bind9 (1:9.7.1.dfsg.P2-2ubuntu0.3) maverick-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via off-by-one
+    - debian/patches/CVE-2011-1910.patch: correctly validate length in
+      lib/dns/ncache.c.
+    - CVE-2011-1910
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 27 May 2011 15:23:52 -0400
+
 bind9 (1:9.7.1.dfsg.P2-2ubuntu0.2) maverick-security; urgency=low
 
   * SECURITY UPDATE: denial of service via IXFR or DDNS update
