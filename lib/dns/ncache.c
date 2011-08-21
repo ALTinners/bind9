@@ -255,6 +255,7 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	RUNTIME_CHECK(dns_rdatalist_tordataset(&ncrdatalist, &ncrdataset)
 		      == ISC_R_SUCCESS);
 	ncrdataset.trust = trust;
+	ncrdataset.attributes |= DNS_RDATASETATTR_NEGATIVE;
 	if (message->rcode == dns_rcode_nxdomain)
 		ncrdataset.attributes |= DNS_RDATASETATTR_NXDOMAIN;
 
@@ -283,6 +284,7 @@ dns_ncache_towire(dns_rdataset_t *rdataset, dns_compress_t *cctx,
 
 	REQUIRE(rdataset != NULL);
 	REQUIRE(rdataset->type == 0);
+	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0);
 
 	result = dns_rdataset_first(rdataset);
 	if (result != ISC_R_SUCCESS)
@@ -499,6 +501,7 @@ dns_ncache_getrdataset(dns_rdataset_t *ncacherdataset, dns_name_t *name,
 
 	REQUIRE(ncacherdataset != NULL);
 	REQUIRE(ncacherdataset->type == 0);
+	REQUIRE((ncacherdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0);
 	REQUIRE(name != NULL);
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
 	REQUIRE(type != dns_rdatatype_rrsig);
