@@ -66,3 +66,21 @@ dlvkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
 
 $SIGNER -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+
+#
+# algroll has just has the old DNSKEY records removed and is waiting
+# for them to be flushed from caches.  We still need to generate
+# RRSIGs for the old DNSKEY.
+#
+zone=algroll.
+infile=algroll.db.in
+zonefile=algroll.db
+
+keyold1=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 1024 -n zone -f KSK $zone`
+keyold2=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 1024 -n zone $zone`
+keynew1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keynew2=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+
+cat $infile $keynew1.key $keynew2.key >$zonefile
+
+$SIGNER -r $RANDFILE -o $zone -k $keyold1 -k $keynew1 $zonefile $keyold1 $keyold2 $keynew1 $keynew2 > /dev/null

@@ -28,15 +28,16 @@ zonefile=root.db
 
 (cd ../ns2 && sh sign.sh )
 
-cp ../ns2/keyset-example. .
-cp ../ns2/keyset-dlv. .
+cp ../ns2/dsset-example. .
+cp ../ns2/dsset-dlv. .
+grep "5 [12]" ../ns2/dsset-algroll. > dsset-algroll.
 
 keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
-cat $infile $keyname.key > $zonefile
+cat $infile $keyname.key dsset-example. dsset-dlv. dsset-algroll. > $zonefile
 
-echo $SIGNER -g -r $RANDFILE -o $zone $zonefile
-$SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null
+echo $SIGNER -r $RANDFILE -o $zone $zonefile
+$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
 

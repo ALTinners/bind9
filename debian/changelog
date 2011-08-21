@@ -1,3 +1,19 @@
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.7) hardy-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via multiple trust anchors for a
+    single zone
+    - lib/dns/validator.c: fix arguments to dns_keytable_findnextkeynode().
+    - Upstream change 2869.
+    - CVE-2010-3762
+  * SECURITY UPDATE: denial of service via off-by-one
+    - lib/dns/ncache.c: correctly validate length.
+    - Patch backported from 9.4-ESV-R4-P1.
+    - CVE-2011-1910
+  * Added tests for previous security update to test suite and backport
+    DNS_DBFIND_ADDITIONALOK so they work.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 27 May 2011 13:26:22 -0400
+
 bind9 (1:9.4.2.dfsg.P2-2ubuntu0.6) hardy-security; urgency=low
 
   * SECURITY UPDATE: denial of service via ncache entry and a rrsig for the

@@ -1708,7 +1708,7 @@ validatezonekey(dns_validator_t *val) {
 		     result == ISC_R_SUCCESS;
 		     result = dns_rdataset_next(val->event->sigrdataset))
 		{
-			dns_keynode_t *keynode = NULL, *nextnode = NULL;
+			dns_keynode_t *keynode = NULL;
 
 			dns_rdata_reset(&sigrdata);
 			dns_rdataset_current(val->event->sigrdataset,
@@ -1723,6 +1723,7 @@ validatezonekey(dns_validator_t *val) {
 			    result == ISC_R_SUCCESS)
 				atsep = ISC_TRUE;
 			while (result == ISC_R_SUCCESS) {
+				dns_keynode_t *nextnode = NULL;
 				dstkey = dns_keynode_key(keynode);
 				result = verify(val, dstkey, &sigrdata,
 						sig.keyid);
