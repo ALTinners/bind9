@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec-keyfromlabel.c,v 1.29.8.4 2011-03-12 04:58:24 tbox Exp $ */
+/* $Id: dnssec-keyfromlabel.c,v 1.29.8.6 2011/11/30 00:53:34 marka Exp $ */
 
 /*! \file */
 
@@ -110,7 +110,8 @@ usage(void) {
 
 int
 main(int argc, char **argv) {
-	char		*algname = NULL, *nametype = NULL, *type = NULL;
+	char		*algname = NULL, *freeit = NULL;
+	char		*nametype = NULL, *type = NULL;
 	const char	*directory = NULL;
 #ifdef USE_PKCS11
 	const char	*engine = "pkcs11";
@@ -342,6 +343,9 @@ main(int argc, char **argv) {
 			algname = strdup(DEFAULT_NSEC3_ALGORITHM);
 		else
 			algname = strdup(DEFAULT_ALGORITHM);
+		if (algname == NULL)
+			fatal("strdup failed");
+		freeit = algname;
 		if (verbose > 0)
 			fprintf(stderr, "no algorithm specified; "
 				"defaulting to %s\n", algname);
@@ -513,8 +517,7 @@ main(int argc, char **argv) {
 	 * is a risk of ID collision due to this key or another key
 	 * being revoked.
 	 */
-	if (key_collision(dst_key_id(key), name, directory, alg, mctx, &exact))
-	{
+	if (key_collision(key, name, directory, mctx, &exact)) {
 		isc_buffer_clear(&buf);
 		ret = dst_key_buildfilename(key, 0, directory, &buf);
 		if (ret != ISC_R_SUCCESS)
@@ -558,6 +561,9 @@ main(int argc, char **argv) {
 		isc_mem_stats(mctx, stdout);
 	isc_mem_free(mctx, label);
 	isc_mem_destroy(&mctx);
+
+	if (freeit != NULL)
+		free(freeit);
 
 	return (0);
 }

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec-settime.c,v 1.19.34.12 2011-06-02 20:23:48 each Exp $ */
+/* $Id: dnssec-settime.c,v 1.19.34.12 2011/06/02 20:23:48 each Exp $ */
 
 /*! \file */
 

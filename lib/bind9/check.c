@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: check.c,v 1.114.4.11 2011-05-07 23:46:36 tbox Exp $ */
+/* $Id$ */
 
 /*! \file */
 
@@ -571,8 +571,17 @@ typedef struct {
 	unsigned int max;
 } intervaltable;
 
+typedef enum {
+	optlevel_config,
+	optlevel_options,
+	optlevel_view,
+	optlevel_zone
+} optlevel_t;
+
 static isc_result_t
-check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
+check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
+	      optlevel_t optlevel)
+{
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
 	unsigned int i;
@@ -738,19 +747,23 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 		     element = cfg_list_next(element))
 		{
 			const char *dlv;
-			const cfg_obj_t *anchor;
+			const cfg_obj_t *dlvobj, *anchor;
 
 			obj = cfg_listelt_value(element);
 
-			dlv = cfg_obj_asstring(cfg_tuple_get(obj, "domain"));
 			anchor = cfg_tuple_get(obj, "trust-anchor");
+			dlvobj = cfg_tuple_get(obj, "domain");
+			dlv = cfg_obj_asstring(dlvobj);
 
 			/*
-			 * If domain is "auto" and trust anchor is missing,
-			 * skip remaining tests
+			 * If domain is "auto" or "no" and trust anchor
+			 * is missing, skip remaining tests
 			 */
-			if (!strcmp(dlv, "auto") && cfg_obj_isvoid(anchor))
-				continue;
+			if (cfg_obj_isvoid(anchor)) {
+				if (!strcasecmp(dlv, "no") ||
+				    !strcasecmp(dlv, "auto"))
+					continue;
+			}
 
 			isc_buffer_init(&b, dlv, strlen(dlv));
 			isc_buffer_add(&b, strlen(dlv));
@@ -802,8 +815,8 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 			} else {
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 					"dnssec-lookaside requires "
-					"either 'auto' or a domain and "
-					"trust anchor");
+					"either 'auto' or 'no', or a "
+					"domain and trust anchor");
 				if (result == ISC_R_SUCCESS)
 					result = ISC_R_FAILURE;
 			}
@@ -811,6 +824,21 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx) {
 
 		if (symtab != NULL)
 			isc_symtab_destroy(&symtab);
+	}
+
+	/*
+	 * Check auto-dnssec at the view/options level
+	 */
+	obj = NULL;
+	(void)cfg_map_get(options, "auto-dnssec", &obj);
+	if (obj != NULL) {
+		const char *arg = cfg_obj_asstring(obj);
+		if (optlevel != optlevel_zone && strcasecmp(arg, "off") != 0) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "auto-dnssec may only be activated at the "
+				    "zone level");
+			result = ISC_R_FAILURE;
+		}
 	}
 
 	/*
@@ -1465,7 +1493,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	/*
 	 * Check various options.
 	 */
-	tresult = check_options(zoptions, logctx, mctx);
+	tresult = check_options(zoptions, logctx, mctx, optlevel_zone);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
@@ -1907,7 +1935,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	isc_symtab_t *symtab = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult = ISC_R_SUCCESS;
-	cfg_aclconfctx_t actx;
+	cfg_aclconfctx_t *actx = NULL;
 	const cfg_obj_t *options = NULL;
 	const cfg_obj_t *obj;
 	isc_boolean_t enablednssec, enablevalidation;
@@ -1921,12 +1949,12 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	 * Check that all zone statements are syntactically correct and
 	 * there are no duplicate zones.
 	 */
-	tresult = isc_symtab_create(mctx, 100, freekey, mctx,
+	tresult = isc_symtab_create(mctx, 1000, freekey, mctx,
 				    ISC_FALSE, &symtab);
 	if (tresult != ISC_R_SUCCESS)
 		return (ISC_R_NOMEMORY);
 
-	cfg_aclconfctx_init(&actx);
+	cfg_aclconfctx_create(mctx, &actx);
 
 	if (voptions != NULL)
 		(void)cfg_map_get(voptions, "zone", &zones);
@@ -1941,7 +1969,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		const cfg_obj_t *zone = cfg_listelt_value(element);
 
 		tresult = check_zoneconf(zone, voptions, config, symtab,
-					 vclass, &actx, logctx, mctx);
+					 vclass, actx, logctx, mctx);
 		if (tresult != ISC_R_SUCCESS)
 			result = ISC_R_FAILURE;
 	}
@@ -1985,7 +2013,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	 * Check that all key statements are syntactically correct and
 	 * there are no duplicate keys.
 	 */
-	tresult = isc_symtab_create(mctx, 100, freekey, mctx,
+	tresult = isc_symtab_create(mctx, 1000, freekey, mctx,
 				    ISC_FALSE, &symtab);
 	if (tresult != ISC_R_SUCCESS)
 		return (ISC_R_NOMEMORY);
@@ -2090,31 +2118,34 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 				result = tresult;
 		}
 	}
+
 	/*
 	 * Check options.
 	 */
 	if (voptions != NULL)
-		tresult = check_options(voptions, logctx, mctx);
+		tresult = check_options(voptions, logctx, mctx,
+					optlevel_view);
 	else
-		tresult = check_options(config, logctx, mctx);
+		tresult = check_options(config, logctx, mctx,
+					optlevel_config);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
-	tresult = check_viewacls(&actx, voptions, config, logctx, mctx);
+	tresult = check_viewacls(actx, voptions, config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
-	tresult = check_recursionacls(&actx, voptions, viewname,
+	tresult = check_recursionacls(actx, voptions, viewname,
 				      config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
-	tresult = check_filteraaaa(&actx, voptions, viewname, config,
+	tresult = check_filteraaaa(actx, voptions, viewname, config,
 				   logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
-	cfg_aclconfctx_clear(&actx);
+	cfg_aclconfctx_detach(&actx);
 
 	return (result);
 }
@@ -2271,7 +2302,7 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 		     isc_mem_t *mctx)
 {
 	isc_result_t result = ISC_R_SUCCESS, tresult;
-	cfg_aclconfctx_t actx;
+	cfg_aclconfctx_t *actx = NULL;
 	const cfg_listelt_t *element, *element2;
 	const cfg_obj_t *allow;
 	const cfg_obj_t *control;
@@ -2292,7 +2323,7 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 
 	(void)cfg_map_get(config, "key", &keylist);
 
-	cfg_aclconfctx_init(&actx);
+	cfg_aclconfctx_create(mctx, &actx);
 
 	/*
 	 * INET: Check allow clause.
@@ -2312,7 +2343,7 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 			control = cfg_listelt_value(element2);
 			allow = cfg_tuple_get(control, "allow");
 			tresult = cfg_acl_fromconfig(allow, config, logctx,
-						     &actx, mctx, 0, &acl);
+						     actx, mctx, 0, &acl);
 			if (acl != NULL)
 				dns_acl_detach(&acl);
 			if (tresult != ISC_R_SUCCESS)
@@ -2359,7 +2390,7 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 				result = tresult;
 		}
 	}
-	cfg_aclconfctx_clear(&actx);
+	cfg_aclconfctx_detach(&actx);
 	return (result);
 }
 
@@ -2383,7 +2414,8 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 	(void)cfg_map_get(config, "options", &options);
 
 	if (options != NULL &&
-	    check_options(options, logctx, mctx) != ISC_R_SUCCESS)
+	    check_options(options, logctx, mctx,
+			  optlevel_options) != ISC_R_SUCCESS)
 		result = ISC_R_FAILURE;
 
 	if (bind9_check_logging(config, logctx, mctx) != ISC_R_SUCCESS)

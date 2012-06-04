@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time_test.c,v 1.2.4.2 2011-03-09 07:29:39 marka Exp $ */
+/* $Id$ */
 
 /*! \file */
 
@@ -49,7 +49,7 @@ ATF_TC_BODY(epoch_minus_one, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL);
+	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
@@ -77,7 +77,7 @@ ATF_TC_BODY(epoch, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL);
+	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
@@ -105,7 +105,7 @@ ATF_TC_BODY(half_maxint, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL);
+	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
@@ -133,7 +133,7 @@ ATF_TC_BODY(half_plus_one, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL);
+	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
@@ -161,7 +161,7 @@ ATF_TC_BODY(fifty_before, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL);
+	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
@@ -189,7 +189,7 @@ ATF_TC_BODY(some_ago, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL);
+	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));

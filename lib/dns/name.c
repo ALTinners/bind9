@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.169.104.5 2011-03-12 04:58:28 tbox Exp $ */
+/* $Id$ */
 
 /*! \file */
 
@@ -2398,14 +2398,20 @@ dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
 
 	isc_buffer_init(&buf, src, strlen(src));
 	isc_buffer_add(&buf, strlen(src));
-	dns_fixedname_init(&fn);
-	name = dns_fixedname_name(&fn);
+	if (BINDABLE(target) && target->buffer != NULL)
+		name = target;
+	else {
+		dns_fixedname_init(&fn);
+		name = dns_fixedname_name(&fn);
+	}
 
 	result = dns_name_fromtext(name, &buf, dns_rootname, options, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	result = dns_name_dup(name, mctx, target);
+	if (name != target)
+		result = dns_name_dup(name, mctx, target);
+
 	return (result);
 }
 

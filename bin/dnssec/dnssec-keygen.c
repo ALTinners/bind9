@@ -29,7 +29,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec-keygen.c,v 1.108.8.8 2011-03-12 04:58:24 tbox Exp $ */
+/* $Id: dnssec-keygen.c,v 1.108.8.10 2011/11/30 00:53:34 marka Exp $ */
 
 /*! \file */
 
@@ -195,7 +195,8 @@ progress(int p)
 
 int
 main(int argc, char **argv) {
-	char		*algname = NULL, *nametype = NULL, *type = NULL;
+	char		*algname = NULL, *freeit = NULL;
+	char		*nametype = NULL, *type = NULL;
 	char		*classname = NULL;
 	char		*endp;
 	dst_key_t	*key = NULL;
@@ -507,6 +508,9 @@ main(int argc, char **argv) {
 				algname = strdup(DEFAULT_NSEC3_ALGORITHM);
 			else
 				algname = strdup(DEFAULT_ALGORITHM);
+			if (algname == NULL)
+				fatal("strdup failed");
+			freeit = algname;
 			if (verbose > 0)
 				fprintf(stderr, "no algorithm specified; "
 						"defaulting to %s\n", algname);
@@ -959,8 +963,7 @@ main(int argc, char **argv) {
 		 * if there is a risk of ID collision due to this key
 		 * or another key being revoked.
 		 */
-		if (key_collision(dst_key_id(key), name, directory,
-				  alg, mctx, NULL)) {
+		if (key_collision(key, name, directory, mctx, NULL)) {
 			conflict = ISC_TRUE;
 			if (null_key) {
 				dst_key_free(&key);
@@ -1013,6 +1016,9 @@ main(int argc, char **argv) {
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
 	isc_mem_destroy(&mctx);
+
+	if (freeit != NULL)
+		free(freeit);
 
 	return (0);
 }
