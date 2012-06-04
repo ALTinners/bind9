@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3hash.c,v 1.4.48.2 2009-10-06 23:47:22 tbox Exp $ */
+/* $Id$ */
 
 #include <config.h>
 
@@ -36,6 +36,9 @@
 #include <dns/types.h>
 
 const char *program = "nsec3hash";
+
+ISC_PLATFORM_NORETURN_PRE static void
+fatal(const char *format, ...) ISC_PLATFORM_NORETURN_POST;
 
 static void
 fatal(const char *format, ...) {

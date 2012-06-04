@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: BINDInstallDlg.h,v 1.8.332.3 2009-09-02 00:21:08 marka Exp $ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg_test.c,v 1.19.332.4 2010-01-11 23:47:22 tbox Exp $ */
+/* $Id$ */
 
 /*! \file */
 
@@ -49,7 +49,7 @@ check_result(isc_result_t result, const char *format, ...) {
 static void
 output(void *closure, const char *text, int textlen) {
 	UNUSED(closure);
-	(void) isc_util_fwrite(text, 1, textlen, stdout);
+	(void) fwrite(text, 1, textlen, stdout);
 }
 
 static void

@@ -45,6 +45,7 @@ isc_app_run
 isc_app_shutdown
 isc_app_start
 isc_app_unblock
+isc_assertion_failed
 isc_assertion_setcallback
 isc_assertion_typetotext
 isc_base32_decoderegion
@@ -506,7 +507,9 @@ isc_taskmgr_create
 isc_taskmgr_destroy
 isc_taskpool_create
 isc_taskpool_destroy
+isc_taskpool_expand
 isc_taskpool_gettask
+isc_taskpool_size
 isc_thread_create
 isc_thread_join
 isc_thread_key_create
@@ -545,7 +548,6 @@ syslog
 
 EXPORTS
 
-isc_assertion_failed		DATA
 isc_commandline_argument	DATA
 isc_commandline_errprint	DATA
 isc_commandline_index		DATA

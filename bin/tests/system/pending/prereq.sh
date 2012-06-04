@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: prereq.sh,v 1.2.4.5 2009-11-25 20:51:05 marka Exp $
+# $Id$
 
 ../../genrandom 400 random.data
 if $KEYGEN -a RSAMD5 -b 512 -n zone -r random.data foo > /dev/null 2>&1

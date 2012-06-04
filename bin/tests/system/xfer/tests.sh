@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.31.332.3 2011-03-11 00:52:38 marka Exp $
+# $Id$
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -201,6 +201,14 @@ test -f ns7/slave.bk.jnl || tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+echo "I:check that a multi-message uncompressable zone transfers"
+$DIG axfr . -p 5300 @10.53.0.4 | grep SOA > axfr.out
+if test `wc -l < axfr.out` != 2
+then
+	 echo "I:failed"
+	 status=`expr $status + 1`
+fi
+
 # now we test transfers with assorted TSIG glitches
 DIGCMD="$DIG $DIGOPTS @10.53.0.4 -p 5300"
 SENDCMD="$PERL ../send.pl 10.53.0.5 5301"
@@ -217,6 +225,11 @@ sleep 1
 # a slave for nil.
 
 cat <<EOF >>ns4/named.conf
+key tsig_key. {
+	secret "LSAnCU+Z";
+	algorithm hmac-md5;
+};
+
 zone "nil" {
 	type slave;
 	file "nil.db";
@@ -225,13 +238,37 @@ zone "nil" {
 EOF
 
 $RNDCCMD reload | sed 's/^/I:ns4 /'
-
 sleep 2
 
 $DIGCMD nil. TXT | grep 'initial AXFR' >/dev/null || {
     echo "I:failed"
     status=1
 }
+
+echo "I:retransfer with misconfigured key should fail"
+# this will fail, but should not harm named.
+cp -f ns4/named.conf.base ns4/named.conf
+cat <<EOF >>ns4/named.conf
+key tsig_key. {
+	secret "12345";
+	algorithm hmac-md5;
+};
+
+zone "nil" {
+	type slave;
+	file "nil.db";
+	masters { 10.53.0.5 key tsig_key; };
+};
+EOF
+
+$SENDCMD < ans5/goodaxfr
+sleep 1
+
+$RNDCCMD reload | sed 's/^/I:ns4 /'
+sleep 1
+
+$RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
+sleep 1
 
 echo "I:unsigned transfer"
 
@@ -240,7 +277,13 @@ sleep 1
 
 $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
-sleep 2
+
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIGCMD nil. SOA > dig.out.ns4
+	grep SOA dig.out.ns4 > /dev/null && break
+	sleep 1
+done
 
 $DIGCMD nil. TXT | grep 'unsigned AXFR' >/dev/null && {
     echo "I:failed"

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: run-test.sh,v 1.2.2.5 2009-06-22 23:47:18 tbox Exp $
+# $Id$
 
 
 sign="../../dnssec/dnssec-signzone -f signed.zone -o example.com."

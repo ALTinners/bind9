@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: BINDInstall.cpp,v 1.7.332.2 2009-09-29 23:47:29 tbox Exp $ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

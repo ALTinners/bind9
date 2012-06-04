@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: genzone.sh,v 1.8 2007-06-19 23:47:00 tbox Exp $
+# $Id$
 
 #
 # Set up a test zone
@@ -261,6 +261,11 @@ dnskey01		DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
 ;				0 		; other size
 ;						; other data
 ;				)
+
+tlsa			TLSA	( 1 1 2 92003ba34942dc74152e2f2c408d29ec
+				a5a520e7f2e06bb944f4dca346baf63c
+				1b177615d466f6c4b71c216a50292bd5
+				8c9ebdd2f74e38fe51ffd48c43326cbc )
 
 ; type 255
 ; TSIG is a meta-type and should never occur in master files.
