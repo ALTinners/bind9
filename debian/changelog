@@ -1,3 +1,11 @@
+bind9 (1:9.8.1.dfsg.P1-5) testing-proposed-updates; urgency=low
+
+  * backport CVE-2012-5688 fix from 9.8.4-P1.  Closes: #693015
+    3407. [security] Named could die on specific queries with
+    dns64 enabled.
+
+ -- LaMont Jones <lamont@debian.org>  Sun, 16 Dec 2012 21:10:32 -0700
+
 bind9 (1:9.8.1.dfsg.P1-4.4) testing-proposed-updates; urgency=low
 
   * Non-maintainer upload.
