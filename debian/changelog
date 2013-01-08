@@ -1,3 +1,48 @@
+bind9 (1:9.7.3.dfsg-1~squeeze7) squeeze-security; urgency=high
+
+  * Apply patch extracted from 9.7.6-P3 to fix CVE-2012-4244
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Wed, 12 Sep 2012 20:00:45 +0200
+
+bind9 (1:9.7.3.dfsg-1~squeeze6) squeeze-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Fi denial of service through assert because of using bad cache
+    data before initialization (CVE-2012-3817).
+
+ -- Nico Golde <nion@debian.org>  Mon, 30 Jul 2012 10:47:30 +0000
+
+bind9 (1:9.7.3.dfsg-1~squeeze5) squeeze-security; urgency=high
+
+  * Apply patch from ISC to fix zero-length RDATA handling (CVE-2012-1667)
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Mon, 04 Jun 2012 21:05:55 +0200
+
+bind9 (1:9.7.3.dfsg-1~squeeze4) squeeze-security; urgency=high
+
+  * Apply patch from ISC to fix query.c crash (CVE-2011-4313)
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Wed, 16 Nov 2011 20:12:40 +0100
+
+bind9 (1:9.7.3.dfsg-1~squeeze3) squeeze-security; urgency=high
+
+  * Apply patch from ISC BIND 9.7.3-P3 to address CVE-2011-2464.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Tue, 05 Jul 2011 18:47:02 +0200
+
+bind9 (1:9.7.3.dfsg-1~squeeze2) squeeze-security; urgency=high
+
+  * Apply patches from 9.7.3-P1 to address crasher in negative caching
+    (CVE-2011-1910) and resolution failures in DLV mode.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Fri, 27 May 2011 20:04:04 +0200
+
+bind9 (1:9.7.3.dfsg-1~squeeze1) stable-security; urgency=high
+
+  * Build for squeeze-security
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Tue, 29 Mar 2011 22:24:54 +0200
+
 bind9 (1:9.7.3.dfsg-1) unstable; urgency=low
 
   [Peter Palfrader]
