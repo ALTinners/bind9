@@ -1,3 +1,9 @@
+bind9 (1:9.7.3.dfsg-1~squeeze9) squeeze-proposed-updates; urgency=low
+
+  * Update db.root with new IP for D.root-servers.net.  Closes: #697352
+
+ -- LaMont Jones <lamont@debian.org>  Tue, 08 Jan 2013 07:07:02 -0700
+
 bind9 (1:9.7.3.dfsg-1~squeeze8) squeeze-security; urgency=high
 
   * Apply patch extracted from 9.7.6-P4 to fix CVE-2012-5166
