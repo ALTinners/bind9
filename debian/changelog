@@ -1,3 +1,47 @@
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.12) hardy-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via specific combinations of RDATA
+    - bin/named/query.c: fix logic
+    - Patch backported from 9.8.3-P4
+    - CVE-2012-5166
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 05 Oct 2012 09:47:25 -0400
+
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.11) hardy-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via large crafted resource record
+    - check length in lib/dns/include/dns/rdata.h,
+      lib/dns/{master,rdata,rdataslab}.c.
+    - Patch backported from 9.6-ESV-R7-P3
+    - CVE-2012-4244
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Thu, 13 Sep 2012 08:03:16 -0400
+
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.10) hardy-security; urgency=low
+
+  * SECURITY UPDATE: ghost domain names attack
+    - lib/dns/rbtdb.c: Restrict the TTL of NS RRset to no more than that
+      of the old NS RRset when replacing it.
+    - Patch backported from 9.6-ESV-R6.
+    - CVE-2012-1033
+  * SECURITY UPDATE: denial of service via zero length rdata handling
+    - lib/dns/rdata.c,lib/dns/rdataslab.c: use sentinel pointer for
+      duplicate rdata.
+    - Patch backported from 9.6-ESV-R7-P1.
+    - CVE-2012-1667
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 04 Jun 2012 13:53:06 -0400
+
+bind9 (1:9.4.2.dfsg.P2-2ubuntu0.9) hardy-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via specially crafted packet
+    - bin/named/query.c,lib/dns/rbtdb.c: correctly handle cache lookups
+      that return RRSIG data associated with nonexistent records.
+    - Patch backported from 9.4-ESV-R5-P1.
+    - CVE-2011-4313
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 16 Nov 2011 14:30:39 -0500
+
 bind9 (1:9.4.2.dfsg.P2-2ubuntu0.8) hardy-security; urgency=low
 
   * SECURITY UPDATE: denial of service via specially crafted packet
