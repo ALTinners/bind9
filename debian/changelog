@@ -1,3 +1,57 @@
+bind9 (1:9.8.1.dfsg.P1-4ubuntu0.5) precise-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via DNS64 and crafted query
+    - bin/named/query.c: init rdataset before cleanup.
+    - Patch backported from 9.8.4-P1
+    - CVE-2012-5688
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 05 Dec 2012 15:48:39 -0500
+
+bind9 (1:9.8.1.dfsg.P1-4ubuntu0.4) precise-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via specific combinations of RDATA
+    - bin/named/query.c: fix logic
+    - Patch backported from 9.8.3-P4
+    - CVE-2012-5166
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 05 Oct 2012 10:54:15 -0400
+
+bind9 (1:9.8.1.dfsg.P1-4ubuntu0.3) precise-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via large crafted resource record
+    - check length in lib/dns/include/dns/rdata.h,
+      lib/dns/{master,rdata,rdataslab}.c. Added tests to
+      lib/dns/tests/Makefile.in, lib/dns/tests/{master,rdata}_test.c,
+      lib/dns/tests/testdata/master/master1{5,6}.data.
+    - Patch backported from 9.8.3-P3
+    - CVE-2012-4244
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 12 Sep 2012 16:12:28 -0400
+
+bind9 (1:9.8.1.dfsg.P1-4ubuntu0.2) precise-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via dnssec validation load
+    - lib/dns/resolver.c: don't use bad->expire before it has been set.
+    - Patch backported from 9.8.3-P2.
+    - CVE-2012-3817
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 25 Jul 2012 16:21:36 -0400
+
+bind9 (1:9.8.1.dfsg.P1-4ubuntu0.1) precise-security; urgency=low
+
+  * SECURITY UPDATE: ghost domain names attack
+    - lib/dns/rbtdb.c: Restrict the TTL of NS RRset to no more than that
+      of the old NS RRset when replacing it.
+    - Patch backported from 9.8.2.
+    - CVE-2012-1033
+  * SECURITY UPDATE: denial of service via zero length rdata handling
+    - lib/dns/rdata.c,lib/dns/rdataslab.c: use sentinel pointer for
+      duplicate rdata.
+    - Patch backported from 9.8.3-P1.
+    - CVE-2012-1667
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 04 Jun 2012 13:12:43 -0400
+
 bind9 (1:9.8.1.dfsg.P1-4) unstable; urgency=low
 
   [Christoph Egger]
