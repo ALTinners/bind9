@@ -1,3 +1,39 @@
+bind9 (1:9.8.1.dfsg.P1-4.2ubuntu3.1) quantal-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via DNS64 and crafted query
+    - bin/named/query.c: init rdataset before cleanup.
+    - Patch backported from 9.8.4-P1
+    - CVE-2012-5688
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 05 Dec 2012 15:47:08 -0500
+
+bind9 (1:9.8.1.dfsg.P1-4.2ubuntu3) quantal; urgency=low
+
+  * SECURITY UPDATE: denial of service via specific combinations of RDATA
+    - bin/named/query.c: fix logic
+    - Patch backported from 9.8.3-P4
+    - CVE-2012-5166
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 05 Oct 2012 09:41:37 -0400
+
+bind9 (1:9.8.1.dfsg.P1-4.2ubuntu2) quantal-proposed; urgency=low
+
+  * SECURITY UPDATE: denial of service via large crafted resource record
+    - check length in lib/dns/include/dns/rdata.h,
+      lib/dns/{master,rdata,rdataslab}.c. Added tests to
+      lib/dns/tests/Makefile.in, lib/dns/tests/{master,rdata}_test.c,
+      lib/dns/tests/testdata/master/master1{5,6}.data.
+    - Patch backported from 9.8.3-P3
+    - CVE-2012-4244
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 12 Sep 2012 15:57:47 -0400
+
+bind9 (1:9.8.1.dfsg.P1-4.2ubuntu1) quantal-proposed; urgency=low
+
+  * debian/bind9.apport: Add AppArmor info and logs to apport hook.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 20 Aug 2012 08:48:47 -0400
+
 bind9 (1:9.8.1.dfsg.P1-4.2) unstable; urgency=high
 
   * Non-maintainer upload by the Security Team.
