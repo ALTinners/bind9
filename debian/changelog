@@ -1,3 +1,56 @@
+bind9 (1:9.7.0.dfsg.P1-1ubuntu0.8) lucid-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via specific combinations of RDATA
+    - bin/named/query.c: fix logic
+    - Patch backported from 9.8.3-P4
+    - CVE-2012-5166
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 05 Oct 2012 10:55:09 -0400
+
+bind9 (1:9.7.0.dfsg.P1-1ubuntu0.7) lucid-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via large crafted resource record
+    - check length in lib/dns/include/dns/rdata.h,
+      lib/dns/{master,rdata,rdataslab}.c.
+    - Patch backported from 9.7.6-P3
+    - CVE-2012-4244
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Thu, 13 Sep 2012 07:57:13 -0400
+
+bind9 (1:9.7.0.dfsg.P1-1ubuntu0.6) lucid-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via dnssec validation load
+    - lib/dns/resolver.c: don't use bad->expire before it has been set.
+    - Patch backported from 9.7.6-P2.
+    - CVE-2012-3817
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 25 Jul 2012 16:27:13 -0400
+
+bind9 (1:9.7.0.dfsg.P1-1ubuntu0.5) lucid-security; urgency=low
+
+  * SECURITY UPDATE: ghost domain names attack
+    - lib/dns/rbtdb.c: Restrict the TTL of NS RRset to no more than that
+      of the old NS RRset when replacing it.
+    - Patch backported from 9.7.5.
+    - CVE-2012-1033
+  * SECURITY UPDATE: denial of service via zero length rdata handling
+    - lib/dns/rdata.c,lib/dns/rdataslab.c: use sentinel pointer for
+      duplicate rdata.
+    - Patch backported from 9.7.6-P1.
+    - CVE-2012-1667
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 04 Jun 2012 13:47:38 -0400
+
+bind9 (1:9.7.0.dfsg.P1-1ubuntu0.4) lucid-security; urgency=low
+
+  * SECURITY UPDATE: denial of service via specially crafted packet
+    - bin/named/query.c,lib/dns/rbtdb.c: correctly handle cache lookups
+      that return RRSIG data associated with nonexistent records.
+    - Patch backported from 9.7.4-P1.
+    - CVE-2011-4313
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 16 Nov 2011 14:29:38 -0500
+
 bind9 (1:9.7.0.dfsg.P1-1ubuntu0.3) lucid-security; urgency=low
 
   * SECURITY UPDATE: denial of service via specially crafted packet
