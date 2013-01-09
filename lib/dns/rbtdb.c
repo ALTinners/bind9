@@ -4822,7 +4822,7 @@ cache_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 			      rdataset);
 		if (need_headerupdate(found, search.now))
 			update = found;
-		if (foundsig != NULL) {
+		if (!NEGATIVE(found) && foundsig != NULL) {
 			bind_rdataset(search.rbtdb, node, foundsig, search.now,
 				      sigrdataset);
 			if (need_headerupdate(foundsig, search.now))
@@ -5451,7 +5451,7 @@ cache_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 	if (found != NULL) {
 		bind_rdataset(rbtdb, rbtnode, found, now, rdataset);
-		if (foundsig != NULL)
+		if (!NEGATIVE(found) && foundsig != NULL)
 			bind_rdataset(rbtdb, rbtnode, foundsig, now,
 				      sigrdataset);
 	}
@@ -5887,6 +5887,19 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 				bind_rdataset(rbtdb, rbtnode, header, now,
 					      addedrdataset);
 			return (ISC_R_SUCCESS);
+		}
+		/*
+		 * If we have will be replacing a NS RRset force its TTL
+		 * to be no more than the current NS RRset's TTL.  This
+		 * ensures the delegations that are withdrawn are honoured.
+		 */
+		if (IS_CACHE(rbtdb) && header->rdh_ttl > now &&
+		    header->type == dns_rdatatype_ns &&
+		    !header_nx && !newheader_nx &&
+		    header->trust <= newheader->trust) {
+			if (newheader->rdh_ttl > header->rdh_ttl) {
+				newheader->rdh_ttl = header->rdh_ttl;
+			}
 		}
 		if (IS_CACHE(rbtdb) && header->rdh_ttl > now &&
 		    (header->type == dns_rdatatype_a ||
