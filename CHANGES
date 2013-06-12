@@ -1,5 +1,37 @@
 	--- 9.8.5rc1 released ---
 
+3360.	[bug]		isc-config.sh did not honour includedir and libdir
+			when set via configure. [RT #33345]
+
+3559.	[func]		Check that both forms of Sender Policy Framework
+			records exist or do not exist. [RT #33355]
+
+3558.	[bug]		IXFR of a DLZ stored zone was broken. [RT #33331]
+
+3556.	[maint]		Added AAAA for D.ROOT-SERVERS.NET.
+
+3555.	[bug]		Address theoretical race conditions in acache.c
+			(change #3553 was incomplete). [RT #33252]
+
+3553.	[bug]		Address suspected double free in acache. [RT #33252]
+
+3552.	[bug]		Wrong getopt option string for 'nsupdate -r'.
+			[RT #33280]
+
+3549.	[doc]		Documentation for "request-nsid" was missing.
+			[RT #33153]
+
+3548.	[bug]		The NSID request code in resolver.c was broken
+			resulting in invalid EDNS options being sent.
+			[RT #33153]
+
+3547.	[bug]		Some malformed unknown rdata records were not properly
+			detected and rejected. [RT #33129]
+
+3056.	[func]		Added support for URI resource record. [RT #23386]
+
+	--- 9.8.5rc1 released ---
+
 3546.	[func]		Add EUI48 and EUI64 types. [RT #33082]
 
 3544.	[contrib]	check5011.pl: Script to report the status of
