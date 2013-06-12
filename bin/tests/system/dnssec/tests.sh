@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -1029,6 +1029,72 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking dnssec-signzone purges RRSIGs from formerly-owned glue (nsec) ($n)"
+ret=0
+key1=`$KEYGEN -K signer -q -r random.data -a NSEC3RSASHA1 -b 1024 -n zone example`
+key2=`$KEYGEN -K signer -q -r random.data -f KSK -a NSEC3RSASHA1 -b 1024 -n zone example`
+(
+cd signer
+cat example.db.in $key1.key $key2.key > example2.db
+cat << EOF >> example2.db
+sub1.example. IN A 10.53.0.1
+ns.sub2.example. IN A 10.53.0.2
+EOF
+$SIGNER -f tmp -o example example2.db > /dev/null 2>&1
+$CHECKZONE -D -o example2.db.signed example tmp > /dev/null 2>&1
+rm -f tmp
+) || ret=1
+grep "^sub1\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 || ret=1
+grep "^ns\.sub2\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 || ret=1
+(
+cd signer
+cp -f example2.db.signed example2.db
+cat << EOF >> example2.db
+sub1.example. IN NS sub1.example.
+sub2.example. IN NS ns.sub2.example.
+EOF
+$SIGNER -f tmp -o example example2.db > /dev/null 2>&1
+$CHECKZONE -D -o example2.db.signed example tmp > /dev/null 2>&1
+rm -f tmp
+) || ret=1
+grep "^sub1\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 && ret=1
+grep "^ns\.sub2\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking dnssec-signzone purges RRSIGs from formerly-owned glue (nsec3) ($n)"
+ret=0
+(
+cd signer
+cat example.db.in $key1.key $key2.key > example2.db
+cat << EOF >> example2.db
+sub1.example. IN A 10.53.0.1
+ns.sub2.example. IN A 10.53.0.2
+EOF
+$SIGNER -3 feedabee -f tmp -o example example2.db > /dev/null 2>&1
+$CHECKZONE -D -o example2.db.signed example tmp > /dev/null 2>&1
+rm -f tmp
+) || ret=1
+grep "^sub1\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 || ret=1
+grep "^ns\.sub2\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 || ret=1
+(
+cd signer
+cp -f example2.db.signed example2.db
+cat << EOF >> example2.db
+sub1.example. IN NS sub1.example.
+sub2.example. IN NS ns.sub2.example.
+EOF
+$SIGNER -3 feedabee -f tmp -o example example2.db > /dev/null 2>&1
+$CHECKZONE -D -o example2.db.signed example tmp > /dev/null 2>&1
+rm -f tmp
+) || ret=1
+grep "^sub1\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 && ret=1
+grep "^ns\.sub2\.example\..*RRSIG[ 	]A[ 	]" signer/example2.db.signed > /dev/null 2>&1 && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:checking validated data are not cached longer than originalttl ($n)"
 ret=0
 $DIG $DIGOPTS +ttl +noauth a.ttlpatch.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
@@ -1479,6 +1545,100 @@ done
 for ttl in $ttls2; do
     [ $ttl -le 120  -a $ttl -gt 60 ] || ret=1
 done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing DNSKEY lookup via CNAME ($n)"
+ret=0
+$DIG $DIGOPTS +noauth cnameandkey.secure.example. \
+	@10.53.0.3 dnskey > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS +noauth cnameandkey.secure.example. \
+	@10.53.0.4 dnskey > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "CNAME" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing KEY lookup at CNAME (present) ($n)"
+ret=0
+$DIG $DIGOPTS +noauth cnameandkey.secure.example. \
+	@10.53.0.3 key > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS +noauth cnameandkey.secure.example. \
+	@10.53.0.4 key > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "CNAME" dig.out.ns4.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing KEY lookup at CNAME (not present) ($n)"
+ret=0
+$DIG $DIGOPTS +noauth cnamenokey.secure.example. \
+	@10.53.0.3 key > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS +noauth cnamenokey.secure.example. \
+	@10.53.0.4 key > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "CNAME" dig.out.ns4.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing DNSKEY lookup via DNAME ($n)"
+ret=0
+$DIG $DIGOPTS a.dnameandkey.secure.example. \
+	@10.53.0.3 dnskey > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS a.dnameandkey.secure.example. \
+	@10.53.0.4 dnskey > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "CNAME" dig.out.ns4.test$n > /dev/null || ret=1
+grep "DNAME" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing KEY lookup via DNAME ($n)"
+ret=0
+$DIG $DIGOPTS b.dnameandkey.secure.example. \
+	@10.53.0.3 key > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS b.dnameandkey.secure.example. \
+	@10.53.0.4 key > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "DNAME" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that named doesn't loop when all private keys are not available ($n)"
+ret=0
+lines=`grep "reading private key file expiring.example" ns3/named.run | wc -l`
+test ${lines:-1000} -lt 15 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check against against missing nearest provable proof ($n)"
+$DIG $DIGOPTS +norec b.c.d.optout-tld. \
+	@10.53.0.6 ds > dig.out.ds.ns6.test$n || ret=1
+nsec3=`grep "IN.NSEC3" dig.out.ds.ns6.test$n | wc -l`
+[ $nsec3 -eq 2 ] || ret=1
+$DIG $DIGOPTS +norec b.c.d.optout-tld. \
+	@10.53.0.6 A > dig.out.ns6.test$n || ret=1
+nsec3=`grep "IN.NSEC3" dig.out.ns6.test$n | wc -l`
+[ $nsec3 -eq 1 ] || ret=1
+$DIG $DIGOPTS optout-tld. \
+	@10.53.0.4 SOA > dig.out.soa.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.soa.ns4.test$n > /dev/null || ret=1
+$DIG $DIGOPTS b.c.d.optout-tld. \
+	@10.53.0.4 A > dig.out.ns4.test$n || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
