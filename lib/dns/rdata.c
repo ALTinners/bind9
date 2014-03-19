@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -35,6 +35,7 @@
 #include <dns/callbacks.h>
 #include <dns/cert.h>
 #include <dns/compress.h>
+#include <dns/dsdigest.h>
 #include <dns/enumtype.h>
 #include <dns/keyflags.h>
 #include <dns/keyvalues.h>
@@ -281,7 +282,7 @@ locator_pton(const char *src, unsigned char *dst) {
 	}
 	if (tp != endp)
 		return (0);
-	memmove(dst, tmp, NS_LOCATORSZ);
+	memcpy(dst, tmp, NS_LOCATORSZ);
 	return (1);
 }
 
@@ -322,7 +323,7 @@ mem_maybedup(isc_mem_t *mctx, void *source, size_t length) {
 		return (source);
 	new = isc_mem_allocate(mctx, length);
 	if (new != NULL)
-		memmove(new, source, length);
+		memcpy(new, source, length);
 
 	return (new);
 }
@@ -502,7 +503,7 @@ dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	isc_buffer_t st;
 	isc_boolean_t use_default = ISC_FALSE;
 	isc_uint32_t activelength;
-	unsigned int length;
+	size_t length;
 
 	REQUIRE(dctx != NULL);
 	if (rdata != NULL) {
@@ -589,7 +590,7 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
 		isc_buffer_availableregion(target, &tr);
 		if (tr.length < rdata->length)
 			return (ISC_R_NOSPACE);
-		memmove(tr.base, rdata->data, rdata->length);
+		memcpy(tr.base, rdata->data, rdata->length);
 		isc_buffer_add(target, rdata->length);
 		return (ISC_R_SUCCESS);
 	}
@@ -683,7 +684,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	unsigned long line;
 	void (*callback)(dns_rdatacallbacks_t *, const char *, ...);
 	isc_result_t tresult;
-	unsigned int length;
+	size_t length;
 	isc_boolean_t unknown;
 
 	REQUIRE(origin == NULL || dns_name_isabsolute(origin) == ISC_TRUE);
@@ -916,7 +917,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	isc_buffer_t st;
 	isc_region_t region;
 	isc_boolean_t use_default = ISC_FALSE;
-	unsigned int length;
+	size_t length;
 
 	REQUIRE(source != NULL);
 	if (rdata != NULL) {
@@ -1179,7 +1180,7 @@ txt_totext(isc_region_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	*tp++ = '"';
 	tl--;
-	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
+	isc_buffer_add(target, tp - (char *)region.base);
 	isc_region_consume(source, *source->base + 1);
 	return (ISC_R_SUCCESS);
 }
@@ -1245,7 +1246,7 @@ txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 	}
 	if (escape)
 		return (DNS_R_SYNTAX);
-	*tregion.base = (unsigned char)(t - tregion.base - 1);
+	*tregion.base = t - tregion.base - 1;
 	isc_buffer_add(target, *tregion.base + 1);
 	return (ISC_R_SUCCESS);
 }
@@ -1268,7 +1269,7 @@ txt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 
 	if (tregion.base != sregion.base)
-		memmove(tregion.base, sregion.base, n);
+		memcpy(tregion.base, sregion.base, n);
 	isc_buffer_forward(source, n);
 	isc_buffer_add(target, n);
 	return (ISC_R_SUCCESS);
@@ -1326,7 +1327,7 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	*tp++ = '"';
 	tl--;
-	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
+	isc_buffer_add(target, tp - (char *)region.base);
 	return (ISC_R_SUCCESS);
 }
 
@@ -1390,7 +1391,7 @@ multitxt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 		}
 		if (escape)
 			return (DNS_R_SYNTAX);
-		*t0 = (unsigned char)(t - t0 - 1);
+		*t0 = t - t0 - 1;
 		isc_buffer_add(target, *t0 + 1);
 	} while (n != 0);
 	return (ISC_R_SUCCESS);
@@ -1418,7 +1419,7 @@ multitxt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
 			return (ISC_R_NOSPACE);
 
 		if (tregion.base != sregion.base)
-			memmove(tregion.base, sregion.base, n);
+			memcpy(tregion.base, sregion.base, n);
 		isc_buffer_forward(source, n);
 		isc_buffer_add(target, n);
 		isc_buffer_activeregion(source, &sregion);
@@ -1469,7 +1470,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memmove(region.base, source, l);
+	memcpy(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -1595,7 +1596,7 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 	if (length > tr.length)
 		return (ISC_R_NOSPACE);
 	if (tr.base != base)
-		memmove(tr.base, base, length);
+		memcpy(tr.base, base, length);
 	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }
@@ -1613,7 +1614,7 @@ hexvalue(char value) {
 		c = tolower(c);
 	if ((s = strchr(hexdigits, c)) == NULL)
 		return (-1);
-	return (int)(s - hexdigits);
+	return (s - hexdigits);
 }
 
 static int
@@ -1628,7 +1629,7 @@ decvalue(char value) {
 		return (-1);
 	if ((s = strchr(decdigits, value)) == NULL)
 		return (-1);
-	return (int)(s - decdigits);
+	return (s - decdigits);
 }
 
 static const char atob_digits[86] =
@@ -1688,15 +1689,15 @@ byte_atob(int c, isc_buffer_t *target, struct state *state) {
 		}
 	} else if ((s = strchr(atob_digits, c)) != NULL) {
 		if (bcount == 0) {
-			word = (isc_int32_t)(s - atob_digits);
+			word = s - atob_digits;
 			++bcount;
 		} else if (bcount < 4) {
 			word = times85(word);
-			word += (isc_int32_t)(s - atob_digits);
+			word += s - atob_digits;
 			++bcount;
 		} else {
 			word = times85(word);
-			word += (isc_int32_t)(s - atob_digits);
+			word += s - atob_digits;
 			RETERR(putbyte((word >> 24) & 0xff, target, state));
 			RETERR(putbyte((word >> 16) & 0xff, target, state));
 			RETERR(putbyte((word >> 8) & 0xff, target, state));

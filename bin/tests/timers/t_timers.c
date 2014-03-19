@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -119,7 +119,8 @@ tx_te(isc_task_t *task, isc_event_t *event) {
 
 	isc_result = isc_time_now(&now);
 	if (isc_result == ISC_R_SUCCESS) {
-		isc_interval_set(&interval, Tx_seconds, Tx_nanoseconds);
+		interval.seconds = Tx_seconds;
+		interval.nanoseconds = Tx_nanoseconds;
 		isc_result = isc_time_add(&Tx_lasttime, &interval, &base);
 		if (isc_result != ISC_R_SUCCESS) {
 			t_info("isc_time_add failed %s\n",
@@ -133,8 +134,8 @@ tx_te(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (isc_result == ISC_R_SUCCESS) {
-		isc_interval_set(&interval,
-				 Tx_FUDGE_SECONDS, Tx_FUDGE_NANOSECONDS);
+		interval.seconds = Tx_FUDGE_SECONDS;
+		interval.nanoseconds = Tx_FUDGE_NANOSECONDS;
 		isc_result = isc_time_add(&base, &interval, &ulim);
 		if (isc_result != ISC_R_SUCCESS) {
 			t_info("isc_time_add failed %s\n",
@@ -462,7 +463,8 @@ t3_te(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (isc_result == ISC_R_SUCCESS) {
-		isc_interval_set(&interval, Tx_seconds, Tx_nanoseconds);
+		interval.seconds = Tx_seconds;
+		interval.nanoseconds = Tx_nanoseconds;
 		isc_result = isc_time_add(&Tx_lasttime, &interval, &base);
 		if (isc_result != ISC_R_SUCCESS) {
 			t_info("isc_time_add failed %s\n",
@@ -472,8 +474,8 @@ t3_te(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (isc_result == ISC_R_SUCCESS) {
-		isc_interval_set(&interval,
-				 Tx_FUDGE_SECONDS, Tx_FUDGE_NANOSECONDS);
+		interval.seconds = Tx_FUDGE_SECONDS;
+		interval.nanoseconds = Tx_FUDGE_NANOSECONDS;
 		isc_result = isc_time_add(&base, &interval, &ulim);
 		if (isc_result != ISC_R_SUCCESS) {
 			t_info("isc_time_add failed %s\n",
@@ -597,7 +599,8 @@ t4_te(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (isc_result == ISC_R_SUCCESS) {
-		isc_interval_set(&interval, Tx_seconds, Tx_nanoseconds);
+		interval.seconds = Tx_seconds;
+		interval.nanoseconds = Tx_nanoseconds;
 		isc_result = isc_time_add(&Tx_lasttime, &interval, &base);
 		if (isc_result != ISC_R_SUCCESS) {
 			t_info("isc_time_add failed %s\n",
@@ -607,8 +610,8 @@ t4_te(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (isc_result == ISC_R_SUCCESS) {
-		isc_interval_set(&interval,
-				 Tx_FUDGE_SECONDS, Tx_FUDGE_NANOSECONDS);
+		interval.seconds = Tx_FUDGE_SECONDS;
+		interval.nanoseconds = Tx_FUDGE_NANOSECONDS;
 		isc_result = isc_time_add(&base, &interval, &ulim);
 		if (isc_result != ISC_R_SUCCESS) {
 			t_info("isc_time_add failed %s\n",
@@ -1116,18 +1119,10 @@ t5(void) {
 }
 
 testspec_t	T_testlist[] = {
-	{	(PFV) t1,		"timer_create"		},
-	{	(PFV) t2,		"timer_create"		},
-	{	(PFV) t3,		"timer_create"		},
-	{	(PFV) t4,		"timer_reset"		},
-	{	(PFV) t5,		"timer_reset"		},
-	{	(PFV) NULL,		NULL			}
+	{	t1,		"timer_create"		},
+	{	t2,		"timer_create"		},
+	{	t3,		"timer_create"		},
+	{	t4,		"timer_reset"		},
+	{	t5,		"timer_reset"		},
+	{	NULL,		NULL			}
 };
-
-#ifdef WIN32
-int
-main(int argc, char **argv) {
-	t_settests(T_testlist);
-	return (t_main(argc, argv));
-}
-#endif

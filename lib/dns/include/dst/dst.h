@@ -29,6 +29,8 @@
 #include <dns/log.h>
 #include <dns/name.h>
 #include <dns/secalg.h>
+#include <dns/ds.h>
+#include <dns/dsdigest.h>
 
 #include <dst/gssapi.h>
 
@@ -162,6 +164,16 @@ isc_boolean_t
 dst_algorithm_supported(unsigned int alg);
 /*%<
  * Checks that a given algorithm is supported by DST.
+ *
+ * Returns:
+ * \li	ISC_TRUE
+ * \li	ISC_FALSE
+ */
+
+isc_boolean_t
+dst_ds_digest_supported(unsigned int digest_type);
+/*%<
+ * Checks that a given digest algorithm is supported by DST.
  *
  * Returns:
  * \li	ISC_TRUE

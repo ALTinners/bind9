@@ -309,8 +309,7 @@ find_typename(int type) {
 static void
 insert_into_typenames(int type, const char *typename, const char *attr) {
 	struct ttnam *ttn = NULL;
-	size_t c;
-	int i, n;
+	int c, i, n;
 	char tmp[256];
 
 	INSIST(strlen(typename) < TYPECLASSBUF);
@@ -486,7 +485,7 @@ sd(int rdclass, const char *classname, const char *dirname, char filetype) {
 
 static unsigned int
 HASH(char *string) {
-	size_t n;
+	unsigned int n;
 	unsigned char a, b;
 
 	n = strlen(string);

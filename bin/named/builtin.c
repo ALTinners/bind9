@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -117,7 +117,7 @@ dns64_rdata(unsigned char *v, size_t start, unsigned char *rdata) {
 			rdata[j++] = decimal[c];
 		}
 	}
-	memmove(&rdata[j], "\07in-addr\04arpa", 14);
+	memcpy(&rdata[j], "\07in-addr\04arpa", 14);
 	return (j + 14);
 }
 
@@ -276,8 +276,7 @@ dns64_cname(const dns_name_t *zone, const dns_name_t *name,
 		 */
 		return (ISC_R_NOTFOUND);
 	}
-	return (dns_sdb_putrdata(lookup, dns_rdatatype_cname, 600,
-				 rdata, (unsigned int)len));
+	return (dns_sdb_putrdata(lookup, dns_rdatatype_cname, 600, rdata, len));
 }
 
 static isc_result_t
@@ -320,7 +319,7 @@ put_txt(dns_sdblookup_t *lookup, const char *text) {
 	if (len > 255)
 		len = 255; /* Silently truncate */
 	buf[0] = len;
-	memmove(&buf[1], text, len);
+	memcpy(&buf[1], text, len);
 	return (dns_sdb_putrdata(lookup, dns_rdatatype_txt, 0, buf, len + 1));
 }
 
@@ -502,11 +501,11 @@ builtin_create(const char *zone, int argc, char **argv,
 				isc_mem_put(ns_g_mctx, empty, sizeof (*empty));
 		} else {
 			if (strcmp(argv[0], "empty") == 0)
-				memmove(empty, &empty_builtin,
-					sizeof (empty_builtin));
+				memcpy(empty, &empty_builtin,
+				       sizeof (empty_builtin));
 			else
-				memmove(empty, &dns64_builtin,
-					sizeof (empty_builtin));
+				memcpy(empty, &dns64_builtin,
+				       sizeof (empty_builtin));
 			empty->server = server;
 			empty->contact = contact;
 			*dbdata = empty;

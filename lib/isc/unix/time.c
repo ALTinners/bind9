@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,7 +23,6 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <syslog.h>
 #include <time.h>
 
@@ -34,7 +33,6 @@
 #include <isc/strerror.h>
 #include <isc/string.h>
 #include <isc/time.h>
-#include <isc/tm.h>
 #include <isc/util.h>
 
 #define NS_PER_S	1000000000	/*%< Nanoseconds per second. */
@@ -407,24 +405,6 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	now = (time_t)t->seconds;
 	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
 	INSIST(flen < len);
-}
-
-isc_result_t
-isc_time_parsehttptimestamp(char *buf, isc_time_t *t) {
-	struct tm t_tm;
-	time_t when;
-	char *p;
-
-	REQUIRE(buf != NULL);
-	REQUIRE(t != NULL);
-	p = isc_tm_strptime(buf, "%a, %d %b %Y %H:%M:%S", &t_tm);
-	if (p == NULL)
-		return (ISC_R_UNEXPECTED);
-	when = isc_tm_timegm(&t_tm);
-	if (when == -1)
-		return (ISC_R_UNEXPECTED);
-	isc_time_set(t, when, 0);
-	return (ISC_R_SUCCESS);
 }
 
 void

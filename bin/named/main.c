@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id$ */
+/* $Id: main.c,v 1.187 2012/02/06 23:46:44 tbox Exp $ */
 
 /*! \file */
 
@@ -96,6 +96,8 @@
 #ifndef BACKTRACE_MAXFRAME
 #define BACKTRACE_MAXFRAME 128
 #endif
+
+extern int isc_dscp_check_value;
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -390,7 +392,7 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 		int arglen;
 		if (end == NULL)
 			end = arg + strlen(arg);
-		arglen = (int)(end - arg);
+		arglen = end - arg;
 		for (def = defs; def->name != NULL; def++) {
 			if (arglen == (int)strlen(def->name) &&
 			    memcmp(arg, def->name, arglen) == 0) {
@@ -415,10 +417,9 @@ parse_command_line(int argc, char *argv[]) {
 
 	save_command_line(argc, argv);
 
-	/* PLEASE keep options synchronized when main is hooked! */
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "46c:C:d:E:fFgi:lm:n:N:p:P:"
+					   "46c:C:d:D:E:fFgi:lm:n:N:p:P:"
 					   "sS:t:T:U:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
@@ -453,6 +454,9 @@ parse_command_line(int argc, char *argv[]) {
 		case 'd':
 			ns_g_debuglevel = parse_int(isc_commandline_argument,
 						    "debug level");
+			break;
+		case 'D':
+			/* Descriptive comment for 'ps'. */
 			break;
 		case 'E':
 			ns_g_engine = isc_commandline_argument;
@@ -511,8 +515,15 @@ parse_command_line(int argc, char *argv[]) {
 			break;
 		case 'T':	/* NOT DOCUMENTED */
 			/*
+			 * force the server to behave (or misbehave) in
+			 * specified ways for testing purposes.
+			 *
 			 * clienttest: make clients single shot with their
 			 * 	       own memory context.
+			 * delay=xxxx: delay client responses by xxxx ms to
+			 *	       simulate remote servers.
+			 * dscp=x:     check that dscp values are as
+			 * 	       expected and assert otherwise.
 			 */
 			if (!strcmp(isc_commandline_argument, "clienttest"))
 				ns_g_clienttest = ISC_TRUE;
@@ -524,10 +535,23 @@ parse_command_line(int argc, char *argv[]) {
 				maxudp = 512;
 			else if (!strcmp(isc_commandline_argument, "maxudp1460"))
 				maxudp = 1460;
+			else if (!strcmp(isc_commandline_argument, "dropedns"))
+				ns_g_dropedns = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "noedns"))
+				ns_g_noedns = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument,
+					  "maxudp=", 7))
+				maxudp = atoi(isc_commandline_argument + 7);
+			else if (!strncmp(isc_commandline_argument,
+					  "delay=", 6))
+				ns_g_delay = atoi(isc_commandline_argument + 6);
 			else if (!strcmp(isc_commandline_argument, "nosyslog"))
 				ns_g_nosyslog = ISC_TRUE;
 			else if (!strcmp(isc_commandline_argument, "nonearest"))
 				ns_g_nonearest = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument, "dscp=", 5))
+				isc_dscp_check_value =
+					   atoi(isc_commandline_argument + 5);
 			else
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
@@ -550,25 +574,8 @@ parse_command_line(int argc, char *argv[]) {
 			printf("%s %s", ns_g_product, ns_g_version);
 			if (*ns_g_description != 0)
 				printf(" %s", ns_g_description);
-			printf(" <id:%s> built by %s with %s\n", ns_g_srcid,
-			       ns_g_builder, ns_g_configargs);
-#ifdef __clang__
-			printf("compiled by CLANG %s\n", __VERSION__);
-#else
-#if defined(__ICC) || defined(__INTEL_COMPILER)
-			printf("compiled by ICC %s\n", __VERSION__);
-#else
-#ifdef __GNUC__
-			printf("compiled by GCC %s\n", __VERSION__);
-#endif
-#endif
-#endif
-#ifdef _MSC_VER
-			printf("compiled by MSVC %d\n", _MSC_VER);
-#endif
-#ifdef __SUNPRO_C
-			printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
-#endif
+			printf(" <id:%s> built with %s\n", ns_g_srcid,
+				ns_g_configargs);
 #ifdef OPENSSL
 			printf("using OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
@@ -1060,8 +1067,6 @@ ns_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 	return (ISC_R_SUCCESS);
 }
 #endif /* HAVE_LIBSCF */
-
-/* main entry point, possibly hooked */
 
 int
 main(int argc, char *argv[]) {

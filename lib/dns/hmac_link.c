@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -228,8 +228,9 @@ hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		isc_md5_update(&md5ctx, r.base, r.length);
 		isc_md5_final(&md5ctx, hkey->key);
 		keylen = ISC_MD5_DIGESTLENGTH;
-	} else {
-		memmove(hkey->key, r.base, r.length);
+	}
+	else {
+		memcpy(hkey->key, r.base, r.length);
 		keylen = r.length;
 	}
 
@@ -504,8 +505,9 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		isc_sha1_update(&sha1ctx, r.base, r.length);
 		isc_sha1_final(&sha1ctx, hkey->key);
 		keylen = ISC_SHA1_DIGESTLENGTH;
-	} else {
-		memmove(hkey->key, r.base, r.length);
+	}
+	else {
+		memcpy(hkey->key, r.base, r.length);
 		keylen = r.length;
 	}
 
@@ -782,8 +784,9 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		isc_sha224_update(&sha224ctx, r.base, r.length);
 		isc_sha224_final(hkey->key, &sha224ctx);
 		keylen = ISC_SHA224_DIGESTLENGTH;
-	} else {
-		memmove(hkey->key, r.base, r.length);
+	}
+	else {
+		memcpy(hkey->key, r.base, r.length);
 		keylen = r.length;
 	}
 
@@ -1060,8 +1063,9 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		isc_sha256_update(&sha256ctx, r.base, r.length);
 		isc_sha256_final(hkey->key, &sha256ctx);
 		keylen = ISC_SHA256_DIGESTLENGTH;
-	} else {
-		memmove(hkey->key, r.base, r.length);
+	}
+	else {
+		memcpy(hkey->key, r.base, r.length);
 		keylen = r.length;
 	}
 
@@ -1338,8 +1342,9 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		isc_sha384_update(&sha384ctx, r.base, r.length);
 		isc_sha384_final(hkey->key, &sha384ctx);
 		keylen = ISC_SHA384_DIGESTLENGTH;
-	} else {
-		memmove(hkey->key, r.base, r.length);
+	}
+	else {
+		memcpy(hkey->key, r.base, r.length);
 		keylen = r.length;
 	}
 
@@ -1616,8 +1621,9 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		isc_sha512_update(&sha512ctx, r.base, r.length);
 		isc_sha512_final(hkey->key, &sha512ctx);
 		keylen = ISC_SHA512_DIGESTLENGTH;
-	} else {
-		memmove(hkey->key, r.base, r.length);
+	}
+	else {
+		memcpy(hkey->key, r.base, r.length);
 		keylen = r.length;
 	}
 

@@ -60,10 +60,6 @@ rm -f ns3/retransfer.bk
 rm -f ns3/retransfer.bk.jnl
 rm -f ns3/retransfer.bk.signed
 rm -f ns3/retransfer.bk.signed.jnl
-rm -f ns3/retransfer3.bk
-rm -f ns3/retransfer3.bk.jnl
-rm -f ns3/retransfer3.bk.signed
-rm -f ns3/retransfer3.bk.signed.jnl
 rm -f ns3/externalkey.db
 rm -f ns3/externalkey.db.signed
 rm -f ns3/externalkey.db.signed.jnl

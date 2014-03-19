@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -420,7 +420,7 @@ isc__buffer_putstr(isc_buffer_t *b, const char *source) {
 	REQUIRE(l <= isc_buffer_availablelength(b));
 
 	cp = isc_buffer_used(b);
-	memmove(cp, source, l);
+	memcpy(cp, source, l);
 	b->used += l;
 }
 
@@ -439,7 +439,7 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r) {
 	available = isc_buffer_availablelength(b);
 	if (r->length > available)
 		return (ISC_R_NOSPACE);
-	memmove(base, r->base, r->length);
+	memcpy(base, r->base, r->length);
 	b->used += r->length;
 
 	return (ISC_R_SUCCESS);

@@ -53,9 +53,9 @@ setup_create_dispatch_v4(void)
 	isc_sockaddr_t local_address;
 	isc_sockaddr_any(&local_address);
 
-	CHECK(dns_dispatch_getudp(dispatch_manager, socket_manager, task_manager,
-				  &local_address, 4096, 100, 100, 100, 500,
-				  0, 0, /* unsigned int attributes, unsigned int mask, */
+	CHECK(dns_dispatch_getudp(dispatch_manager, socket_manager,
+				  task_manager, &local_address,
+				  4096, 100, 100, 100, 500, 0, 0,
 				  &dispatch_v4));
 }
 static void
@@ -223,18 +223,11 @@ test_dns_resolver_settimeout_over_maximum(void) {
 
 
 testspec_t T_testlist[] = {
-	{ (PFV) test_dns_resolver_create,	"dns_resolver_create"		},
-	{ (PFV) test_dns_resolver_settimeout,	"dns_resolver_settimeout"	},
-	{ (PFV) test_dns_resolver_gettimeout,	"dns_resolver_gettimeout"	},
-	{ (PFV) test_dns_resolver_settimeout_to_default, "test_dns_resolver_settimeout_to_default" },
-	{ (PFV) test_dns_resolver_settimeout_over_maximum, "test_dns_resolver_settimeout_over_maximum" },
-	{ (PFV) 0,	NULL }
+	{ test_dns_resolver_create,	"dns_resolver_create"		},
+	{ test_dns_resolver_settimeout,	"dns_resolver_settimeout"	},
+	{ test_dns_resolver_gettimeout,	"dns_resolver_gettimeout"	},
+	{ test_dns_resolver_settimeout_to_default, "test_dns_resolver_settimeout_to_default" },
+	{ test_dns_resolver_settimeout_over_maximum, "test_dns_resolver_settimeout_over_maximum" },
+	{ NULL,	NULL }
 };
 
-#ifdef WIN32
-int
-main(int argc, char **argv) {
-	t_settests(T_testlist);
-	return (t_main(argc, argv));
-}
-#endif

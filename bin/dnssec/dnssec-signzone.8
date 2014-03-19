@@ -1,4 +1,4 @@
-.\" Copyright (C) 2004-2009, 2011, 2013 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2009, 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -77,8 +77,8 @@ files in
 Output only those record types automatically managed by
 \fBdnssec\-signzone\fR, i.e. RRSIG, NSEC, NSEC3 and NSEC3PARAM records. If smart signing (\fB\-S\fR) is used, DNSKEY records are also included. The resulting file can be included in the original zone file with
 \fB$INCLUDE\fR. This option cannot be combined with
-\fB\-O raw\fR
-or serial number updating.
+\fB\-O raw\fR,
+\fB\-O map\fR, or serial number updating.
 .RE
 .PP
 \-E \fIengine\fR
@@ -178,8 +178,9 @@ generates signatures that are valid for 30 days, with a cycle interval of 7.5 da
 .RS 4
 The format of the input zone file. Possible formats are
 \fB"text"\fR
-(default) and
-\fB"raw"\fR. This option is primarily intended to be used for dynamic signed zones so that the dumped zone file in a non\-text format containing updates can be signed directly. The use of this option does not make much sense for non\-dynamic zones.
+(default),
+\fB"raw"\fR, and
+\fB"map"\fR. This option is primarily intended to be used for dynamic signed zones so that the dumped zone file in a non\-text format containing updates can be signed directly. The use of this option does not make much sense for non\-dynamic zones.
 .RE
 .PP
 \-j \fIjitter\fR
@@ -193,7 +194,7 @@ Signature lifetime jitter also to some extent benefits validators and servers by
 .PP
 \-L \fIserial\fR
 .RS 4
-When writing a signed zone to 'raw' format, set the "source serial" value in the header to the specified serial number. (This is expected to be used primarily for testing purposes.)
+When writing a signed zone to "raw" or "map" format, set the "source serial" value in the header to the specified serial number. (This is expected to be used primarily for testing purposes.)
 .RE
 .PP
 \-n \fIncpus\fR
@@ -237,15 +238,15 @@ The zone origin. If not specified, the name of the zone file is assumed to be th
 .RS 4
 The format of the output file containing the signed zone. Possible formats are
 \fB"text"\fR
-(default)
-\fB"full"\fR, which is text output in a format suitable for processing by external scripts, and
-\fB"raw"\fR
-or
-\fB"raw=N"\fR, which store the zone in a binary format for rapid loading by
+(default), which is the standard textual representation of the zone;
+\fB"full"\fR, which is text output in a format suitable for processing by external scripts; and
+\fB"map"\fR,
+\fB"raw"\fR, and
+\fB"raw=N"\fR, which store the zone in binary formats for rapid loading by
 \fBnamed\fR.
 \fB"raw=N"\fR
 specifies the format version of the raw zone file: if N is 0, the raw file can be read by any version of
-\fBnamed\fR; if N is 1, the file can be read by release 9.9.0 or higher. The default is 1.
+\fBnamed\fR; if N is 1, the file can be read by release 9.9.0 or higher; the default is 1.
 .RE
 .PP
 \-p
@@ -260,25 +261,15 @@ Disable post sign verification tests.
 The post sign verification test ensures that for each algorithm in use there is at least one non revoked self signed KSK key, that all revoked KSK keys are self signed, and that all records in the zone are signed by the algorithm. This option skips these tests.
 .RE
 .PP
-\-Q
-.RS 4
-Remove signatures from keys that are no longer active.
-.sp
-Normally, when a previously\-signed zone is passed as input to the signer, and a DNSKEY record has been removed and replaced with a new one, signatures from the old key that are still within their validity period are retained. This allows the zone to continue to validate with cached copies of the old DNSKEY RRset. The
-\fB\-Q\fR
-forces
-\fBdnssec\-signzone\fR
-to remove signatures from keys that are no longer active. This enables ZSK rollover using the procedure described in RFC 4641, section 4.2.1.1 ("Pre\-Publish Key Rollover").
-.RE
-.PP
 \-R
 .RS 4
-Remove signatures from keys that are no longer published.
+Remove signatures from keys that no longer exist.
 .sp
-This option is similar to
-\fB\-Q\fR, except it forces
+Normally, when a previously\-signed zone is passed as input to the signer, and a DNSKEY record has been removed and replaced with a new one, signatures from the old key that are still within their validity period are retained. This allows the zone to continue to validate with cached copies of the old DNSKEY RRset. The
+\fB\-R\fR
+forces
 \fBdnssec\-signzone\fR
-to signatures from keys that are no longer published. This enables ZSK rollover using the procedure described in RFC 4641, section 4.2.1.2 ("Double Signature Zone Signing Key Rollover").
+to remove all orphaned signatures.
 .RE
 .PP
 \-r \fIrandomdev\fR
@@ -433,13 +424,12 @@ db.example.com.signed
 .PP
 \fBdnssec\-keygen\fR(8),
 BIND 9 Administrator Reference Manual,
-RFC 4033,
-RFC 4641.
+RFC 4033.
 .SH "AUTHOR"
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2009, 2011, 2013 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2009, 2011\-2013 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

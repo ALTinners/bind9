@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -90,9 +90,8 @@ inet_pton4(const char *src, unsigned char *dst) {
 		const char *pch;
 
 		if ((pch = strchr(digits, ch)) != NULL) {
-			unsigned int new = *tp * 10;
+			unsigned int new = *tp * 10 + (pch - digits);
 
-			new += (unsigned int)(pch - digits);
 			if (new > 255)
 				return (0);
 			*tp = new;
@@ -116,7 +115,7 @@ inet_pton4(const char *src, unsigned char *dst) {
 	}
 	if (octets < 4)
 		return (0);
-	memmove(dst, tmp, NS_INADDRSZ);
+	memcpy(dst, tmp, NS_INADDRSZ);
 	return (1);
 }
 
@@ -199,7 +198,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 		 * Since some memmove()'s erroneously fail to handle
 		 * overlapping regions, we'll do the shift by hand.
 		 */
-		const int n = (int)(tp - colonp);
+		const int n = tp - colonp;
 		int i;
 
 		for (i = 1; i <= n; i++) {
@@ -210,6 +209,6 @@ inet_pton6(const char *src, unsigned char *dst) {
 	}
 	if (tp != endp)
 		return (0);
-	memmove(dst, tmp, NS_IN6ADDRSZ);
+	memcpy(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }

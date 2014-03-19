@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1130,7 +1130,7 @@ sync_channellist(isc_logconfig_t *lcfg) {
 	if (lcfg->channellist_count != 0) {
 		bytes = lcfg->channellist_count *
 			sizeof(ISC_LIST(isc_logchannellist_t));
-		memmove(lists, lcfg->channellists, bytes);
+		memcpy(lists, lcfg->channellists, bytes);
 		isc_mem_put(lctx->mctx, lcfg->channellists, bytes);
 	}
 
@@ -1146,7 +1146,7 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	char *basename, *digit_end;
 	const char *dirname;
 	int version, greatest = -1;
-	size_t basenamelen;
+	unsigned int basenamelen;
 	isc_dir_t dir;
 	isc_result_t result;
 	char sep = '/';

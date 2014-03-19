@@ -211,8 +211,7 @@ initialize_ipv6only(void) {
 
 static void
 try_ipv6pktinfo(void) {
-	SOCKET s;
-	int on;
+	int s, on;
 	char strbuf[ISC_STRERRORSIZE];
 	isc_result_t result;
 	int optname;
@@ -331,4 +330,9 @@ isc_net_enableipv6(void) {
 	initialize();
 	if (ipv6_result == ISC_R_DISABLED)
 		ipv6_result = ISC_R_SUCCESS;
+}
+
+unsigned int
+isc_net_probedscp() {
+	return (0);
 }
