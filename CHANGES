@@ -1,3 +1,50 @@
+	--- 9.10.2-P1 released ---
+
+4134.	[cleanup]	Include client-ip rules when logging the number
+                        of RPZ rules of each type. [RT #39670]
+
+4131.	[bug]		Addressed further problems with reloading RPZ
+			zones. [RT #39649]
+
+4126.	[bug]		Addressed a regression introduced in change #4121.
+			[RT #39611]
+
+4122.	[bug]		The server could match a shorter prefix than what was
+			available in CLIENT-IP policy triggers, and so, an
+			unexpected action could be taken. This has been
+			corrected. [RT #39481]
+
+4121.	[bug]		On servers with one or more policy zones
+			configured as slaves, if a policy zone updated
+			during regular operation (rather than at
+			startup) using a full zone reload, such as via
+			AXFR, a bug could allow the RPZ summary data to
+			fall out of sync, potentially leading to an
+			assertion failure in rpz.c when further
+			incremental updates were made to the zone, such
+			as via IXFR. [RT #39567]
+
+4120.	[bug]		A bug in RPZ could cause the server to crash if
+			policy zones were updated while recursion was
+			pending for RPZ processing of an active query.
+			[RT #39415]
+
+4116.	[bug]		Fix a bug in RPZ that could cause some policy
+			zones that did not specifically require
+			recursion to be treated as if they did;
+			consequently, setting qname-wait-recurse no; was
+			sometimes ineffective. [RT #39229]
+
+4063.	[bug]		Asynchronous zone loads were not handled
+			correctly when the zone load was already in
+			progress; this could trigger a crash in zt.c.
+			[RT #37573]
+
+4062.	[bug]		Fix an out-of-bounds read in RPZ code. If the
+			read succeeded, it doesn't result in a bug
+			during operation. If the read failed, named
+			could segfault. [RT #38559]
+
 	--- 9.10.2 released ---
 
 	--- 9.10.2rc2 released ---
