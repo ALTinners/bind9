@@ -1,8 +1,29 @@
+	--- 9.10.0-P2 released ---
+
+3861.	[security]	Missing isc_buffer_availablelength check results
+			in a REQUIRE assertion when printing out a packet
+			(CVE-2014-3859).  [RT #36078]
+
+3858.	[bug]		Disable GCC 4.9 "delete null pointer check".
+			[RT #35968]
+
+3853.	[cleanup]	Refactor dns_rdataslab_fromrdataset to seperate out
+			the handling of a rdataset with no records. [RT #35968]
+
+3850.	[bug]		Disabling forwarding could trigger a REQUIRE assertion.
+			[RT #35979]
+
+3843.	[bug]		Use the x64 version of the Microsoft Visual C++
+			Redistributable when built for 64 bit Windows.
+			[RT #35973]
+
+3838.	[protocol]	EDNS EXPIRE as been assigned a code point of 9.
+
 	--- 9.10.0-P1 released ---
 
 3837.	[security]	A NULL pointer is passed to query_prefetch resulting
 			a REQUIRE assertion failure when a fetch is actually
-			initiated.  [ RT #35899]
+			initiated (CVE-2014-3214).  [RT #35899]
 
 	--- 9.10.0 released ---
 
