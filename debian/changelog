@@ -1,3 +1,13 @@
+bind9 (1:9.9.5.dfsg-12.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * Add patch to fix CVE-2015-8000.
+    CVE-2015-8000: Insufficient testing when parsing a message allowed
+    records with an incorrect class to be accepted, triggering a REQUIRE
+    failure when those records were subsequently cached. (Closes: #808081)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Wed, 16 Dec 2015 15:01:39 +0100
+
 bind9 (1:9.9.5.dfsg-12) unstable; urgency=high
 
   * Fix CVE-2015-5722: maliciously crafted DNSSEC key can cause named to crash.
