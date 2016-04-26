@@ -28,15 +28,6 @@ Date:   Mon Mar 10 11:38:41 2008 -0600
  	else if (!strcasecmp(str, "cyclic"))
  		mode = 0;
  	else
-@@ -6923,8 +6925,6 @@
- 	if (server->tkeyctx != NULL)
- 		dns_tkeyctx_destroy(&server->tkeyctx);
- 
--	dst_lib_destroy();
--
- 	isc_event_free(&server->reload_event);
- 
- 	INSIST(ISC_LIST_EMPTY(server->viewlist));
 --- a/lib/bind9/check.c
 +++ b/lib/bind9/check.c
 @@ -147,6 +147,7 @@
