@@ -1,3 +1,10 @@
+bind9 (1:9.10.3.dfsg.P4-8ubuntu1) xenial-proposed; urgency=medium
+
+  * Fix bad patch from when we switched to quilt.  Closes: #820847  LP:
+    #1552801, #1549788, #1553460
+
+ -- LaMont Jones <lamont@ubuntu.com>  Tue, 26 Apr 2016 16:30:06 -0600
+
 bind9 (1:9.10.3.dfsg.P4-8) unstable; urgency=medium
 
   [Timo Aaltonen]
