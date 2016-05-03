@@ -55,6 +55,7 @@ stamps/configure: stamps/prepare
 		--libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
 		--infodir=\$${prefix}/share/info \
 		--sysconfdir=/etc/bind \
+		--with-python=python3 \
 		--localstatedir=/ \
 		--enable-threads \
 		--enable-largefile \
@@ -82,6 +83,7 @@ stamps/configure-udeb: stamps/prepare
 	cd build-udeb && ../configure \
 		--prefix=/usr \
 		--sysconfdir=/etc/bind \
+		--with-python=python3 \
 		--localstatedir=/ \
 		--disable-epoll \
 		--disable-kqueue \

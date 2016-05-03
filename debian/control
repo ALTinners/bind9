@@ -15,8 +15,7 @@ Build-Depends: debhelper (>= 9),
   libcap2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
   libgeoip-dev (>= 1.4.6.dfsg-5),
   dpkg-dev (>= 1.16.1~),
-  python,
-  python-argparse,
+  python3,
   dh-systemd,
   autotools-dev,
   dh-autoreconf
@@ -53,7 +52,7 @@ Description: Internet Domain Name Server
 Package: bind9utils
 Architecture: any
 Replaces: bind9 (<= 1:9.9.5.dfsg-1)
-Depends: ${shlibs:Depends}, ${misc:Depends}, python, python-argparse
+Depends: ${shlibs:Depends}, ${misc:Depends}, python3
 Description: Utilities for BIND
  This package provides various utilities that are useful for maintaining a
  working BIND installation.
