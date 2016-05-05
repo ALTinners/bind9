@@ -1,3 +1,9 @@
+bind9 (1:9.10.3.dfsg.P4-8ubuntu2) xenial-proposed; urgency=medium
+
+  * Use python3.  LP: #1578674
+
+ -- LaMont Jones <lamont@ubuntu.com>  Thu, 05 May 2016 09:02:18 -0600
+
 bind9 (1:9.10.3.dfsg.P4-8ubuntu1) xenial-proposed; urgency=medium
 
   * Fix bad patch from when we switched to quilt.  Closes: #820847  LP:
