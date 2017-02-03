@@ -1,3 +1,11 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.3) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: resolver DoS via specially crafted zone data
+    - lib/dns/validator.c: don't use uninitialized fixedname.
+    - CVE-2015-4620
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 29 Jun 2015 15:00:34 -0400
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.2) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service via revoking a managed trust anchor
