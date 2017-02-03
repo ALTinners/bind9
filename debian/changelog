@@ -1,3 +1,13 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.2) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via revoking a managed trust anchor
+    and supplying an untrusted replacement
+    - lib/dns/zone.c: avoid crash due to managed-key rollover
+    - Based on patch supplied by Evan Hunt <each@isc.org>
+    - CVE-2015-1349
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 18 Feb 2015 07:40:48 -0500
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.1) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service via delegation handling defect
