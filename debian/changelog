@@ -1,3 +1,23 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.11) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: assertion failure via class mismatch
+    - lib/dns/resolver.c: properly handle certain TKEY records.
+    - CVE-2016-9131
+  * SECURITY UPDATE: assertion failure via inconsistent DNSSEC information
+    - lib/dns/resolver.c: fix logic when records are returned without the
+      requested data.
+    - CVE-2016-9147
+  * SECURITY UPDATE: assertion failure via unusually-formed DS record
+    - lib/dns/message.c, lib/dns/resolver.c: handle missing RRSIGs.
+    - CVE-2016-9444
+  * SECURITY UPDATE: regression in CVE-2016-8864
+    - lib/dns/resolver.c: properly handle CNAME -> DNAME in responses,
+      added tests to bin/tests/system/dname/ns2/example.db,
+      bin/tests/system/dname/tests.sh.
+    - No CVE number
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 09 Jan 2017 09:27:53 -0500
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.10) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service via responses containing a DNAME
