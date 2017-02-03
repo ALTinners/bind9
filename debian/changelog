@@ -1,3 +1,15 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.5) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service in DNSSEC-signed record validation
+    via malformed keys
+    - fix validation inlib/dns/hmac_link.c, lib/dns/include/dst/dst.h,
+      lib/dns/ncache.c, lib/dns/openssldh_link.c,
+      lib/dns/openssldsa_link.c, lib/dns/opensslecdsa_link.c,
+      lib/dns/opensslrsa_link.c, lib/dns/resolver.c.
+    - CVE-2015-5722
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 01 Sep 2015 14:00:51 -0400
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.4) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service in TKEY record query handling
