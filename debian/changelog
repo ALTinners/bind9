@@ -1,3 +1,12 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.9) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via assertion failure
+    - lib/dns/message.c: properly handle lengths.
+    - backported from patch provided by upstream.
+    - CVE-2016-2776
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 26 Sep 2016 14:40:09 -0400
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.8) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service via rndc control channel input
