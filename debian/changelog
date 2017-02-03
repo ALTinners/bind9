@@ -1,3 +1,17 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.8) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via rndc control channel input
+    parsing error
+    - properly check data in bin/named/control.c, bin/named/controlconf.c,
+      bin/rndc/rndc.c, lib/isccc/cc.c.
+    - CVE-2016-1285
+  * SECURITY UPDATE: denial of service via resource record signatures
+    parsing issue
+    - fix improper DNAME handling in lib/dns/resolver.c.
+    - CVE-2016-1286
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 08 Mar 2016 08:32:14 -0500
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.7) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service via string formatting operations
