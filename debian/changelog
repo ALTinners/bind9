@@ -1,3 +1,11 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.7) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via string formatting operations
+    - lib/dns/rdata/in_1/apl_42.c: use correct length.
+    - CVE-2015-8704
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 18 Jan 2016 07:55:47 -0500
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.6) trusty-security; urgency=medium
 
   * SECURITY UPDATE: REQUIRE failure via incorrect class
