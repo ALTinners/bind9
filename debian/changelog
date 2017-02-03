@@ -1,3 +1,13 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.10) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via responses containing a DNAME
+    answer
+    - lib/dns/resolver.c: remove assertion failure.
+    - patch backported from 9.9.9-P4.
+    - CVE-2016-8864
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 31 Oct 2016 08:57:15 -0400
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.9) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service via assertion failure
