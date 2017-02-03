@@ -1,3 +1,11 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.4) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service in TKEY record query handling
+    - lib/dns/tkey.c: clear out name before trying the answer section.
+    - CVE-2015-5477
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 27 Jul 2015 11:41:31 -0400
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.3) trusty-security; urgency=medium
 
   * SECURITY UPDATE: resolver DoS via specially crafted zone data
