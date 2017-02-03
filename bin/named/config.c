@@ -162,6 +162,8 @@ options {\n\
 	dnssec-accept-expired no;\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
+	max-recursion-depth 7;\n\
+	max-recursion-queries 50;\n\
 	zero-no-soa-ttl-cache no;\n\
 	nsec3-test-zone no;\n\
 	allow-new-zones no;\n\

@@ -1,3 +1,19 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.1) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via delegation handling defect
+    - limit max recursion in bin/named/config.c, bin/named/query.c,
+      bin/named/server.c, lib/dns/adb.c, lib/dns/include/dns/adb.h,
+      lib/dns/include/dns/resolver.h, lib/dns/resolver.c,
+      lib/export/isc/Makefile.in, lib/isc/counter.c,
+      lib/isc/include/isc/counter.h, lib/isc/include/isc/Makefile.in,
+      lib/isc/include/isc/types.h, lib/isc/Makefile.in,
+      lib/isc/tests/counter_test.c, lib/isc/tests/Makefile.in,
+      lib/isccfg/namedconf.c.
+    - Patch extracted from 9.9.6-P1.
+    - CVE-2014-8500
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 09 Dec 2014 08:46:03 -0500
+
 bind9 (1:9.9.5.dfsg-3) unstable; urgency=low
 
   * Re-enable rrl (now a configure option).  Closes: #741059 LP: #1288823
