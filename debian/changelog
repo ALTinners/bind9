@@ -1,3 +1,12 @@
+bind9 (1:9.9.5.dfsg-3ubuntu0.6) trusty-security; urgency=medium
+
+  * SECURITY UPDATE: REQUIRE failure via incorrect class
+    - properly handle class in lib/dns/include/dns/message.h,
+      lib/dns/message.c, lib/dns/resolver.c, lib/dns/xfrin.c.
+    - CVE-2015-8000
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 14 Dec 2015 13:45:55 -0500
+
 bind9 (1:9.9.5.dfsg-3ubuntu0.5) trusty-security; urgency=medium
 
   * SECURITY UPDATE: denial of service in DNSSEC-signed record validation
