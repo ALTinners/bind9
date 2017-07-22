@@ -72,6 +72,7 @@ stamps/configure: stamps/prepare
 		--enable-filter-aaaa \
 		--enable-native-pkcs11 \
 		--with-pkcs11=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)/softhsm/libsofthsm2.so \
+		--with-randomdev=/dev/urandom \
 		$(EXTRA_FEATURES)
 
 	touch $@

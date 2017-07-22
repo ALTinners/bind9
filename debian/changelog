@@ -1,3 +1,54 @@
+bind9 (1:9.10.3.dfsg.P4-12.3+deb9u2) stretch-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * debian/patches:
+    - CVE-2017-3142_regression added, fix a regression introduced in with the
+    correction for CVE-2017-3142.
+
+ -- Yves-Alexis Perez <corsac@debian.org>  Sat, 22 Jul 2017 21:24:54 +0200
+
+bind9 (1:9.10.3.dfsg.P4-12.3+deb9u1) stretch-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * debian/patches:
+    - debian/patches/CVE-2017-3142+CVE-2017-3143 added, fix TSIG bypasses
+      CVE-2017-3142: error in TSIG authentication can permit unauthorized zone
+      transfers. An attacker may be able to circumvent TSIG authentication of
+      AXFR and Notify requests.
+      CVE-2017-3143: error in TSIG authentication can permit unauthorized
+      dynamic updates. An attacker may be able to forge a valid TSIG or SIG(0)
+      signature for a dynamic update.
+
+ -- Yves-Alexis Perez <corsac@debian.org>  Fri, 30 Jun 2017 16:20:29 +0200
+
+bind9 (1:9.10.3.dfsg.P4-12.3) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * Dns64 with "break-dnssec yes;" can result in a assertion failure
+    (CVE-2017-3136) (Closes: #860224)
+  * Some chaining (CNAME or DNAME) responses to upstream queries could trigger
+    assertion failures (CVE-2017-3137) (Closes: #860225)
+  * 'rndc ""' could trigger a assertion failure in named (CVE-2017-3138)
+    (Closes: #860226)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sun, 07 May 2017 15:22:46 +0200
+
+bind9 (1:9.10.3.dfsg.P4-12.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Replace 32_mips_atomic.diff with a version that uses C11 atomics. Fixes
+    hangs and crashes on MIPS. (Closes: #778720)
+
+ -- James Cowgill <jcowgill@debian.org>  Tue, 18 Apr 2017 16:42:50 +0100
+
+bind9 (1:9.10.3.dfsg.P4-12.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Use /dev/urandom to avoid blocking in the server process.
+    (closes: #854243)
+
+ -- Bastian Blank <waldi@debian.org>  Fri, 17 Mar 2017 19:07:16 +0100
+
 bind9 (1:9.10.3.dfsg.P4-12) unstable; urgency=high
 
   * Merge and accept the non-maintainer upload.
