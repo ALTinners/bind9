@@ -1,3 +1,130 @@
+bind9 (1:9.9.5.dfsg-9+deb8u13) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Add patch to fix regression introduced by patch for CVE-2017-3042.
+                                                                closes: #868952
+
+ -- Yves-Alexis Perez <corsac@debian.org>  Sun, 23 Jul 2017 15:15:58 +0200
+
+bind9 (1:9.9.5.dfsg-9+deb8u12) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Add patch to fix CVE-2017-3042 and CVE-2017-3043
+    CVE-2017-3042: error in TSIG authentication can permit unauthorized zone
+    transfers. An attacker may be able to circumvent TSIG authentication of
+    AXFR and Notify requests.
+    CVE-2017-3043: error in TSIG authentication can permit unauthorized
+    dynamic updates. An attacker may be able to forge a valid TSIG or SIG(0)
+    signature for a dynamic update.
+
+ -- Yves-Alexis Perez <corsac@debian.org>  Fri, 30 Jun 2017 18:10:30 +0200
+
+bind9 (1:9.9.5.dfsg-9+deb8u11) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Dns64 with "break-dnssec yes;" can result in a assertion failure.
+    (CVE-2017-3136) (Closes: #860224)
+  * Prerequisite for CVE-2017-3137 cherry-picked from upstream change #4190.
+    If not cherry-picking this change the fix for CVE-2017-3137 can cause an
+    assertion failure to appear in name.c.
+  * Some chaining (CNAME or DNAME) responses to upstream queries could trigger
+    assertion failures (CVE-2017-3137) (Closes: #860225)
+  * Reimplement: Some chaining (CNAME or DNAME) responses to upstream queries
+    could trigger assertion failures. (CVE-2017-3137)
+  * Fix regression introduced when handling CNAME to referral below the
+    current domain
+  * 'rndc ""' could trigger a assertion failure in named. (CVE-2017-3138)
+    (Closes: #860226)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Thu, 11 May 2017 08:39:19 +0200
+
+bind9 (1:9.9.5.dfsg-9+deb8u10) jessie-security; urgency=medium
+
+  * Fix regression caused by the fix for CVE-2016-8864 (closes: #855540).
+  * Fix CVE-2017-3135: a malicously crafted query can cause named to crash if
+    both DNS64 and RPZ are being used (closes: #855520).
+
+ -- Michael Gilbert <mgilbert@debian.org>  Sun, 26 Feb 2017 00:03:04 +0000
+
+bind9 (1:9.9.5.dfsg-9+deb8u9) jessie-security; urgency=medium
+
+  * Apply patches from ISC.
+  * CVE-2016-9131: Assertion failure related to caching of TKEY records
+    in upstream DNS responses.
+  * CVE-2016-9147: Processing of RRSIG records in upstream DNS response
+    without corresponding signed data could lead to an assertion failure.
+  * CVE-2016-9444: Missing RRSIG records in the authority section of
+    upstream responses could lead to an assertion failure.
+  * RT #43779: Fix handling of CNAME/DNAME responses.  (Regression due
+    to the CVE-2016-8864 fix.)
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Wed, 11 Jan 2017 11:50:31 +0100
+
+bind9 (1:9.9.5.dfsg-9+deb8u8) jessie-security; urgency=medium
+
+  * CVE-2016-8864: Fix assertion failure in DNAME processing with patch
+    provided by ISC.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Tue, 01 Nov 2016 17:51:22 +0100
+
+bind9 (1:9.9.5.dfsg-9+deb8u7) jessie-security; urgency=high
+
+  * CVE-2016-2775: lwresd crash with long query name.
+    Backport of upstream commit 38cc2d14e218e536e0102fa70deef99461354232.
+    Closes: #831796.
+  * CVE-2016-2776: assertion failure due to unspecified crafted query.
+    Fix based on 43139-9-9.patch from ISC.  Closes: #839010.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Tue, 27 Sep 2016 19:46:00 +0200
+
+bind9 (1:9.9.5.dfsg-9+deb8u6) jessie-security; urgency=high
+
+  * Fix CVE-2016-1285: error parsing control channel input.
+  * Fix CVE-2016-1286: error parsing DNAME resource records.
+
+ -- Michael Gilbert <mgilbert@debian.org>  Tue, 08 Mar 2016 00:40:53 +0000
+
+bind9 (1:9.9.5.dfsg-9+deb8u5) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * CVE-2015-8704: Specific APL data could trigger an INSIST in apl_42.c.
+    A buffer size check used to guard against overflow could cause named to
+    exit with an INSIST failure In apl_42.c.
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sat, 16 Jan 2016 10:51:37 +0100
+
+bind9 (1:9.9.5.dfsg-9+deb8u4) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Add patch to fix CVE-2015-8000.
+    CVE-2015-8000: Insufficient testing when parsing a message allowed
+    records with an incorrect class to be be accepted, triggering a REQUIRE
+    failure when those records were subsequently cached.
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 14 Dec 2015 20:02:04 +0100
+
+bind9 (1:9.9.5.dfsg-9+deb8u3) jessie-security; urgency=medium
+
+  * CVE-2015-5722
+
+ -- Moritz Muehlenhoff <jmm@debian.org>  Wed, 02 Sep 2015 13:11:02 +0000
+
+bind9 (1:9.9.5.dfsg-9+deb8u2) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * CVE-2015-5477: A failure to reset a value to NULL in tkey.c could
+    result in an assertion failure.
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 27 Jul 2015 21:06:05 +0200
+
+bind9 (1:9.9.5.dfsg-9+deb8u1) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * CVE-2015-4620: Specially constructed zone data can cause a resolver to
+    crash when validating.
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Tue, 30 Jun 2015 17:21:49 +0200
+
 bind9 (1:9.9.5.dfsg-9) unstable; urgency=high
 
   * Fix CVE-2015-1349: named crash due to managed key rollover, primarily only

@@ -436,6 +436,8 @@ msginit(dns_message_t *m) {
 	m->saved.base = NULL;
 	m->saved.length = 0;
 	m->free_saved = 0;
+	m->tkey = 0;
+	m->rdclass_set = 0;
 	m->querytsig = NULL;
 }
 
@@ -1086,11 +1088,17 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		 * If this class is different than the one we already read,
 		 * this is an error.
 		 */
-		if (msg->state == DNS_SECTION_ANY) {
-			msg->state = DNS_SECTION_QUESTION;
+		if (msg->rdclass_set == 0) {
 			msg->rdclass = rdclass;
+			msg->rdclass_set = 1;
 		} else if (msg->rdclass != rdclass)
 			DO_FORMERR;
+
+		/*
+		 * Is this a TKEY query?
+		 */
+		if (rdtype == dns_rdatatype_tkey)
+			msg->tkey = 1;
 
 		/*
 		 * Can't ask the same question twice.
@@ -1163,14 +1171,71 @@ update(dns_section_t section, dns_rdataclass_t rdclass) {
 	return (ISC_FALSE);
 }
 
+/*
+ * Check to confirm that all DNSSEC records (DS, NSEC, NSEC3) have
+ * covering RRSIGs.
+ */
+static isc_boolean_t
+auth_signed(dns_namelist_t *section) {
+	dns_name_t *name;
+
+	for (name = ISC_LIST_HEAD(*section);
+	     name != NULL;
+	     name = ISC_LIST_NEXT(name, link))
+	{
+		int auth_dnssec = 0, auth_rrsig = 0;
+		dns_rdataset_t *rds;
+
+		for (rds = ISC_LIST_HEAD(name->list);
+		     rds != NULL;
+		     rds = ISC_LIST_NEXT(rds, link))
+		{
+			switch (rds->type) {
+			case dns_rdatatype_ds:
+				auth_dnssec |= 0x1;
+				break;
+			case dns_rdatatype_nsec:
+				auth_dnssec |= 0x2;
+				break;
+			case dns_rdatatype_nsec3:
+				auth_dnssec |= 0x4;
+				break;
+			case dns_rdatatype_rrsig:
+				break;
+			default:
+				continue;
+			}
+
+			switch (rds->covers) {
+			case dns_rdatatype_ds:
+				auth_rrsig |= 0x1;
+				break;
+			case dns_rdatatype_nsec:
+				auth_rrsig |= 0x2;
+				break;
+			case dns_rdatatype_nsec3:
+				auth_rrsig |= 0x4;
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (auth_dnssec != auth_rrsig)
+			return (ISC_FALSE);
+	}
+
+	return (ISC_TRUE);
+}
+
 static isc_result_t
 getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	   dns_section_t sectionid, unsigned int options)
 {
 	isc_region_t r;
 	unsigned int count, rdatalen;
-	dns_name_t *name;
-	dns_name_t *name2;
+	dns_name_t *name = NULL;
+	dns_name_t *name2 = NULL;
 	dns_offsets_t *offsets;
 	dns_rdataset_t *rdataset;
 	dns_rdatalist_t *rdatalist;
@@ -1180,7 +1245,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	dns_rdata_t *rdata;
 	dns_ttl_t ttl;
 	dns_namelist_t *section;
-	isc_boolean_t free_name, free_rdataset;
+	isc_boolean_t free_name = ISC_FALSE, free_rdataset = ISC_FALSE;
 	isc_boolean_t preserve_order, best_effort, seen_problem;
 	isc_boolean_t issigzero;
 
@@ -1188,11 +1253,11 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	best_effort = ISC_TF(options & DNS_MESSAGEPARSE_BESTEFFORT);
 	seen_problem = ISC_FALSE;
 
+	section = &msg->sections[sectionid];
+
 	for (count = 0; count < msg->counts[sectionid]; count++) {
 		int recstart = source->current;
 		isc_boolean_t skip_name_search, skip_type_search;
-
-		section = &msg->sections[sectionid];
 
 		skip_name_search = ISC_FALSE;
 		skip_type_search = ISC_FALSE;
@@ -1236,12 +1301,12 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		 * If there was no question section, we may not yet have
 		 * established a class.  Do so now.
 		 */
-		if (msg->state == DNS_SECTION_ANY &&
+		if (msg->rdclass_set == 0 &&
 		    rdtype != dns_rdatatype_opt &&	/* class is UDP SIZE */
 		    rdtype != dns_rdatatype_tsig &&	/* class is ANY */
 		    rdtype != dns_rdatatype_tkey) {	/* class is undefined */
 			msg->rdclass = rdclass;
-			msg->state = DNS_SECTION_QUESTION;
+			msg->rdclass_set = 1;
 		}
 
 		/*
@@ -1251,11 +1316,21 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		if (msg->opcode != dns_opcode_update
 		    && rdtype != dns_rdatatype_tsig
 		    && rdtype != dns_rdatatype_opt
-		    && rdtype != dns_rdatatype_dnskey /* in a TKEY query */
+		    && rdtype != dns_rdatatype_key /* in a TKEY query */
 		    && rdtype != dns_rdatatype_sig /* SIG(0) */
 		    && rdtype != dns_rdatatype_tkey /* Win2000 TKEY */
 		    && msg->rdclass != dns_rdataclass_any
 		    && msg->rdclass != rdclass)
+			DO_FORMERR;
+
+		/*
+		 * If this is not a TKEY query/response then the KEY
+		 * record's class needs to match.
+		 */
+		if (msg->opcode != dns_opcode_update && !msg->tkey &&
+		    rdtype == dns_rdatatype_key &&
+		    msg->rdclass != dns_rdataclass_any &&
+		    msg->rdclass != rdclass)
 			DO_FORMERR;
 
 		/*
@@ -1356,7 +1431,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			goto cleanup;
 		rdata->rdclass = rdclass;
 		issigzero = ISC_FALSE;
-		if (rdtype == dns_rdatatype_rrsig  &&
+		if (rdtype == dns_rdatatype_rrsig &&
 		    rdata->flags == 0) {
 			covers = dns_rdata_covers(rdata);
 			if (covers == 0)
@@ -1372,6 +1447,10 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 				skip_name_search = ISC_TRUE;
 				skip_type_search = ISC_TRUE;
 				issigzero = ISC_TRUE;
+			} else {
+				if (msg->rdclass != dns_rdataclass_any &&
+				    msg->rdclass != rdclass)
+					DO_FORMERR;
 			}
 		} else
 			covers = 0;
@@ -1557,6 +1636,19 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		INSIST(free_rdataset == ISC_FALSE);
 	}
 
+	/*
+	 * If any of DS, NSEC or NSEC3 appeared in the
+	 * authority section of a query response without
+	 * a covering RRSIG, FORMERR
+	 */
+	if (sectionid == DNS_SECTION_AUTHORITY &&
+	    msg->opcode == dns_opcode_query &&
+	    ((msg->flags & DNS_MESSAGEFLAG_QR) != 0) &&
+	    ((msg->flags & DNS_MESSAGEFLAG_TC) == 0) &&
+	    !preserve_order &&
+	    !auth_signed(section)) 
+		DO_FORMERR;
+
 	if (seen_problem)
 		return (DNS_R_RECOVERABLE);
 	return (ISC_R_SUCCESS);
@@ -1610,6 +1702,7 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
 	msg->counts[DNS_SECTION_ADDITIONAL] = isc_buffer_getuint16(source);
 
 	msg->header_ok = 1;
+	msg->state = DNS_SECTION_QUESTION;
 
 	/*
 	 * -1 means no EDNS.
@@ -1713,7 +1806,7 @@ dns_message_renderbegin(dns_message_t *msg, dns_compress_t *cctx,
 	if (r.length < DNS_MESSAGE_HEADERLEN)
 		return (ISC_R_NOSPACE);
 
-	if (r.length < msg->reserved)
+	if (r.length - DNS_MESSAGE_HEADERLEN < msg->reserved)
 		return (ISC_R_NOSPACE);
 
 	/*
@@ -1840,8 +1933,29 @@ norender_rdataset(const dns_rdataset_t *rdataset, unsigned int options)
 
 	return (ISC_TRUE);
 }
-
 #endif
+
+static isc_result_t
+renderset(dns_rdataset_t *rdataset, dns_name_t *owner_name,
+	  dns_compress_t *cctx, isc_buffer_t *target,
+	  unsigned int reserved, unsigned int options, unsigned int *countp)
+{
+	isc_result_t result;
+
+	/*
+	 * Shrink the space in the buffer by the reserved amount.
+	 */
+	if (target->length - target->used < reserved)
+		return (ISC_R_NOSPACE);
+
+	target->length -= reserved;
+	result = dns_rdataset_towire(rdataset, owner_name,
+				     cctx, target, options, countp);
+	target->length += reserved;
+
+	return (result);
+}
+
 isc_result_t
 dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 			  unsigned int options)
@@ -1884,6 +1998,8 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 	/*
 	 * Shrink the space in the buffer by the reserved amount.
 	 */
+	if (msg->buffer->length - msg->buffer->used < msg->reserved)
+		return (ISC_R_NOSPACE);
 	msg->buffer->length -= msg->reserved;
 
 	total = 0;
@@ -2160,9 +2276,8 @@ dns_message_renderend(dns_message_t *msg) {
 		 * Render.
 		 */
 		count = 0;
-		result = dns_rdataset_towire(msg->opt, dns_rootname,
-					     msg->cctx, msg->buffer, 0,
-					     &count);
+		result = renderset(msg->opt, dns_rootname, msg->cctx,
+				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2178,9 +2293,8 @@ dns_message_renderend(dns_message_t *msg) {
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		count = 0;
-		result = dns_rdataset_towire(msg->tsig, msg->tsigname,
-					     msg->cctx, msg->buffer, 0,
-					     &count);
+		result = renderset(msg->tsig, msg->tsigname, msg->cctx,
+				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2201,9 +2315,8 @@ dns_message_renderend(dns_message_t *msg) {
 		 * the owner name of a SIG(0) is irrelevant, and will not
 		 * be set in a message being rendered.
 		 */
-		result = dns_rdataset_towire(msg->sig0, dns_rootname,
-					     msg->cctx, msg->buffer, 0,
-					     &count);
+		result = renderset(msg->sig0, dns_rootname, msg->cctx,
+				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2939,12 +3052,19 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 
 		result = dns_rdata_tostruct(&rdata, &tsig, NULL);
 		INSIST(result == ISC_R_SUCCESS);
-		if (msg->tsigstatus != dns_rcode_noerror)
-			result = DNS_R_TSIGVERIFYFAILURE;
-		else if (tsig.error != dns_rcode_noerror)
-			result = DNS_R_TSIGERRORSET;
-		else
+		if (msg->verified_sig &&
+		    msg->tsigstatus == dns_rcode_noerror &&
+		    tsig.error == dns_rcode_noerror)
+		{
 			result = ISC_R_SUCCESS;
+		} else if ((!msg->verified_sig) ||
+			   (msg->tsigstatus != dns_rcode_noerror))
+		{
+			result = DNS_R_TSIGVERIFYFAILURE;
+		} else {
+			INSIST(tsig.error != dns_rcode_noerror);
+			result = DNS_R_TSIGERRORSET;
+		}
 		dns_rdata_freestruct(&tsig);
 
 		if (msg->tsigkey == NULL) {
@@ -3549,4 +3669,16 @@ dns_message_buildopt(dns_message_t *message, dns_rdataset_t **rdatasetp,
 	if (rdatalist != NULL)
 		dns_message_puttemprdatalist(message, &rdatalist);
 	return (result);
+}
+
+void
+dns_message_setclass(dns_message_t *msg, dns_rdataclass_t rdclass) {
+
+	REQUIRE(DNS_MESSAGE_VALID(msg));
+	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTPARSE);
+	REQUIRE(msg->state == DNS_SECTION_ANY);
+	REQUIRE(msg->rdclass_set == 0);
+
+	msg->rdclass = rdclass;
+	msg->rdclass_set = 1;
 }

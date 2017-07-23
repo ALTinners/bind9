@@ -48,6 +48,7 @@ SRCS =		db_test.c \
 		rdata_test.c \
 		rdataset_test.c \
 		time_test.c \
+		tsig_test.c \
 		update_test.c \
 		zonemgr_test.c \
 		zt_test.c
@@ -64,6 +65,7 @@ TARGETS =	db_test@EXEEXT@ \
 		rdata_test@EXEEXT@ \
 		rdataset_test@EXEEXT@ \
 		time_test@EXEEXT@ \
+		tsig_test@EXEEXT@ \
 		update_test@EXEEXT@ \
 		zonemgr_test@EXEEXT@ \
 		zt_test@EXEEXT@
@@ -145,6 +147,11 @@ dispatch_test@EXEEXT@: dispatch_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 db_test@EXEEXT@: db_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			db_test.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+tsig_test@EXEEXT@: tsig_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			tsig_test.@O@ dnstest.@O@ ${DNSLIBS} \
 			${ISCLIBS} ${LIBS}
 
 unit::
