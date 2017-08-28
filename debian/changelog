@@ -1,3 +1,13 @@
+bind9 (1:9.10.3.dfsg.P4-12.3+deb9u3) stretch; urgency=medium
+
+  [ Bernhard Schmidt ]
+  * Import upcoming DNSSEC KSK-2017 from 9.10.5
+
+  [ Ondřej Surý ]
+  * Non-maintainer upload.
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 28 Aug 2017 09:36:28 +0200
+
 bind9 (1:9.10.3.dfsg.P4-12.3+deb9u2) stretch-security; urgency=high
 
   * Non-maintainer upload by the Security Team.
