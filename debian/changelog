@@ -1,3 +1,13 @@
+bind9 (1:9.9.5.dfsg-9+deb8u14) jessie; urgency=high
+
+  [ Bernhard Schmidt ]
+  * Import upcoming DNSSEC KSK-2017 from 9.10.5
+
+  [ Ondřej Surý ]
+  * Non-maintainer upload.
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 28 Aug 2017 10:26:39 +0200
+
 bind9 (1:9.9.5.dfsg-9+deb8u13) jessie-security; urgency=high
 
   * Non-maintainer upload by the Security Team.
