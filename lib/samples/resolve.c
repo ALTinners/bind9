@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -186,7 +186,7 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	  const char *namespace)
 {
 	struct addrinfo hints, *res;
-	int gai_error;
+	int gaierror;
 	isc_sockaddr_t sa;
 	isc_sockaddrlist_t servers;
 	isc_result_t result;
@@ -200,10 +200,10 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_flags = AI_NUMERICHOST;
-	gai_error = getaddrinfo(addrstr, port, &hints, &res);
-	if (gai_error != 0) {
+	gaierror = getaddrinfo(addrstr, port, &hints, &res);
+	if (gaierror != 0) {
 		fprintf(stderr, "getaddrinfo failed: %s\n",
-			gai_strerror(gai_error));
+			gai_strerror(gaierror));
 		exit(1);
 	}
 	INSIST(res->ai_addrlen <= sizeof(sa.type));

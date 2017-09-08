@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -30,10 +30,9 @@ for subdomain in secure bogus dnskey-unknown dnskey-nsec3-unknown \
 	dynamic keyless nsec3 optout nsec3-unknown optout-unknown \
 	multiple rsasha256 rsasha512 kskonly update-nsec3 auto-nsec \
 	auto-nsec3 secure.below-cname ttlpatch split-dnssec split-smart \
-	expired expiring upper lower
-
+	expired expiring upper lower managed-future revkey
 do
-	cp ../ns3/dsset-$subdomain.example. .
+	cp ../ns3/dsset-$subdomain.example$TP .
 done
 
 keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
@@ -120,10 +119,11 @@ $SIGNER -P -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
 dlvzone=dlv.
 dlvinfile=dlv.db.in
 dlvzonefile=dlv.db
+dlvsetfile=dlvset-`echo $privzone |sed -e "s/\.$//g"`$TP
 
 dlvkeyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 
-cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
+cat $dlvinfile $dlvkeyname.key $dlvsetfile > $dlvzonefile
 
 $SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -319,35 +319,39 @@ fix_dce(size_t reallen, size_t * len);
 
 #include "spnego_asn1.c"
 
-static unsigned char gss_krb5_mech_oid_bytes[] = {
-	0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02
+/*
+ * Force the oid arrays to be isc_uint64_t aligned to silence warnings
+ * about the arrays not being properly aligned for (void *).
+ */
+typedef union { unsigned char b[8]; isc_uint64_t _align; } aligned8;
+typedef union { unsigned char b[16]; isc_uint64_t _align[2]; } aligned16;
+
+static aligned16 gss_krb5_mech_oid_bytes = {
+	{ 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02 }
 };
 
 static gss_OID_desc gss_krb5_mech_oid_desc = {
-	sizeof(gss_krb5_mech_oid_bytes),
-	gss_krb5_mech_oid_bytes
+	9, gss_krb5_mech_oid_bytes.b
 };
 
 static gss_OID GSS_KRB5_MECH = &gss_krb5_mech_oid_desc;
 
-static unsigned char gss_mskrb5_mech_oid_bytes[] = {
-	0x2a, 0x86, 0x48, 0x82, 0xf7, 0x12, 0x01, 0x02, 0x02
+static aligned16 gss_mskrb5_mech_oid_bytes = {
+	{ 0x2a, 0x86, 0x48, 0x82, 0xf7, 0x12, 0x01, 0x02, 0x02 }
 };
 
 static gss_OID_desc gss_mskrb5_mech_oid_desc = {
-	sizeof(gss_mskrb5_mech_oid_bytes),
-	gss_mskrb5_mech_oid_bytes
+	9, gss_mskrb5_mech_oid_bytes.b
 };
 
 static gss_OID GSS_MSKRB5_MECH = &gss_mskrb5_mech_oid_desc;
 
-static unsigned char gss_spnego_mech_oid_bytes[] = {
-	0x2b, 0x06, 0x01, 0x05, 0x05, 0x02
+static aligned8 gss_spnego_mech_oid_bytes = {
+	{ 0x2b, 0x06, 0x01, 0x05, 0x05, 0x02 }
 };
 
 static gss_OID_desc gss_spnego_mech_oid_desc = {
-	sizeof(gss_spnego_mech_oid_bytes),
-	gss_spnego_mech_oid_bytes
+	6, gss_spnego_mech_oid_bytes.b
 };
 
 static gss_OID GSS_SPNEGO_MECH = &gss_spnego_mech_oid_desc;
@@ -569,7 +573,7 @@ gss_accept_sec_context_spnego(OM_uint32 *minor_status,
 			      gss_cred_id_t *delegated_cred_handle)
 {
 	NegTokenInit init_token;
-	OM_uint32 major_status;
+	OM_uint32 major_status = GSS_S_COMPLETE;
 	OM_uint32 minor_status2;
 	gss_buffer_desc ibuf, obuf;
 	gss_buffer_t ot = NULL;
@@ -685,7 +689,7 @@ gss_accept_sec_context_spnego(OM_uint32 *minor_status,
 	if (ot != NULL && ot->length != 0U)
 		gss_release_buffer(&minor_status2, ot);
 
-	return (ret);
+	return (ret != GSS_S_COMPLETE ? (OM_uint32) ret : major_status);
 }
 
 /* decapsulate.c */

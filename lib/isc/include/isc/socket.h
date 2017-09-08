@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -260,6 +260,7 @@ struct isc_socket_connev {
  * _PKTINFO:	The pktinfo member is valid.
  * _MULTICAST:	The UDP packet was received via a multicast transmission.
  * _DSCP:	The UDP DSCP value is valid.
+ * _USEMINMTU:	Set the per packet IPV6_USE_MIN_MTU flag.
  */
 #define ISC_SOCKEVENTATTR_ATTACHED		0x80000000U /* internal */
 #define ISC_SOCKEVENTATTR_TRUNC			0x00800000U /* public */
@@ -268,6 +269,7 @@ struct isc_socket_connev {
 #define ISC_SOCKEVENTATTR_PKTINFO		0x00100000U /* public */
 #define ISC_SOCKEVENTATTR_MULTICAST		0x00080000U /* public */
 #define ISC_SOCKEVENTATTR_DSCP			0x00040000U /* public */
+#define ISC_SOCKEVENTATTR_USEMINMTU		0x00020000U /* public */
 /*@}*/
 
 #define ISC_SOCKEVENT_ANYEVENT  (0)
@@ -437,7 +439,8 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager,
  *
  * Note:
  *
- *\li   'fd' is the already-opened file descriptor.
+ *\li   'fd' is the already-opened file descriptor (must be less
+ * 	than maxsockets).
  *\li	This function is not available on Windows.
  *\li	The callback function is called "in-line" - this means the function
  *	needs to return as fast as possible, as all other I/O will be suspended
@@ -461,6 +464,7 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager,
  *\li	#ISC_R_NOMEMORY
  *\li	#ISC_R_NORESOURCES
  *\li	#ISC_R_UNEXPECTED
+ *\li	#ISC_R_RANGE
  */
 
 isc_result_t

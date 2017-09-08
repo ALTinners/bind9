@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -194,7 +194,9 @@ typedef struct dns_dbmethods {
 				   dns_rdataset_t *rdataset,
 				   dns_rdataset_t *sigrdataset);
 	isc_result_t	(*setcachestats)(dns_db_t *db, isc_stats_t *stats);
-	unsigned int	(*hashsize)(dns_db_t *db);
+	size_t		(*hashsize)(dns_db_t *db);
+	isc_result_t	(*getsize)(dns_db_t *db, dns_dbversion_t *version,
+				   isc_uint64_t *records, isc_uint64_t *bytes);
 } dns_dbmethods_t;
 
 typedef isc_result_t
@@ -1366,7 +1368,7 @@ dns_db_nodecount(dns_db_t *db);
  * \li	The number of nodes in the database
  */
 
-unsigned int
+size_t
 dns_db_hashsize(dns_db_t *db);
 /*%<
  * For database implementations using a hash table, report the
@@ -1378,7 +1380,7 @@ dns_db_hashsize(dns_db_t *db);
  *
  * Returns:
  * \li	The number of buckets in the database's hash table, or
- *      ISC_R_NOTIMPLEMENTED.
+ *      0 if not implemented.
  */
 
 void
@@ -1482,6 +1484,24 @@ dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_NOTFOUND - the DB implementation does not support this feature
  *			  or this zone does not have NSEC3 records.
+ */
+
+isc_result_t
+dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, isc_uint64_t *records,
+	       isc_uint64_t *bytes);
+/*%<
+ * Get the number of records in the given version of the database as well
+ * as the number bytes used to store those records.
+ *
+ * Requires:
+ * \li	'db' is a valid zone database.
+ * \li	'version' is NULL or a valid version.
+ * \li	'records' is NULL or a pointer to return the record count in.
+ * \li	'bytes' is NULL or a pointer to return the byte count in.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOTIMPLEMENTED
  */
 
 isc_result_t

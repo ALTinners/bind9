@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,9 +18,14 @@
 
 #include <config.h>
 
+#include <pk11/site.h>
+
+#ifndef PK11_DH_DISABLE
+
 #include <ctype.h>
 
 #include <isc/mem.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -194,8 +199,9 @@ pkcs11dh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 	if (attr == NULL)
 		return (DST_R_INVALIDPUBLICKEY);
 
-	ret = pk11_get_session(&ctx, OP_DH, ISC_TRUE, ISC_FALSE, ISC_FALSE,
-			       NULL, pk11_get_best_token(OP_DH));
+	ret = pk11_get_session(&ctx, OP_DH, ISC_TRUE, ISC_FALSE,
+			       priv->keydata.pkey->reqlogon, NULL,
+			       pk11_get_best_token(OP_DH));
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 
@@ -1126,6 +1132,7 @@ dst__pkcs11dh_init(dst_func_t **funcp) {
 		*funcp = &pkcs11dh_functions;
 	return (ISC_R_SUCCESS);
 }
+#endif /* !PK11_DH_DISABLE */
 
 #else /* PKCS11CRYPTO */
 

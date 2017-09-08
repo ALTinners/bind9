@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -84,6 +84,7 @@ typedef isc_uint64_t			isc_resourcevalue_t;	/*%< Resource Value */
 typedef unsigned int			isc_result_t;		/*%< Result */
 typedef struct isc_rwlock		isc_rwlock_t;		/*%< Read Write Lock */
 typedef struct isc_sockaddr		isc_sockaddr_t;		/*%< Socket Address */
+typedef ISC_LIST(isc_sockaddr_t)	isc_sockaddrlist_t;	/*%< Socket Address List */
 typedef struct isc_socket		isc_socket_t;		/*%< Socket */
 typedef struct isc_socketevent		isc_socketevent_t;	/*%< Socket Event */
 typedef struct isc_socketmgr		isc_socketmgr_t;	/*%< Socket Manager */

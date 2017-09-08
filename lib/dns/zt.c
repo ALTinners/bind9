@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -155,7 +155,7 @@ dns_zt_unmount(dns_zt_t *zt, dns_zone_t *zone) {
 }
 
 isc_result_t
-dns_zt_find(dns_zt_t *zt, dns_name_t *name, unsigned int options,
+dns_zt_find(dns_zt_t *zt, const dns_name_t *name, unsigned int options,
 	    dns_name_t *foundname, dns_zone_t **zonep)
 {
 	isc_result_t result;

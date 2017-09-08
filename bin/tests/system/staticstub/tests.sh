@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -162,7 +162,7 @@ n=`expr $n + 1`
 # Note: for a short term workaround we use ::1, assuming it's configured and
 # usable for our tests.  We should eventually use the test ULA and available
 # checks introduced in change 2916.
-if $PERL ../testsock6.pl ::1 2> /dev/null
+if $TESTSOCK6 ../testsock6.pl ::1 2> /dev/null
 then
     echo "I:checking IPv6 static-stub address ($n)"
     ret=0
@@ -214,4 +214,4 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

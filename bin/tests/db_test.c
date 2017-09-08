@@ -295,7 +295,8 @@ load(const char *filename, const char *origintext, isc_boolean_t cache) {
 		dns_dbtable_adddefault(dbtable, dbi->db);
 		cache_dbi = dbi;
 	} else {
-		if (dns_dbtable_add(dbtable, dbi->db) != ISC_R_SUCCESS) {
+		result = dns_dbtable_add(dbtable, dbi->db);
+		if (result != ISC_R_SUCCESS) {
 			dns_db_detach(&dbi->db);
 			isc_mem_put(mctx, dbi, sizeof(*dbi));
 			return (result);
@@ -366,7 +367,7 @@ main(int argc, char *argv[]) {
 	dns_name_t *fname;
 	unsigned int options = 0, zcoptions;
 	isc_time_t start, finish;
-	char *origintext;
+	const char *origintext;
 	dbinfo *dbi;
 	dns_dbversion_t *version;
 	dns_name_t *origin;

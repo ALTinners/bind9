@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $Id$ */
 
 /*! \file
  * \author Principal Author: Bob Halley
@@ -550,6 +548,7 @@ task_send(isc__task_t *task, isc_event_t **eventp) {
 	REQUIRE(event != NULL);
 	REQUIRE(event->ev_type > 0);
 	REQUIRE(task->state != task_state_done);
+	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
 
 	XTRACE("task_send");
 
@@ -1439,6 +1438,10 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 		if (isc_thread_create(run, manager,
 				      &manager->threads[manager->workers]) ==
 		    ISC_R_SUCCESS) {
+			char name[16];	/* thread name limit on Linux */
+			snprintf(name, sizeof(name), "isc-worker%04d", i);
+			isc_thread_setname(manager->threads[manager->workers],
+					   name);
 			manager->workers++;
 			started++;
 		}
@@ -1645,11 +1648,11 @@ isc__taskmgr_dispatch(isc_taskmgr_t *manager0) {
 void
 isc__taskmgr_pause(isc_taskmgr_t *manager0) {
 	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	manager->pause_requested = ISC_TRUE;
 	LOCK(&manager->lock);
 	while (manager->tasks_running > 0) {
 		WAIT(&manager->paused, &manager->lock);
 	}
-	manager->pause_requested = ISC_TRUE;
 	UNLOCK(&manager->lock);
 }
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -45,7 +45,12 @@ for alg in $algs; do
 
     echo "I:testing inline signing with PKCS#11 keys ($alg)"
 
-    $NSUPDATE > /dev/null <<END || status=1
+    $DIG $DIGOPTS ns.$alg.example. @10.53.0.1 a > dig.out.$alg.0 || ret=1
+    if [ $ret != 0 ]; then echo "I:failed"; fi
+    status=`expr $status + $ret`
+    count0=`grep RRSIG dig.out.$alg.0 | wc -l`
+
+    $NSUPDATE -v > upd.log.$alg <<END || status=1
 server 10.53.0.1 5300
 ttl 300
 zone $alg.example.
@@ -56,11 +61,11 @@ END
     echo "I:waiting 20 seconds for key changes to take effect"
     sleep 20
 
-    $DIG $DIGOPTS ns.$alg.example. @10.53.0.1 a > dig.out || ret=1
+    $DIG $DIGOPTS ns.$alg.example. @10.53.0.1 a > dig.out.$alg || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
-    count=`grep RRSIG dig.out | wc -l`
-    if [ $count != 4 ]; then echo "I:failed"; status=1; fi
+    count=`grep RRSIG dig.out.$alg | wc -l`
+    if [ $count -le $count0 ]; then echo "I:failed"; status=1; fi
 
     echo "I:testing PKCS#11 key destroy ($alg)"
     ret=0
@@ -79,4 +84,4 @@ END
 done
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

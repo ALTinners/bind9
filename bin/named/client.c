@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -248,7 +248,7 @@ static isc_result_t get_client(ns_clientmgr_t *manager, ns_interface_t *ifp,
 static inline isc_boolean_t
 allowed(isc_netaddr_t *addr, dns_name_t *signer, dns_acl_t *acl);
 #ifdef ISC_PLATFORM_USESIT
-static void compute_sit(ns_client_t *client, isc_uint32_t when,
+static void compute_cookie(ns_client_t *client, isc_uint32_t when,
 			isc_uint32_t nonce, isc_buffer_t *buf);
 #endif
 
@@ -400,7 +400,7 @@ exit_check(ns_client_t *client) {
 		INSIST(client->newstate <= NS_CLIENTSTATE_READY);
 		if (client->nreads > 0)
 			dns_tcpmsg_cancelread(&client->tcpmsg);
-		if (! client->nreads == 0) {
+		if (client->nreads != 0) {
 			/* Still waiting for read cancel completion. */
 			return (ISC_TRUE);
 		}
@@ -909,6 +909,16 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 
 	isc_buffer_usedregion(buffer, &r);
 
+	/*
+	 * If this is a UDP client and the IPv6 packet can't be
+	 * encapsulated without generating a PTB on a 1500 octet
+	 * MTU link force fragmentation at 1280 if it is a IPv6
+	 * response.
+	 */
+	client->sendevent->attributes &= ~ISC_SOCKEVENTATTR_USEMINMTU;
+	if (!TCP_CLIENT(client) && r.length > 1432)
+		client->sendevent->attributes |= ISC_SOCKEVENTATTR_USEMINMTU;
+
 	CTRACE("sendto");
 
 	result = isc_socket_sendto2(sock, &r, client->task,
@@ -988,7 +998,8 @@ client_send(ns_client_t *client) {
 
 	CTRACE("send");
 
-	if ((client->attributes & NS_CLIENTATTR_RA) != 0)
+	if (client->message->opcode == dns_opcode_query &&
+	    (client->attributes & NS_CLIENTATTR_RA) != 0)
 		client->message->flags |= DNS_MESSAGEFLAG_RA;
 
 	if ((client->attributes & NS_CLIENTATTR_WANTDNSSEC) != 0)
@@ -1001,6 +1012,12 @@ client_send(ns_client_t *client) {
 		if (client->view->preferred_glue == dns_rdatatype_a)
 			preferred_glue = DNS_MESSAGERENDER_PREFER_A;
 		else if (client->view->preferred_glue == dns_rdatatype_aaaa)
+			preferred_glue = DNS_MESSAGERENDER_PREFER_AAAA;
+	}
+	if (preferred_glue == 0) {
+		if (isc_sockaddr_pf(&client->peeraddr) == AF_INET)
+			preferred_glue = DNS_MESSAGERENDER_PREFER_A;
+		else
 			preferred_glue = DNS_MESSAGERENDER_PREFER_AAAA;
 	}
 
@@ -1318,7 +1335,7 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 			 */
 			if (wouldlog) {
 				ns_client_log(client,
-					      NS_LOGCATEGORY_QUERY_EERRORS,
+					      NS_LOGCATEGORY_QUERY_ERRORS,
 					      NS_LOGMODULE_CLIENT,
 					      loglevel,
 					      "%s", log_buf);
@@ -1398,7 +1415,7 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 {
 	char nsid[BUFSIZ], *nsidp;
 #ifdef ISC_PLATFORM_USESIT
-	unsigned char sit[COOKIE_SIZE];
+	unsigned char cookie[COOKIE_SIZE];
 #endif
 	isc_result_t result;
 	dns_view_t *view;
@@ -1448,16 +1465,16 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 		isc_stdtime_t now;
 		isc_uint32_t nonce;
 
-		isc_buffer_init(&buf, sit, sizeof(sit));
+		isc_buffer_init(&buf, cookie, sizeof(cookie));
 		isc_stdtime_get(&now);
 		isc_random_get(&nonce);
 
-		compute_sit(client, now, nonce, &buf);
+		compute_cookie(client, now, nonce, &buf);
 
 		INSIST(count < DNS_EDNSOPTIONS);
 		ednsopts[count].code = DNS_OPT_COOKIE;
 		ednsopts[count].length = COOKIE_SIZE;
-		ednsopts[count].value = sit;
+		ednsopts[count].value = cookie;
 		count++;
 	}
 #endif
@@ -1559,8 +1576,8 @@ ns_client_isself(dns_view_t *myview, dns_tsigkey_t *mykey,
 
 #ifdef ISC_PLATFORM_USESIT
 static void
-compute_sit(ns_client_t *client, isc_uint32_t when, isc_uint32_t nonce,
-	    isc_buffer_t *buf)
+compute_cookie(ns_client_t *client, isc_uint32_t when, isc_uint32_t nonce,
+	       isc_buffer_t *buf)
 {
 #ifdef AES_SIT
 	unsigned char digest[ISC_AES_BLOCK_LENGTH];
@@ -1663,7 +1680,7 @@ compute_sit(ns_client_t *client, isc_uint32_t when, isc_uint32_t nonce,
 }
 
 static void
-process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
+process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	unsigned char dbuf[COOKIE_SIZE];
 	unsigned char *old;
 	isc_stdtime_t now;
@@ -1672,10 +1689,10 @@ process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	isc_buffer_t db;
 
 	/*
-	 * If we have already seen a ECS option skip this ECS option.
+	 * If we have already seen a SIT option skip this SIT option.
 	 */
 	if ((client->attributes & NS_CLIENTATTR_WANTSIT) != 0) {
-		isc_buffer_forward(buf, optlen);
+		isc_buffer_forward(buf, (isc_uint32_t)optlen);
 		return;
 	}
 	client->attributes |= NS_CLIENTATTR_WANTSIT;
@@ -1714,7 +1731,7 @@ process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 
 	/*
 	 * Allow for a 5 minute clock skew between servers sharing a secret.
-	 * Only accept SIT if we have talked to the client in the last hour.
+	 * Only accept COOKIE if we have talked to the client in the last hour.
 	 */
 	isc_stdtime_get(&now);
 	if (isc_serial_gt(when, (now + 300)) ||		/* In the future. */
@@ -1725,7 +1742,7 @@ process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	}
 
 	isc_buffer_init(&db, dbuf, sizeof(dbuf));
-	compute_sit(client, when, nonce, &db);
+	compute_cookie(client, when, nonce, &db);
 
 	if (!isc_safe_memequal(old, dbuf, COOKIE_SIZE)) {
 		isc_stats_increment(ns_g_server->nsstats,
@@ -1801,7 +1818,7 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 				break;
 #ifdef ISC_PLATFORM_USESIT
 			case DNS_OPT_COOKIE:
-				process_sit(client, &optbuf, optlen);
+				process_cookie(client, &optbuf, optlen);
 				break;
 #endif
 			case DNS_OPT_EXPIRE:
@@ -2031,7 +2048,7 @@ client_request(isc_task_t *task, isc_event_t *event) {
 					       &client->opt);
 
 		ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-			      NS_LOGMODULE_CLIENT, ISC_LOG_WARNING,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(1),
 			      "message parsing failed: %s",
 			      isc_result_totext(result));
 		ns_client_error(client, result);

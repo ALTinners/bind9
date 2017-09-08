@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -45,13 +45,13 @@
 #include <dns/masterdump.h>
 #include <dns/order.h>
 #include <dns/peer.h>
-#include <dns/rrl.h>
 #include <dns/rbt.h>
 #include <dns/rdataset.h>
 #include <dns/request.h>
 #include <dns/resolver.h>
 #include <dns/result.h>
 #include <dns/rpz.h>
+#include <dns/rrl.h>
 #include <dns/stats.h>
 #include <dns/tsig.h>
 #include <dns/zone.h>
@@ -206,6 +206,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->redirect = NULL;
 	view->requestnsid = ISC_FALSE;
 	view->requestsit = ISC_TRUE;
+	view->trust_anchor_telemetry = ISC_TRUE;
 	view->new_zone_file = NULL;
 	view->new_zone_config = NULL;
 	view->cfg_destroy = NULL;
@@ -280,6 +281,7 @@ static inline void
 destroy(dns_view_t *view) {
 	dns_dns64_t *dns64;
 	dns_dlzdb_t *dlzdb;
+	isc_result_t result;
 
 	REQUIRE(!ISC_LINK_LINKED(view, link));
 	REQUIRE(isc_refcount_current(&view->references) == 0);
@@ -294,7 +296,6 @@ destroy(dns_view_t *view) {
 		dns_peerlist_detach(&view->peers);
 
 	if (view->dynamickeys != NULL) {
-		isc_result_t result;
 		char template[20];
 		char keyfile[20];
 		FILE *fp = NULL;
@@ -452,7 +453,8 @@ destroy(dns_view_t *view) {
 		dns_zone_detach(&view->managed_keys);
 	if (view->redirect != NULL)
 		dns_zone_detach(&view->redirect);
-	dns_view_setnewzones(view, ISC_FALSE, NULL, NULL);
+	result = dns_view_setnewzones(view, ISC_FALSE, NULL, NULL);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	dns_fwdtable_destroy(&view->fwdtable);
 	dns_aclenv_destroy(&view->aclenv);
 	DESTROYLOCK(&view->lock);
@@ -1824,20 +1826,35 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
 	isc_buffer_init(&buffer, data, sizeof(data));
 	dns_rdata_fromstruct(&rdata, dnskey->common.rdclass,
 			     dns_rdatatype_dnskey, dnskey, &buffer);
+
 	result = dns_dnssec_keyfromrdata(keyname, &rdata, mctx, &key);
 	if (result != ISC_R_SUCCESS)
 		return;
+
 	result = dns_view_getsecroots(view, &sr);
 	if (result == ISC_R_SUCCESS) {
-		dns_keytable_deletekeynode(sr, key);
+		result = dns_keytable_deletekeynode(sr, key);
+
+		/*
+		 * If key was found in secroots, then it was a
+		 * configured trust anchor, and we want to fail
+		 * secure. If there are no other configured keys,
+		 * then leave a null key so that we can't validate
+		 * anymore.
+		 */
+
+		if (result == ISC_R_SUCCESS)
+			dns_keytable_marksecure(sr, keyname);
+
 		dns_keytable_detach(&sr);
 	}
+
 	dst_key_free(&key);
 }
 
 #define NZF ".nzf"
 
-void
+isc_result_t
 dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		     void (*cfg_destroy)(void **))
 {
@@ -1860,9 +1877,12 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		/* Truncate the hash at 16 chars; full length is overkill */
 		isc_string_printf(buffer + 16, sizeof(NZF), "%s", NZF);
 		view->new_zone_file = isc_mem_strdup(view->mctx, buffer);
+		if (view->new_zone_file == NULL)
+			return (ISC_R_NOMEMORY);
 		view->new_zone_config = cfgctx;
 		view->cfg_destroy = cfg_destroy;
 	}
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t

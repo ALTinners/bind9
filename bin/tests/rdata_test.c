@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,8 +34,6 @@
 #include <dns/rdatatype.h>
 #include <dns/result.h>
 
-isc_mem_t *mctx;
-isc_lex_t *lex;
 
 isc_lexspecials_t specials;
 
@@ -898,6 +896,8 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 
 int
 main(int argc, char *argv[]) {
+	isc_mem_t *mctx = NULL;
+	isc_lex_t *lex = NULL;
 	isc_token_t token;
 	isc_result_t result;
 	int quiet = 0;

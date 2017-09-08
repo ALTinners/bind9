@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -149,11 +149,11 @@ isc_file_getmodtime(const char *file, isc_time_t *modtime) {
 	result = file_stats(file, &stats);
 
 	if (result == ISC_R_SUCCESS)
-		/*
-		 * XXXDCL some operating systems provide nanoseconds, too,
-		 * such as BSD/OS via st_mtimespec.
-		 */
+#ifdef ISC_PLATFORM_HAVESTATNSEC
+		isc_time_set(modtime, stats.st_mtime, stats.st_mtim.tv_nsec);
+#else
 		isc_time_set(modtime, stats.st_mtime, 0);
+#endif
 
 	return (result);
 }
@@ -224,8 +224,9 @@ isc_file_mktemplate(const char *path, char *buf, size_t buflen) {
 
 isc_result_t
 isc_file_template(const char *path, const char *templet, char *buf,
-			size_t buflen) {
-	char *s;
+		  size_t buflen)
+{
+	const char *s;
 
 	REQUIRE(path != NULL);
 	REQUIRE(templet != NULL);
@@ -282,7 +283,7 @@ isc_file_renameunique(const char *file, char *templet) {
 		if (errno != EEXIST)
 			return (isc__errno2result(errno));
 		for (cp = x;;) {
-			char *t;
+			const char *t;
 			if (*cp == '\0')
 				return (ISC_R_FAILURE);
 			t = strchr(alphnum, *cp);
@@ -499,7 +500,7 @@ isc_file_ischdiridempotent(const char *filename) {
 
 const char *
 isc_file_basename(const char *filename) {
-	char *s;
+	const char *s;
 
 	REQUIRE(filename != NULL);
 
@@ -617,9 +618,11 @@ isc_file_safecreate(const char *filename, FILE **fp) {
 }
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
+isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
+		   char const **bname)
 {
-	char *dir, *file, *slash;
+	char *dir;
+	const char *file, *slash;
 
 	if (path == NULL)
 		return (ISC_R_INVALIDFILE);
@@ -648,7 +651,7 @@ isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
 	}
 
 	*dirname = dir;
-	*basename = file;
+	*bname = file;
 
 	return (ISC_R_SUCCESS);
 }
@@ -674,6 +677,9 @@ isc_file_mmap(void *addr, size_t len, int prot,
 		len = end - offset;
 
 	buf = malloc(len);
+	if (buf == NULL)
+		return (NULL);
+
 	ret = read(fd, buf, len);
 	if (ret != (ssize_t) len) {
 		free(buf);

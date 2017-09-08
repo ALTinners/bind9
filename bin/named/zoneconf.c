@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -905,6 +905,8 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		len = strlen(dlzname) + 5;
 		cpval = isc_mem_allocate(mctx, len);
+		if (cpval == NULL)
+			return (ISC_R_NOMEMORY);
 		snprintf(cpval, len, "dlz %s", dlzname);
 	}
 
@@ -972,11 +974,21 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			      "with 'masterfile-format map'", zname);
 		return (ISC_R_FAILURE);
 	} else if (result == ISC_R_SUCCESS) {
-		dns_ttl_t maxttl = cfg_obj_asuint32(obj);
+		dns_ttl_t maxttl = 0;	/* unlimited */
+
+		if (cfg_obj_isuint32(obj))
+			maxttl = cfg_obj_asuint32(obj);
 		dns_zone_setmaxttl(zone, maxttl);
 		if (raw != NULL)
 			dns_zone_setmaxttl(raw, maxttl);
 	}
+
+	obj = NULL;
+	result = ns_config_get(maps, "max-records", &obj);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
+	dns_zone_setmaxrecords(mayberaw, cfg_obj_asuint32(obj));
+	if (zone != mayberaw)
+		dns_zone_setmaxrecords(zone, 0);
 
 	if (raw != NULL && filename != NULL) {
 #define SIGNED ".signed"

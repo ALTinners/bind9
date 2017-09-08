@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $Id$ */
 
 #include <config.h>
 
@@ -273,10 +271,11 @@ count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		} else if (cfg_obj_isstring(ce)) {
 			const char *name = cfg_obj_asstring(ce);
 			if (strcasecmp(name, "localhost") == 0 ||
-			    strcasecmp(name, "localnets") == 0) {
+			    strcasecmp(name, "localnets") == 0 ||
+			    strcasecmp(name, "none") == 0)
+			{
 				n++;
-			} else if (strcasecmp(name, "any") != 0 &&
-				   strcasecmp(name, "none") != 0) {
+			} else if (strcasecmp(name, "any") != 0) {
 				dns_acl_t *inneracl = NULL;
 				/*
 				 * Convert any named acls we reference now if
@@ -532,21 +531,32 @@ parse_geoip_element(const cfg_obj_t *obj, isc_log_t *lctx,
 		subtype = dns_geoip_city_name;
 		strlcpy(de.geoip_elem.as_string, search,
 			sizeof(de.geoip_elem.as_string));
-	} else if (strcasecmp(stype, "postal") == 0 && len < 7) {
-		subtype = dns_geoip_city_postalcode;
-		strlcpy(de.geoip_elem.as_string, search,
-			sizeof(de.geoip_elem.as_string));
-	} else if (strcasecmp(stype, "postal") == 0) {
-		cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
-			    "geoiop postal code (%s) too long", search);
-		return (ISC_R_FAILURE);
-	} else if (strcasecmp(stype, "metro") == 0) {
+	} else if (strcasecmp(stype, "postal") == 0 ||
+		   strcasecmp(stype, "postalcode") == 0)
+	{
+		if (len < 7) {
+			subtype = dns_geoip_city_postalcode;
+			strlcpy(de.geoip_elem.as_string, search,
+				sizeof(de.geoip_elem.as_string));
+		} else {
+			cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
+				    "geoiop postal code (%s) too long",
+				    search);
+			return (ISC_R_FAILURE);
+		}
+	} else if (strcasecmp(stype, "metro") == 0 ||
+		   strcasecmp(stype, "metrocode") == 0)
+	{
 		subtype = dns_geoip_city_metrocode;
 		de.geoip_elem.as_int = atoi(search);
-	} else if (strcasecmp(stype, "area") == 0) {
+	} else if (strcasecmp(stype, "area") == 0 ||
+		   strcasecmp(stype, "areacode") == 0)
+	{
 		subtype = dns_geoip_city_areacode;
 		de.geoip_elem.as_int = atoi(search);
-	} else if (strcasecmp(stype, "tz") == 0) {
+	} else if (strcasecmp(stype, "tz") == 0 ||
+		   strcasecmp(stype, "timezone") == 0)
+	{
 		subtype = dns_geoip_city_timezonecode;
 		strlcpy(de.geoip_elem.as_string, search,
 			sizeof(de.geoip_elem.as_string));
@@ -707,6 +717,14 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 				if (nest_level != 0)
 					dns_acl_detach(&de->nestedacl);
 				continue;
+			}
+			result = isc_netaddr_prefixok(&addr, bitlen);
+			if (result != ISC_R_SUCCESS) {
+				char buf[ISC_NETADDR_FORMATSIZE + 1];
+				isc_netaddr_format(&addr, buf, sizeof(buf));
+				cfg_obj_log(ce, lctx, ISC_LOG_WARNING,
+					    "'%s/%u': address/prefix length "
+					    "mismatch", buf, bitlen);
 			}
 
 			/*

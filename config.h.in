@@ -1,6 +1,6 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -69,12 +69,6 @@
 
 /** define if gai_strerror() exists */
 #undef HAVE_GAISTRERROR
-
-/** define if arc4random() exists */
-#undef HAVE_ARC4RANDOM
-
-/** define if arc4random_addrandom() exists */
-#undef HAVE_ARC4RANDOM_ADDRANDOM
 
 /**
  * define if pthread_setconcurrency() should be called to tell the
@@ -147,6 +141,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 #undef NEED_PTHREAD_SCOPE_SYSTEM
 
+/* Define to 1 if you have the uname library function. */
+#undef HAVE_UNAME
+
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
@@ -192,6 +189,21 @@ int sigwait(const unsigned int *set, int *sig);
    MSVC and with C++ compilers. */
 #undef FLEXIBLE_ARRAY_MEMBER
 
+/* Define to 1 if you have the `arc4random' function. */
+#undef HAVE_ARC4RANDOM
+
+/* Define to 1 if you have the `arc4random_addrandom' function. */
+#undef HAVE_ARC4RANDOM_ADDRANDOM
+
+/* Define to 1 if you have the `arc4random_stir' function. */
+#undef HAVE_ARC4RANDOM_STIR
+
+/* Define to 1 if the compiler supports __builtin_clz. */
+#undef HAVE_BUILTIN_CLZ
+
+/* Define to 1 if the compiler supports __builtin_expect. */
+#undef HAVE_BUILTIN_EXPECT
+
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
 
@@ -212,6 +224,15 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `dlsym' function. */
 #undef HAVE_DLSYM
+
+/* Define to 1 if you have the <editline/readline.h> header file. */
+#undef HAVE_EDITLINE_READLINE_H
+
+/* Define to 1 if you have the <edit/readline/history.h> header file. */
+#undef HAVE_EDIT_READLINE_HISTORY_H
+
+/* Define to 1 if you have the <edit/readline/readline.h> header file. */
+#undef HAVE_EDIT_READLINE_READLINE_H
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #undef HAVE_EVP_SHA256
@@ -239,6 +260,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Build with GeoIP Country IPv6 support */
 #undef HAVE_GEOIP_V6
+
+/* Define to 1 if you have the `getrandom' function. */
+#undef HAVE_GETRANDOM
 
 /* Define to use gperftools CPU profiler. */
 #undef HAVE_GPERFTOOLS_PROFILER
@@ -363,6 +387,15 @@ int sigwait(const unsigned int *set, int *sig);
 /* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
 #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
 
+/* Define to 1 if you have the <pthread_np.h> header file. */
+#undef HAVE_PTHREAD_NP_H
+
+/* Define to 1 if you have the `pthread_setname_np' function. */
+#undef HAVE_PTHREAD_SETNAME_NP
+
+/* Define to 1 if you have the `pthread_set_name_np' function. */
+#undef HAVE_PTHREAD_SET_NAME_NP
+
 /* Define to 1 if you have the `pthread_yield' function. */
 #undef HAVE_PTHREAD_YIELD
 
@@ -371,6 +404,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `readline' function. */
 #undef HAVE_READLINE
+
+/* Define to 1 if you have the <readline/history.h> header file. */
+#undef HAVE_READLINE_HISTORY_H
+
+/* Define to 1 if you have the <readline/readline.h> header file. */
+#undef HAVE_READLINE_READLINE_H
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
@@ -458,9 +497,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
-
-/* HMAC_*() return ints */
-#undef HMAC_RETURN_INT
 
 /* Use HMAC-SHA1 for Source Identity Token generation */
 #undef HMAC_SHA1_SIT

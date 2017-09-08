@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -105,10 +105,10 @@
 #define BACKTRACE_MAXFRAME 128
 #endif
 
-extern int isc_dscp_check_value;
-extern unsigned int dns_zone_mkey_hour;
-extern unsigned int dns_zone_mkey_day;
-extern unsigned int dns_zone_mkey_month;
+LIBISC_EXTERNAL_DATA extern int isc_dscp_check_value;
+LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_hour;
+LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_day;
+LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_month;
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -304,11 +304,13 @@ static void
 lwresd_usage(void) {
 	fprintf(stderr,
 		"usage: lwresd [-4|-6] [-c conffile | -C resolvconffile] "
-		"[-d debuglevel]\n"
-		"              [-f|-g] [-n number_of_cpus] [-p port] "
-		"[-P listen-port] [-s]\n"
-		"              [-t chrootdir] [-u username] [-i pidfile]\n"
-		"              [-m {usage|trace|record|size|mctx}]\n");
+		"[-d debuglevel] [-f|-g]\n"
+		"              [-i pidfile] [-n number_of_cpus] "
+		"[-p port] [-P listen-port]\n"
+		"              [-s] [-S sockets] [-t chrootdir] [-u username] "
+		"[-U listeners]\n"
+		"              [-m {usage|trace|record|size|mctx}]\n"
+		"usage: lwresd [-v|-V]\n");
 }
 
 static void
@@ -321,8 +323,10 @@ usage(void) {
 		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
 		"[-E engine] [-f|-g]\n"
 		"             [-n number_of_cpus] [-p port] [-s] "
-		"[-t chrootdir] [-u username]\n"
-		"             [-m {usage|trace|record|size|mctx}]\n");
+		"[-S sockets] [-t chrootdir]\n"
+		"             [-u username] [-U listeners] "
+		"[-m {usage|trace|record|size|mctx}]\n"
+		"usage: named [-v|-V]\n");
 }
 
 static void
@@ -609,6 +613,12 @@ parse_command_line(int argc, char *argv[]) {
 					ns_main_earlyfatal("bad mkeytimer");
 			} else if (!strcmp(isc_commandline_argument, "notcp"))
 				ns_g_notcp = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument, "tat=", 4))
+				ns_g_tat_interval =
+					   atoi(isc_commandline_argument + 4);
+			else if (!strcmp(isc_commandline_argument,
+					 "keepstderr"))
+				ns_g_keepstderr = ISC_TRUE;
 			else
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
@@ -631,6 +641,7 @@ parse_command_line(int argc, char *argv[]) {
 			printf("%s %s%s%s <id:%s>\n", ns_g_product, ns_g_version,
 			       (*ns_g_description != '\0') ? " " : "",
 			       ns_g_description, ns_g_srcid);
+			printf("running on %s\n", ns_os_uname());
 			printf("built by %s with %s\n",
 			       ns_g_builder, ns_g_configargs);
 #ifdef __clang__
@@ -653,8 +664,15 @@ parse_command_line(int argc, char *argv[]) {
 #ifdef OPENSSL
 			printf("compiled with OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
+#if !defined(LIBRESSL_VERSION_NUMBER) && \
+    OPENSSL_VERSION_NUMBER >= 0x10100000L /* 1.1.0 or higher */
+			printf("linked to OpenSSL version: %s\n",
+			       OpenSSL_version(OPENSSL_VERSION));
+
+#else
 			printf("linked to OpenSSL version: %s\n",
 			       SSLeay_version(SSLEAY_VERSION));
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
 #endif
 #ifdef HAVE_LIBXML2
 			printf("compiled with libxml2 version: %s\n",
@@ -662,7 +680,7 @@ parse_command_line(int argc, char *argv[]) {
 			printf("linked to libxml2 version: %s\n",
 			       xmlParserVersion);
 #endif
-#ifdef HAVE_JSON
+#if defined(HAVE_JSON) && defined(JSON_C_VERSION)
 			printf("compiled with libjson-c version: %s\n",
 			       JSON_C_VERSION);
 			printf("linked to libjson-c version: %s\n",
@@ -705,6 +723,8 @@ create_managers(void) {
 	isc_result_t result;
 	unsigned int socks;
 
+	INSIST(ns_g_cpus_detected > 0);
+
 #ifdef ISC_PLATFORM_USETHREADS
 	if (ns_g_cpus == 0)
 		ns_g_cpus = ns_g_cpus_detected;
@@ -721,10 +741,8 @@ create_managers(void) {
 	if (ns_g_udpdisp == 0) {
 		if (ns_g_cpus_detected == 1)
 			ns_g_udpdisp = 1;
-		else if (ns_g_cpus_detected < 4)
-			ns_g_udpdisp = 2;
 		else
-			ns_g_udpdisp = ns_g_cpus_detected / 2;
+			ns_g_udpdisp = ns_g_cpus_detected - 1;
 	}
 	if (ns_g_udpdisp > ns_g_cpus)
 		ns_g_udpdisp = ns_g_cpus;
@@ -991,6 +1009,9 @@ setup(void) {
 		      ns_g_srcid, saved_command_line);
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE, "running on %s", ns_os_uname());
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
@@ -1108,6 +1129,9 @@ setup(void) {
 static void
 cleanup(void) {
 	destroy_managers();
+
+	if (ns_g_mapped != NULL)
+		dns_acl_detach(&ns_g_mapped);
 
 	ns_server_destroy(&ns_g_server);
 

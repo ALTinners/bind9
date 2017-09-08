@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,11 @@ SYSTEMTESTTOP=..
 
 DIGCMD="$DIG @10.53.0.2 -p 5300"
 
-if $PERL -e 'use JSON;' 2>/dev/null
+if [ ! "$HAVEJSONSTATS" ]
+then
+    unset PERL_JSON
+    echo "I:JSON was not configured; skipping" >&2
+elif $PERL -e 'use JSON;' 2>/dev/null
 then
     PERL_JSON=1
 else
@@ -27,7 +31,11 @@ else
     echo "I:JSON tests require JSON library; skipping" >&2
 fi
 
-if $PERL -e 'use XML::Simple;' 2>/dev/null
+if [ ! "$HAVEXMLSTATS" ]
+then
+    unset PERL_XML
+    echo "I:XML was not configured; skipping" >&2
+elif $PERL -e 'use XML::Simple;' 2>/dev/null
 then
     PERL_XML=1
 else
@@ -54,10 +62,10 @@ if [ $PERL_XML ]; then
     file=`$PERL fetch.pl xml/v3/server`
     mv $file xml.stats
     $PERL server-xml.pl > xml.fmtstats 2> /dev/null
-    xml_query_count=`awk '/opcode QUERY/ { print $NF }' xml.fmtstats` 
+    xml_query_count=`awk '/opcode QUERY/ { print $NF }' xml.fmtstats`
     xml_query_count=${xml_query_count:-0}
     [ "$query_count" -eq "$xml_query_count" ] || ret=1
-    xml_txt_count=`awk '/qtype TXT/ { print $NF }' xml.fmtstats` 
+    xml_txt_count=`awk '/qtype TXT/ { print $NF }' xml.fmtstats`
     xml_txt_count=${xml_txt_count:-0}
     [ "$txt_count" -eq "$xml_txt_count" ] || ret=1
 fi
@@ -65,10 +73,10 @@ if [ $PERL_JSON ]; then
     file=`$PERL fetch.pl json/v1/server`
     mv $file json.stats
     $PERL server-json.pl > json.fmtstats 2> /dev/null
-    json_query_count=`awk '/opcode QUERY/ { print $NF }' json.fmtstats` 
+    json_query_count=`awk '/opcode QUERY/ { print $NF }' json.fmtstats`
     json_query_count=${json_query_count:-0}
     [ "$query_count" -eq "$json_query_count" ] || ret=1
-    json_txt_count=`awk '/qtype TXT/ { print $NF }' json.fmtstats` 
+    json_txt_count=`awk '/qtype TXT/ { print $NF }' json.fmtstats`
     json_txt_count=${json_txt_count:-0}
     [ "$txt_count" -eq "$json_txt_count" ] || ret=1
 fi
@@ -77,4 +85,4 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

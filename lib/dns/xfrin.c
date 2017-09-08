@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -149,6 +149,9 @@ struct dns_xfrin_ctx {
 	unsigned int		nrecs;		/*%< Number of records recvd */
 	isc_uint64_t		nbytes;		/*%< Number of bytes received */
 
+	unsigned int		maxrecords;	/*%< The maximum number of
+						     records set for the zone */
+
 	isc_time_t		start;		/*%< Start time of the transfer */
 	isc_time_t		end;		/*%< End time of the transfer */
 
@@ -292,6 +295,9 @@ axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 
 	dns_difftuple_t *tuple = NULL;
 
+	if (rdata->rdclass != xfr->rdclass)
+		return(DNS_R_BADCLASS);
+
 	CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op,
 				   name, ttl, rdata, &tuple));
@@ -309,10 +315,18 @@ axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t
 axfr_apply(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
+	isc_uint64_t records;
 
 	CHECK(dns_diff_load(&xfr->diff, xfr->axfr.add, xfr->axfr.add_private));
 	xfr->difflen = 0;
 	dns_diff_clear(&xfr->diff);
+	if (xfr->maxrecords != 0U) {
+		result = dns_db_getsize(xfr->db, xfr->ver, &records, NULL);
+		if (result == ISC_R_SUCCESS && records > xfr->maxrecords) {
+			result = DNS_R_TOOMANYRECORDS;
+			goto failure;
+		}
+	}
 	result = ISC_R_SUCCESS;
  failure:
 	return (result);
@@ -376,8 +390,11 @@ ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 	     dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata)
 {
 	isc_result_t result;
-
 	dns_difftuple_t *tuple = NULL;
+
+	if (rdata->rdclass != xfr->rdclass)
+		return(DNS_R_BADCLASS);
+
 	if (op == DNS_DIFFOP_ADD)
 		CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op,
@@ -396,6 +413,7 @@ ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t
 ixfr_apply(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
+	isc_uint64_t records;
 
 	if (xfr->ver == NULL) {
 		CHECK(dns_db_newversion(xfr->db, &xfr->ver));
@@ -403,6 +421,13 @@ ixfr_apply(dns_xfrin_ctx_t *xfr) {
 			CHECK(dns_journal_begin_transaction(xfr->ixfr.journal));
 	}
 	CHECK(dns_diff_apply(&xfr->diff, xfr->db, xfr->ver));
+	if (xfr->maxrecords != 0U) {
+		result = dns_db_getsize(xfr->db, xfr->ver, &records, NULL);
+		if (result == ISC_R_SUCCESS && records > xfr->maxrecords) {
+			result = DNS_R_TOOMANYRECORDS;
+			goto failure;
+		}
+	}
 	if (xfr->ixfr.journal != NULL) {
 		result = dns_journal_writediff(xfr->ixfr.journal, &xfr->diff);
 		if (result != ISC_R_SUCCESS)
@@ -759,7 +784,7 @@ xfrin_reset(dns_xfrin_ctx_t *xfr) {
 
 static void
 xfrin_fail(dns_xfrin_ctx_t *xfr, isc_result_t result, const char *msg) {
-	if (result != DNS_R_UPTODATE) {
+	if (result != DNS_R_UPTODATE && result != DNS_R_TOOMANYRECORDS) {
 		xfrin_log(xfr, ISC_LOG_ERROR, "%s: %s",
 			  msg, isc_result_totext(result));
 		if (xfr->is_ixfr)
@@ -852,6 +877,7 @@ xfrin_create(isc_mem_t *mctx,
 	xfr->nmsg = 0;
 	xfr->nrecs = 0;
 	xfr->nbytes = 0;
+	xfr->maxrecords = dns_zone_getmaxrecords(zone);
 	isc_time_now(&xfr->start);
 
 	xfr->tsigkey = NULL;
@@ -1247,10 +1273,17 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 			  dns_result_totext(result));
 
 	if (result != ISC_R_SUCCESS || msg->rcode != dns_rcode_noerror ||
+	    msg->opcode != dns_opcode_query ||msg->rdclass != xfr->rdclass ||
 	    (xfr->checkid && msg->id != xfr->id)) {
-		if (result == ISC_R_SUCCESS)
+		if (result == ISC_R_SUCCESS && msg->rcode != dns_rcode_noerror)
 			result = ISC_RESULTCLASS_DNSRCODE + msg->rcode; /*XXX*/
-		if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR)
+		else if (result == ISC_R_SUCCESS &&
+			 msg->opcode != dns_opcode_query)
+			result = DNS_R_UNEXPECTEDOPCODE;
+		else if (result == ISC_R_SUCCESS &&
+			 msg->rdclass != xfr->rdclass)
+			result = DNS_R_BADCLASS;
+		else if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR)
 			result = DNS_R_UNEXPECTEDID;
 		if (xfr->reqtype == dns_rdatatype_axfr ||
 		    xfr->reqtype == dns_rdatatype_soa)

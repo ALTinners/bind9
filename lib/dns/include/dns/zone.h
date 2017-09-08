@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -296,6 +296,32 @@ dns_zone_getfile(dns_zone_t *zone);
  */
 
 void
+dns_zone_setmaxrecords(dns_zone_t *zone, isc_uint32_t records);
+/*%<
+ * 	Sets the maximim number of records permitted in a zone.
+ *	0 implies unlimited.
+ *
+ * Requires:
+ *\li	'zone' to be valid initialised zone.
+ *
+ * Returns:
+ *\li	void
+ */
+
+isc_uint32_t
+dns_zone_getmaxrecords(dns_zone_t *zone);
+/*%<
+ * 	Gets the maximim number of records permitted in a zone.
+ *	0 implies unlimited.
+ *
+ * Requires:
+ *\li	'zone' to be valid initialised zone.
+ *
+ * Returns:
+ *\li	isc_uint32_t maxrecords.
+ */
+
+void
 dns_zone_setmaxttl(dns_zone_t *zone, isc_uint32_t maxttl);
 /*%<
  * 	Sets the max ttl of the zone.
@@ -316,7 +342,7 @@ dns_zone_getmaxttl(dns_zone_t *zone);
  *\li	'zone' to be valid initialised zone.
  *
  * Returns:
- *\li	isc_uint32_t maxttl.
+ *\li	dns_ttl_t maxttl.
  */
 
 isc_result_t
@@ -896,7 +922,7 @@ dns_zone_getnotifysrc4(dns_zone_t *zone);
 isc_dscp_t
 dns_zone_getnotifysrc4dscp(dns_zone_t *zone);
 /*%/
- * Get the DSCP value associated with the notify source.
+ * Get the DSCP value associated with the IPv4 notify source.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -905,7 +931,7 @@ dns_zone_getnotifysrc4dscp(dns_zone_t *zone);
 isc_result_t
 dns_zone_setnotifysrc4dscp(dns_zone_t *zone, isc_dscp_t dscp);
 /*%<
- * Set the DSCP value associated with the notify source.
+ * Set the DSCP value associated with the IPv4 notify source.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -940,7 +966,7 @@ dns_zone_getnotifysrc6(dns_zone_t *zone);
 isc_dscp_t
 dns_zone_getnotifysrc6dscp(dns_zone_t *zone);
 /*%/
- * Get the DSCP value associated with the notify source.
+ * Get the DSCP value associated with the IPv6 notify source.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -949,7 +975,7 @@ dns_zone_getnotifysrc6dscp(dns_zone_t *zone);
 isc_result_t
 dns_zone_setnotifysrc6dscp(dns_zone_t *zone, isc_dscp_t dscp);
 /*%<
- * Set the DSCP value associated with the notify source.
+ * Set the DSCP value associated with the IPv6 notify source.
  *
  * Require:
  *\li	'zone' to be a valid zone.

@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@ top_srcdir =	@top_srcdir@
 .NOTPARALLEL:
 .NO_PARALLEL:
 
-@BIND9_VERSION@
+VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
@@ -38,7 +38,8 @@ DNSDEPLIBS =	../libdns.@A@
 LIBS =		@LIBS@ @ATFLIBS@
 
 OBJS =		dnstest.@O@
-SRCS =		db_test.c \
+SRCS =		acl_test.c \
+		db_test.c \
 		dbdiff_test.c \
 		dbiterator_test.c \
 		dh_test.c \
@@ -56,13 +57,16 @@ SRCS =		db_test.c \
 		rdata_test.c \
 		rdataset_test.c \
 		rdatasetstats_test.c \
+		rsa_test.c \
 		time_test.c \
+		tsig_test.c \
 		update_test.c \
 		zonemgr_test.c \
-		zt_test.c 
+		zt_test.c
 
 SUBDIRS =
-TARGETS =	db_test@EXEEXT@ \
+TARGETS =	acl_test@EXEEXT@ \
+		db_test@EXEEXT@ \
 		dbdiff_test@EXEEXT@ \
 		dbiterator_test@EXEEXT@ \
 		dbversion_test@EXEEXT@ \
@@ -80,12 +84,19 @@ TARGETS =	db_test@EXEEXT@ \
 		rdata_test@EXEEXT@ \
 		rdataset_test@EXEEXT@ \
 		rdatasetstats_test@EXEEXT@ \
+		rsa_test@EXEEXT@ \
 		time_test@EXEEXT@ \
+		tsig_test@EXEEXT@ \
 		update_test@EXEEXT@ \
 		zonemgr_test@EXEEXT@ \
 		zt_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
+
+acl_test@EXEEXT@: acl_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			acl_test.@O@ dnstest.@O@ ${DNSLIBS} \
+				${ISCLIBS} ${LIBS}
 
 master_test@EXEEXT@: master_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	test -d testdata || mkdir testdata
@@ -183,7 +194,7 @@ rbt_serialize_test@EXEEXT@: rbt_serialize_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${D
 
 rdata_test@EXEEXT@: rdata_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-			rdata_test.@O@ ${DNSLIBS} \
+			rdata_test.@O@ dnstest.@O@ ${DNSLIBS} \
 			${ISCLIBS} ${LIBS}
 
 geoip_test@EXEEXT@: geoip_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
@@ -206,6 +217,16 @@ dh_test@EXEEXT@: dh_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 			dh_test.@O@ dnstest.@O@ ${DNSLIBS} \
 			${ISCLIBS} ${LIBS}
 
+rsa_test@EXEEXT@: rsa_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			rsa_test.@O@ dnstest.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+tsig_test@EXEEXT@: tsig_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			tsig_test.@O@ dnstest.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
 unit::
 	sh ${top_srcdir}/unit/unittest.sh
 
@@ -213,5 +234,5 @@ clean distclean::
 	rm -f ${TARGETS}
 	rm -f atf.out
 	rm -f testdata/master/master12.data testdata/master/master13.data \
-		testdata/master/master14.data 
+		testdata/master/master14.data
 	rm -f zone.bin

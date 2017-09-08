@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -45,6 +45,8 @@
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <dns/dnssec.h>
 #include <dns/fixedname.h>
@@ -525,15 +527,30 @@ main(int argc, char **argv) {
 		}
 
 		if (strcasecmp(algname, "RSA") == 0) {
+#ifndef PK11_MD5_DISABLE
 			fprintf(stderr, "The use of RSA (RSAMD5) is not "
 					"recommended.\nIf you still wish to "
 					"use RSA (RSAMD5) please specify "
 					"\"-a RSAMD5\"\n");
 			INSIST(freeit == NULL);
 			return (1);
-		} else if (strcasecmp(algname, "HMAC-MD5") == 0)
+		} else if (strcasecmp(algname, "HMAC-MD5") == 0) {
 			alg = DST_ALG_HMACMD5;
-		else if (strcasecmp(algname, "HMAC-SHA1") == 0)
+#else
+			fprintf(stderr,
+				"The use of RSA (RSAMD5) was disabled\n");
+			INSIST(freeit == NULL);
+			return (1);
+		} else if (strcasecmp(algname, "RSAMD5") == 0) {
+			fprintf(stderr, "The use of RSAMD5 was disabled\n");
+			INSIST(freeit == NULL);
+			return (1);
+		} else if (strcasecmp(algname, "HMAC-MD5") == 0) {
+			fprintf(stderr,
+				"The use of HMAC-MD5 was disabled\n");
+			return (1);
+#endif
+		} else if (strcasecmp(algname, "HMAC-SHA1") == 0)
 			alg = DST_ALG_HMACSHA1;
 		else if (strcasecmp(algname, "HMAC-SHA224") == 0)
 			alg = DST_ALG_HMACSHA224;
@@ -552,6 +569,10 @@ main(int argc, char **argv) {
 			if (alg == DST_ALG_DH)
 				options |= DST_TYPE_KEY;
 		}
+
+#ifdef PK11_MD5_DISABLE
+		INSIST((alg != DNS_KEYALG_RSAMD5) && (alg != DST_ALG_HMACMD5));
+#endif
 
 		if (!dst_algorithm_supported(alg))
 			fatal("unsupported algorithm: %d", alg);

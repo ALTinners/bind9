@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -167,7 +167,8 @@ usage(void) {
 "                 -p port             (specify port number)\n"
 "                 -q name             (specify query name)\n"
 "                 -t type             (specify query type)\n"
-"                 -c class            (specify query class)\n"
+"                 -c class            (option included for compatibility;\n"
+"                                      only IN is supported)\n"
 "                 -4                  (use IPv4 query transport only)\n"
 "                 -6                  (use IPv6 query transport only)\n"
 "                 -i                  (disable DNSSEC validation)\n"
@@ -451,8 +452,8 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner,
 				dns_rdataset_current(rdataset, &rdata);
 				result = dns_rdata_tofmttext(&rdata,
 							     dns_rootname,
-							     styleflags,
-							     0, 60, " ",
+							     styleflags, 0,
+							     splitwidth, " ",
 							     &target);
 				if (result != ISC_R_SUCCESS)
 					break;
@@ -773,7 +774,7 @@ setup_dnsseckeys(dns_client_t *client) {
 static isc_result_t
 addserver(dns_client_t *client) {
 	struct addrinfo hints, *res, *cur;
-	int gai_error;
+	int gaierror;
 	struct in_addr in4;
 	struct in6_addr in6;
 	isc_sockaddr_t *sa;
@@ -812,11 +813,11 @@ addserver(dns_client_t *client) {
 			hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
-		gai_error = getaddrinfo(server, port, &hints, &res);
-		if (gai_error != 0) {
+		gaierror = getaddrinfo(server, port, &hints, &res);
+		if (gaierror != 0) {
 			delv_log(ISC_LOG_ERROR,
 				  "getaddrinfo failed: %s",
-				  gai_strerror(gai_error));
+				  gai_strerror(gaierror));
 			return (ISC_R_FAILURE);
 		}
 

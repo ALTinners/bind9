@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@ srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-@BIND9_VERSION@
+VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
@@ -74,11 +74,11 @@ rndc-confgen.@O@: rndc-confgen.c
 ddns-confgen.@O@: ddns-confgen.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${srcdir}/ddns-confgen.c
 
-rndc-confgen@EXEEXT@: rndc-confgen.@O@ util.@O@ keygen.@O@ ${UOBJS} ${CONFDEPLIBS} 
+rndc-confgen@EXEEXT@: rndc-confgen.@O@ util.@O@ keygen.@O@ ${UOBJS} ${CONFDEPLIBS}
 	export BASEOBJS="rndc-confgen.@O@ util.@O@ keygen.@O@ ${UOBJS}"; \
 	${FINALBUILDCMD}
 
-ddns-confgen@EXEEXT@: ddns-confgen.@O@ util.@O@ keygen.@O@ ${UOBJS} ${CONFDEPLIBS} 
+ddns-confgen@EXEEXT@: ddns-confgen.@O@ util.@O@ keygen.@O@ ${UOBJS} ${CONFDEPLIBS}
 	export BASEOBJS="ddns-confgen.@O@ util.@O@ keygen.@O@ ${UOBJS}"; \
 	${FINALBUILDCMD}
 
@@ -103,6 +103,14 @@ install:: rndc-confgen@EXEEXT@ ddns-confgen@EXEEXT@ installdirs
 	${INSTALL_DATA} ${srcdir}/ddns-confgen.8 ${DESTDIR}${mandir}/man8
 	(cd ${DESTDIR}${sbindir}; rm -f tsig-keygen@EXEEXT@; ${LINK_PROGRAM} ddns-confgen@EXEEXT@ tsig-keygen@EXEEXT@)
 	(cd ${DESTDIR}${mandir}/man8; rm -f tsig-keygen.8; ${LINK_PROGRAM} ddns-confgen.8 tsig-keygen.8)
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man8/tsig-keygen.8
+	rm -f ${DESTDIR}${sbindir}/tsig-keygen@EXEEXT@
+	rm -f ${DESTDIR}${mandir}/man8/ddns-confgen.8
+	rm -f ${DESTDIR}${mandir}/man8/rndc-confgen.8
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/ddns-confgen@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/rndc-confgen@EXEEXT@
 
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}

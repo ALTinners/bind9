@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -523,6 +523,9 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event);
  * Inform the dispatcher of a socket receive.  This is used for sockets
  * shared between dispatchers and clients.  If the dispatcher fails to copy
  * or send the event, nothing happens.
+ *
+ * If the attribute DNS_DISPATCHATTR_NOLISTEN is not set, then
+ * the dispatch is already handling a recv; return immediately.
  *
  * Requires:
  *\li 	disp is valid, and the attribute DNS_DISPATCHATTR_NOLISTEN is set.

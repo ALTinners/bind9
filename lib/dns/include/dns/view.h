@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -128,6 +128,7 @@ struct dns_view {
 	isc_boolean_t			enablednssec;
 	isc_boolean_t			enablevalidation;
 	isc_boolean_t			acceptexpired;
+	isc_boolean_t			trust_anchor_telemetry;
 	dns_transfer_format_t		transfer_format;
 	dns_acl_t *			cacheacl;
 	dns_acl_t *			cacheonacl;
@@ -1132,6 +1133,12 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
  * Remove keys that match 'keyname' and 'dnskey' from the views trust
  * anchors.
  *
+ * (NOTE: If the configuration specifies that there should be a
+ * trust anchor at 'keyname', but no keys are left after this
+ * operation, that is an error.  We fail closed, inserting a NULL
+ * key so as to prevent validation until a legimitate key has been
+ * provided.)
+ *
  * Requires:
  * \li	'view' is valid.
  * \li	'keyname' is valid.
@@ -1139,7 +1146,7 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
  * \li	'dnskey' is valid.
  */
 
-void
+isc_result_t
 dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		     void (*cfg_destroy)(void **));
 /*%<
@@ -1158,6 +1165,10 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
  *
  * Requires:
  * \li 'view' is valid.
+ *
+ * Returns:
+ * \li ISC_R_SUCCESS
+ * \li ISC_R_NOMEMORY
  */
 
 void
@@ -1176,14 +1187,14 @@ dns_view_searchdlz(dns_view_t *view, dns_name_t *name,
  * findzone method.  If successful, '*dbp' is set to point to the
  * DLZ database.
  *
- * Returns:
- * \li ISC_R_SUCCESS
- * \li ISC_R_NOTFOUND
- *
  * Requires:
  * \li 'view' is valid.
  * \li 'name' is not NULL.
  * \li 'dbp' is not NULL and *dbp is NULL.
+ *
+ * Returns:
+ * \li ISC_R_SUCCESS
+ * \li ISC_R_NOTFOUND
  */
 
 ISC_LANG_ENDDECLS

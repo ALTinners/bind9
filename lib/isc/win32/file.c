@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -319,7 +319,8 @@ isc_file_mktemplate(const char *path, char *buf, size_t buflen) {
 
 isc_result_t
 isc_file_template(const char *path, const char *templet, char *buf,
-			size_t buflen) {
+		  size_t buflen)
+{
 	char *s;
 
 	REQUIRE(path != NULL);
@@ -582,7 +583,7 @@ isc_file_basename(const char *filename) {
 isc_result_t
 isc_file_progname(const char *filename, char *progname, size_t namelen) {
 	const char *s;
-	char *p;
+	const char *p;
 	size_t len;
 
 	REQUIRE(filename != NULL);
@@ -694,9 +695,11 @@ isc_file_safecreate(const char *filename, FILE **fp) {
 }
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
+isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
+		   char const ** basename)
 {
-	char *dir, *file, *slash;
+	char *dir;
+	const char *file, *slash;
 	char *backslash;
 
 	slash = strrchr(path, '/');
@@ -751,6 +754,9 @@ isc_file_mmap(void *addr, size_t len, int prot,
 		len = end - offset;
 
 	buf = malloc(len);
+	if (buf == NULL)
+		return (NULL);
+
 	ret = read(fd, buf, (unsigned int) len);
 	if (ret != (ssize_t) len) {
 		free(buf);

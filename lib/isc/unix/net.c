@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -110,12 +110,20 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 
 # if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
-# endif
 
-# if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+#  if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
-# endif
+#  endif
+# endif /* WANT_IPV6 */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
+
+#ifndef ISC_CMSG_IP_TOS
+#ifdef __APPLE__
+#define ISC_CMSG_IP_TOS 0	/* As of 10.8.2. */
+#else /* ! __APPLE__ */
+#define ISC_CMSG_IP_TOS 1
+#endif /* ! __APPLE__ */
+#endif /* ! ISC_CMSG_IP_TOS */
 
 static isc_once_t 	once = ISC_ONCE_INIT;
 static isc_once_t 	once_dscp = ISC_ONCE_INIT;
@@ -138,6 +146,9 @@ try_proto(int domain) {
 		switch (errno) {
 #ifdef EAFNOSUPPORT
 		case EAFNOSUPPORT:
+#endif
+#ifdef EPFNOSUPPORT
+		case EPFNOSUPPORT:
 #endif
 #ifdef EPROTONOSUPPORT
 		case EPROTONOSUPPORT:
@@ -408,6 +419,9 @@ isc_net_probe_ipv6pktinfo(void) {
 	return (ipv6pktinfo_result);
 }
 
+#if ISC_CMSG_IP_TOS || \
+    defined(ISC_NET_BSD44MSGHDR) && defined(IPV6_TCLASS) && defined(WANT_IPV6)
+
 static inline ISC_SOCKADDR_LEN_T
 cmsg_len(ISC_SOCKADDR_LEN_T len) {
 #ifdef CMSG_LEN
@@ -498,7 +512,7 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 		unsigned char b[256];
 	} control;
 	struct cmsghdr *cmsgp;
-	int dscp = 46;
+	int dscp = (46 << 2);	/* Expedited forwarding. */
 	struct iovec iovec;
 	char buf[1] = { 0 };
 	isc_result_t result;
@@ -560,6 +574,8 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 
 	if (sendmsg(s, &msg, 0) < 0) {
 		int debug = ISC_LOG_DEBUG(10);
+		const char *typestr;
+		const char *msgstr;
 		switch (errno) {
 #ifdef ENOPROTOOPT
 		case ENOPROTOOPT:
@@ -568,6 +584,7 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 		case EOPNOTSUPP:
 #endif
 		case EINVAL:
+		case EPERM:
 			break;
 		default:
 			debug = ISC_LOG_NOTICE;
@@ -578,13 +595,12 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 				      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
 				      "sendmsg: %s", strbuf);
 		} else {
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "sendmsg() %s: %s",
-					 isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_GENERAL,
-							ISC_MSG_FAILED,
-							"failed"),
-					 strbuf);
+			typestr = (type == IP_TOS) ? "IP_TOS" : "IPV6_TCLASS";
+			msgstr = isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
+						ISC_MSG_FAILED, "failed");
+			UNEXPECTED_ERROR(__FILE__, __LINE__, "probing "
+					 "sendmsg() with %s=%02x %s: %s",
+					 typestr, dscp, msgstr, strbuf);
 		}
 		return (ISC_FALSE);
 	}
@@ -612,6 +628,7 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 
 	return (ISC_TRUE);
 }
+#endif
 #endif
 
 static void
@@ -663,14 +680,6 @@ try_dscp_v4(void) {
 #endif /* IP_RECVTOS */
 
 #ifdef ISC_NET_BSD44MSGHDR
-
-#ifndef ISC_CMSG_IP_TOS
-#ifdef __APPLE__
-#define ISC_CMSG_IP_TOS 0	/* As of 10.8.2. */
-#else /* ! __APPLE__ */
-#define ISC_CMSG_IP_TOS 1
-#endif /* ! __APPLE__ */
-#endif /* ! ISC_CMSG_IP_TOS */
 
 #if ISC_CMSG_IP_TOS
 	if (cmsgsend(s, IPPROTO_IP, IP_TOS, res0))

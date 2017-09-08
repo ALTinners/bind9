@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008, 2012, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,5 +20,8 @@
 # Clean up after lwresd tests.
 #
 rm -f */named.memstats
+rm -f */named.run
 rm -f dig.out
 rm -f lwresd1/lwresd.run.resolv
+rm -f lwresd1/lwresd.run.lwresd
+rm -f lwresd*/lwresd.run

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -54,7 +54,7 @@ ATF_TC_BODY(snprintf, tc) {
 	char buf[10000];
 	isc_uint64_t ll = 8589934592ULL;
 	isc_uint64_t nn = 20000000000000ULL;
-	isc_uint64_t zz = 10000000000000000000LLU;
+	isc_uint64_t zz = 10000000000000000000ULL;
 	int n;
 	size_t size;
 
@@ -117,6 +117,12 @@ ATF_TC_BODY(snprintf, tc) {
 	n = isc_print_snprintf(buf, sizeof(buf), "%zo", size);
 	ATF_CHECK_EQ(n, 4);
 	ATF_CHECK_STREQ(buf, "1750");
+
+	zz = 0xf5f5f5f5f5f5f5f5ULL;
+	memset(buf, 0xff, sizeof(buf));
+	n = isc_print_snprintf(buf, sizeof(buf), "0x%"ISC_PRINT_QUADFORMAT"x", zz);
+	ATF_CHECK_EQ(n, 18);
+	ATF_CHECK_STREQ(buf, "0xf5f5f5f5f5f5f5f5");
 }
 
 ATF_TC(fprintf);

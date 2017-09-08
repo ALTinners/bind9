@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $Id: dispatch.c,v 1.175 2011/11/29 01:03:47 marka Exp $ */
 
 /*! \file */
 
@@ -2255,10 +2253,9 @@ dns_dispatchmgr_setudp(dns_dispatchmgr_t *mgr,
 	}
 	result = isc_mempool_create(mgr->mctx, sizeof(dispsocket_t),
 				    &mgr->spool);
-	if (result != ISC_R_SUCCESS) {
-		UNLOCK(&mgr->buffer_lock);
+	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	}
+
 	isc_mempool_setname(mgr->spool, "dispmgr_spool");
 	isc_mempool_setmaxalloc(mgr->spool, maxrequests);
 	isc_mempool_setfreemax(mgr->spool, maxrequests);
@@ -3008,7 +3005,7 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 			isc_sockaddr_format(localaddr, addrbuf,
 					    ISC_SOCKADDR_FORMATSIZE);
 			mgr_log(mgr, LVL(90), "dns_dispatch_createudp: Created"
-				" UDP dispatch for %s with socket fd %d\n",
+				" UDP dispatch for %s with socket fd %d",
 				addrbuf, isc_socket_getfd(sock));
 		}
 
@@ -3691,9 +3688,12 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event) {
 	REQUIRE((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) != 0);
 	REQUIRE(event != NULL);
 
-	sevent = (isc_socketevent_t *)event;
+	if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0)
+		return;
 
+	sevent = (isc_socketevent_t *)event;
 	INSIST(sevent->n <= disp->mgr->buffersize);
+
 	newsevent = (isc_socketevent_t *)
 		    isc_event_allocate(disp->mgr->mctx, NULL,
 				      DNS_EVENT_IMPORTRECVDONE, udp_shrecv,

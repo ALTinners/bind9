@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -75,6 +75,7 @@ struct dns_peer {
 	isc_boolean_t		support_edns;
 	isc_boolean_t		request_nsid;
 	isc_boolean_t		request_sit;
+	isc_boolean_t		force_tcp;
 	dns_name_t	       *key;
 	isc_sockaddr_t	       *transfer_source;
 	isc_dscp_t		transfer_dscp;
@@ -165,6 +166,12 @@ dns_peer_setrequestsit(dns_peer_t *peer, isc_boolean_t newval);
 
 isc_result_t
 dns_peer_getrequestsit(dns_peer_t *peer, isc_boolean_t *retval);
+
+isc_result_t
+dns_peer_setforcetcp(dns_peer_t *peer, isc_boolean_t newval);
+
+isc_result_t
+dns_peer_getforcetcp(dns_peer_t *peer, isc_boolean_t *retval);
 
 isc_result_t
 dns_peer_setsupportedns(dns_peer_t *peer, isc_boolean_t newval);

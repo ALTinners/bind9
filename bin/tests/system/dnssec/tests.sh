@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -117,6 +117,7 @@ grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
+
 echo "I:checking for AD in authoritative answer ($n)"
 ret=0
 $DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
@@ -866,6 +867,25 @@ if [ -x ${DELV} ] ; then
    echo "I:checking that validation fails when key record is missing using dns_client ($n)"
    $DELV $DELVOPTS +cd @10.53.0.4 a a.b.keyless.example > delv.out$n 2>&1 || ret=1
    grep "resolution failed: broken trust chain" delv.out$n > /dev/null || ret=1
+   n=`expr $n + 1`
+   if [ $ret != 0 ]; then echo "I:failed"; fi
+   status=`expr $status + $ret`
+fi
+
+echo "I:checking that validation succeeds when a revoked key is encountered ($n)"
+ret=0
+$DIG $DIGOPTS revkey.example soa @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags: .* ad" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+if [ -x ${DELV} ] ; then
+   ret=0
+   echo "I:checking that validation succeeds when a revoked key is encountered using dns_client ($n)"
+   $DELV $DELVOPTS +cd @10.53.0.4 soa revkey.example > delv.out$n 2>&1 || ret=1
+   grep "fully validated" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo "I:failed"; fi
    status=`expr $status + $ret`
@@ -2083,7 +2103,7 @@ awk '{
 	for (i=1;i<7;i++) printf("%s ", $i);
 	for (i=7;i<=NF;i++) printf("%s", $i);
 	printf("\n");
-}' < ns1/dsset-algroll. > canonical2.$n || ret=1
+}' < ns1/dsset-algroll$TP > canonical2.$n || ret=1
 diff -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -2242,7 +2262,32 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+cp ns4/named4.conf ns4/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
+sleep 3
+
 echo "I:testing TTL is capped at RRSIG expiry time for records in the additional section with dnssec-accept-expired yes; ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
+$DIG +noall +additional +dnssec +cd -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +additional +dnssec -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
+for ttl in ${ttls:-300}; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in ${ttls2:-0}; do
+    [ $ttl -le 120  -a $ttl -gt 60 ] || ret=1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+cp ns4/named4.conf ns4/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
+sleep 3
+
+echo "I:testing TTL is capped at RRSIG expiry time for records in the additional section with acache off; ($n)"
 ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
 $DIG +noall +additional +dnssec +cd -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
@@ -2422,7 +2467,7 @@ n=`expr $n + 1`
 if test "$before" = "$after" ; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
-cp ns4/named4.conf ns4/named.conf
+cp ns4/named5.conf ns4/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
 sleep 3
 
@@ -2549,7 +2594,7 @@ else
 		 +trusted-key=ns3/trusted-future.key > dig.out.ns3.test$n &
 	pid=$!
 	sleep 1
-	kill -9 $pid 2> /dev/null
+	$KILL -9 $pid 2> /dev/null
 	wait $pid
 	grep ";; No DNSKEY is valid to check the RRSIG of the RRset: FAILED" dig.out.ns3.test$n > /dev/null || ret=1
 	if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -2788,5 +2833,83 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:check that RRSIGs are correctly removed from apex when RRset is removed  NSEC ($n)"
+ret=0
+# generate signed zone with MX and AAAA records at apex.
+(
+cd signer
+$KEYGEN -q -r $RANDFILE -3 -fK remove > /dev/null
+$KEYGEN -q -r $RANDFILE -3 remove > /dev/null
+echo > remove.db.signed
+$SIGNER -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
+)
+grep "RRSIG MX" signer/remove.db.signed > /dev/null || {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.pre$n;
+}
+# re-generate signed zone without MX and AAAA records at apex.
+(
+cd signer
+$SIGNER -S -o remove -D -f remove.db.signed remove2.db.in > signer.out.2.$n 2>&1
+)
+grep "RRSIG MX" signer/remove.db.signed > /dev/null &&  {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.post$n;
+}
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that RRSIGs are correctly removed from apex when RRset is removed  NSEC3 ($n)"
+ret=0
+# generate signed zone with MX and AAAA records at apex.
+(
+cd signer
+echo > remove.db.signed
+$SIGNER -3 - -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
+)
+grep "RRSIG MX" signer/remove.db.signed > /dev/null || {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.pre$n;
+}
+# re-generate signed zone without MX and AAAA records at apex.
+(
+cd signer
+$SIGNER -3 - -S -o remove -D -f remove.db.signed remove2.db.in > signer.out.2.$n 2>&1
+)
+grep "RRSIG MX" signer/remove.db.signed > /dev/null &&  {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.post$n;
+}
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that a named managed zone that was signed 'in-the-future' is re-signed when loaded ($n)"
+ret=0
+$DIG $DIGOPTS managed-future.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that trust-anchor-telemetry queries are logged ($n)"
+ret=0
+grep "sending trust-anchor-telemetry query '_ta-[0-9a-f]*/NULL" ns6/named.run > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that trust-anchor-telemetry queries are received ($n)"
+ret=0
+grep "query '_ta-[0-9a-f]*/NULL/IN' approved" ns1/named.run > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that trust-anchor-telemetry are not sent when disabled ($n)"
+ret=0
+grep "sending trust-anchor-telemetry query '_ta-[0-9a-f]*/NULL" ns1/named.run > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

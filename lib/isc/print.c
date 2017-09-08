@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -292,6 +292,16 @@ isc__print_printf(void (*emit)(char, void *), void *arg,
 			z = 1;
 			format++;
 			goto doint;
+#ifdef WIN32
+		case 'I':
+			/* Windows has I64 as a modifier for a quad. */
+			if (format[1] == '6' && format[2] == '4') {
+				q = 1;
+				format += 3;
+				goto doint;
+			}
+			continue;
+#endif
 		case 'n':
 		case 'i':
 		case 'd':

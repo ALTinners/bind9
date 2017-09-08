@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -49,6 +49,8 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <isccfg/namedconf.h>
 
 #include <dns/callbacks.h>
@@ -88,8 +90,17 @@
 #include <bind9/getaddresses.h>
 
 #if defined(HAVE_READLINE)
+#if defined(HAVE_EDIT_READLINE_READLINE_H)
+#include <edit/readline/readline.h>
+#if defined(HAVE_EDIT_READLINE_HISTORY_H)
+#include <edit/readline/history.h>
+#endif
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#else
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
 #endif
 
 #ifdef HAVE_ADDRINFO
@@ -218,6 +229,8 @@ typedef struct nsu_gssinfo {
 	gss_ctx_id_t context;
 } nsu_gssinfo_t;
 
+static void
+failed_gssrequest();
 static void
 start_gssrequest(dns_name_t *master);
 static void
@@ -457,6 +470,7 @@ parse_hmac(dns_name_t **hmac, const char *hmacstr, size_t len) {
 	strncpy(buf, hmacstr, len);
 	buf[len] = 0;
 
+#ifndef PK11_MD5_DISABLE
 	if (strcasecmp(buf, "hmac-md5") == 0) {
 		*hmac = DNS_TSIG_HMACMD5_NAME;
 	} else if (strncasecmp(buf, "hmac-md5-", 9) == 0) {
@@ -465,7 +479,9 @@ parse_hmac(dns_name_t **hmac, const char *hmacstr, size_t len) {
 		if (result != ISC_R_SUCCESS || digestbits > 128)
 			fatal("digest-bits out of range [0..128]");
 		digestbits = (digestbits +7) & ~0x7U;
-	} else if (strcasecmp(buf, "hmac-sha1") == 0) {
+	} else
+#endif
+	if (strcasecmp(buf, "hmac-sha1") == 0) {
 		*hmac = DNS_TSIG_HMACSHA1_NAME;
 	} else if (strncasecmp(buf, "hmac-sha1-", 10) == 0) {
 		*hmac = DNS_TSIG_HMACSHA1_NAME;
@@ -555,7 +571,11 @@ setup_keystr(void) {
 		secretstr = n + 1;
 		digestbits = parse_hmac(&hmacname, keystr, s - keystr);
 	} else {
+#ifndef PK11_MD5_DISABLE
 		hmacname = DNS_TSIG_HMACMD5_NAME;
+#else
+		hmacname = DNS_TSIG_HMACSHA256_NAME;
+#endif
 		name = keystr;
 		n = s;
 	}
@@ -640,6 +660,8 @@ read_sessionkey(isc_mem_t *mctx, isc_log_t *lctx) {
 
 	len = strlen(algorithm) + strlen(mykeyname) + strlen(secretstr) + 3;
 	keystr = isc_mem_allocate(mctx, len);
+	if (keystr == NULL)
+		fatal("out of memory");
 	snprintf(keystr, len, "%s:%s:%s", algorithm, mykeyname, secretstr);
 	setup_keystr();
 
@@ -687,9 +709,11 @@ setup_keyfile(isc_mem_t *mctx, isc_log_t *lctx) {
 	}
 
 	switch (dst_key_alg(dstkey)) {
+#ifndef PK11_MD5_DISABLE
 	case DST_ALG_HMACMD5:
 		hmacname = DNS_TSIG_HMACMD5_NAME;
 		break;
+#endif
 	case DST_ALG_HMACSHA1:
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
 		break;
@@ -1545,7 +1569,11 @@ evaluate_key(char *cmdline) {
 		digestbits = parse_hmac(&hmacname, namestr, n - namestr);
 		namestr = n + 1;
 	} else
+#ifndef PK11_MD5_DISABLE
 		hmacname = DNS_TSIG_HMACMD5_NAME;
+#else
+		hmacname = DNS_TSIG_HMACSHA256_NAME;
+#endif
 
 	isc_buffer_init(&b, namestr, strlen(namestr));
 	isc_buffer_add(&b, strlen(namestr));
@@ -2070,10 +2098,10 @@ do_next_command(char *cmdline) {
 "oldgsstsig                (use Microsoft's GSS_TSIG to sign the request)\n"
 "zone name                 (set the zone to be updated)\n"
 "class CLASS               (set the zone's DNS class, e.g. IN (default), CH)\n"
-"[prereq] nxdomain name    (does this name not exist)\n"
-"[prereq] yxdomain name    (does this name exist)\n"
-"[prereq] nxrrset ....     (does this RRset exist)\n"
-"[prereq] yxrrset ....     (does this RRset not exist)\n"
+"[prereq] nxdomain name    (require that this name does not exist)\n"
+"[prereq] yxdomain name    (require that this name exists)\n"
+"[prereq] nxrrset ....     (require that this RRset does not exist)\n"
+"[prereq] yxrrset ....     (require that this RRset exists)\n"
 "[update] add ....         (add the given record to the zone)\n"
 "[update] del[ete] ....    (remove the given record(s) from the zone)\n");
 		return (STATUS_MORE);
@@ -2640,7 +2668,8 @@ get_ticket_realm(isc_mem_t *mctx) {
 	krb5_error_code rc;
 	krb5_ccache ccache;
 	krb5_principal princ;
-	char *name, *ticket_realm;
+	char *name;
+	const char * ticket_realm;
 
 	rc = krb5_init_context(&ctx);
 	if (rc != 0)
@@ -2680,6 +2709,15 @@ get_ticket_realm(isc_mem_t *mctx) {
 		fprintf(stderr, "Found realm from ticket: %s\n", realm+1);
 }
 
+static void
+failed_gssrequest() {
+	seenerror = ISC_TRUE;
+
+	dns_name_free(&tmpzonename, gmctx);
+	dns_name_free(&restart_master, gmctx);
+
+	done_update();
+}
 
 static void
 start_gssrequest(dns_name_t *master) {
@@ -2687,7 +2725,7 @@ start_gssrequest(dns_name_t *master) {
 	isc_buffer_t buf;
 	isc_result_t result;
 	isc_uint32_t val = 0;
-	dns_message_t *rmsg;
+	dns_message_t *rmsg = NULL;
 	dns_request_t *request = NULL;
 	dns_name_t *servname;
 	dns_fixedname_t fname;
@@ -2713,10 +2751,8 @@ start_gssrequest(dns_name_t *master) {
 		if (kserver == NULL)
 			fatal("out of memory");
 	}
-	if (servers == NULL)
-		get_addresses(namestr, dnsport, kserver, 1);
-	else
-		memmove(kserver, &servers[ns_inuse], sizeof(isc_sockaddr_t));
+
+	memmove(kserver, &master_servers[master_inuse], sizeof(isc_sockaddr_t));
 
 	dns_fixedname_init(&fname);
 	servname = dns_fixedname_name(&fname);
@@ -2767,14 +2803,24 @@ start_gssrequest(dns_name_t *master) {
 	result = dns_tkey_buildgssquery(rmsg, keyname, servname, NULL, 0,
 					&context, use_win2k_gsstsig,
 					gmctx, &err_message);
-	if (result == ISC_R_FAILURE)
-		fatal("tkey query failed: %s",
-		      err_message != NULL ? err_message : "unknown error");
+	if (result == ISC_R_FAILURE) {
+		fprintf(stderr, "tkey query failed: %s\n",
+			err_message != NULL ? err_message : "unknown error");
+		goto failure;
+	}
 	if (result != ISC_R_SUCCESS)
 		fatal("dns_tkey_buildgssquery failed: %s",
 		      isc_result_totext(result));
 
 	send_gssrequest(kserver, rmsg, &request, context);
+	return;
+
+failure:
+	if (rmsg != NULL)
+		dns_message_destroy(&rmsg);
+	if (err_message != NULL)
+		isc_mem_free(gmctx, err_message);
+	failed_gssrequest();
 }
 
 static void
@@ -2851,11 +2897,11 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (eresult != ISC_R_SUCCESS) {
-		next_server("recvgss", addr, eresult);
+		next_master("recvgss", addr, eresult);
 		ddebug("Destroying request [%p]", request);
 		dns_request_destroy(&request);
 		dns_message_renderreset(tsigquery);
-		sendrequest(&servers[ns_inuse], tsigquery, &request);
+		sendrequest(&master_servers[master_inuse], tsigquery, &request);
 		isc_mem_put(gmctx, reqinfo, sizeof(nsu_gssinfo_t));
 		isc_event_free(&event);
 		return;
@@ -2904,13 +2950,15 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 	tsigkey = NULL;
 	result = dns_tkey_gssnegotiate(tsigquery, rcvmsg, servname,
 				       &context, &tsigkey, gssring,
-				       use_win2k_gsstsig,
-				       &err_message);
+				       use_win2k_gsstsig, &err_message);
 	switch (result) {
 
 	case DNS_R_CONTINUE:
+		dns_message_destroy(&rcvmsg);
+		dns_request_destroy(&request);
 		send_gssrequest(kserver, tsigquery, &request, context);
-		break;
+		ddebug("Out of recvgss");
+		return;
 
 	case ISC_R_SUCCESS:
 		/*
@@ -2947,7 +2995,7 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 		break;
 
 	default:
-		fatal("dns_tkey_negotiategss: %s %s",
+		fatal("dns_tkey_gssnegotiate: %s %s",
 		      isc_result_totext(result),
 		      err_message != NULL ? err_message : "");
 	}
