@@ -8496,12 +8496,6 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 					     namebuf, tag);
 				trustkey = ISC_TRUE;
 			}
-		} else {
-			/*
-			 * No previously known key, and the key is not
-			 * secure, so skip it.
-			 */
-			continue;
 		}
 
 		/* Delete old version */
@@ -8550,7 +8544,7 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 			trust_key(zone, keyname, &dnskey, mctx);
 		}
 
-		if (secure && !deletekey)
+		if (!deletekey)
 			set_refreshkeytimer(zone, &keydata, now);
 	}
 

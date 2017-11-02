@@ -43,9 +43,9 @@ SRCS =		context.c \
 		gai_sterror.c getaddrinfo.c getnameinfo.c \
 		resconf.c
 
-ISCLIBS =	../isc/libisc-export.@A@
-DNSLIBS =	../dns/libdns-export.@A@
-ISCCFGLIBS =	../isccfg/libisccfg-export.@A@
+ISCLIBS =	../isc/libisc.@A@
+DNSLIBS =	../dns/libdns.@A@
+ISCCFGLIBS =	../isccfg/libisccfg.@A@
 
 LIBS =		@LIBS@
 
@@ -62,26 +62,26 @@ version.@O@: ${srcdir}/version.c
 		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
-libirs-export.@SA@: ${OBJS} version.@O@
+libirs.@SA@: ${OBJS} version.@O@
 	${AR} ${ARFLAGS} $@ ${OBJS} version.@O@
 	${RANLIB} $@
 
-libirs-export.la: ${OBJS} version.@O@
+libirs.la: ${OBJS} version.@O@
 	${LIBTOOL_MODE_LINK} \
-		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libirs-export.la \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libirs.la \
 		-rpath ${export_libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} version.@O@ ${LIBS} ${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS}
 
-timestamp: libirs-export.@A@
+timestamp: libirs.@A@
 	touch timestamp
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${export_libdir}
 
 install:: timestamp installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} libirs-export.@A@ \
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} libirs.@A@ \
 	${DESTDIR}${export_libdir}/
 
 clean distclean::
-	rm -f libirs-export.@A@ libirs-export.la timestamp
+	rm -f libirs.@A@ libirs.la timestamp

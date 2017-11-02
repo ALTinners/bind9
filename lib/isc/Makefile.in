@@ -13,6 +13,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+# $Id$
+
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
@@ -51,7 +53,7 @@ WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
 OBJS =		@ISC_EXTRA_OBJS@ \
 		assertions.@O@ backtrace.@O@ base32.@O@ base64.@O@ \
 		bitstring.@O@ buffer.@O@ bufferlist.@O@ commandline.@O@ \
-		counter.@O@ error.@O@ event.@O@ \
+		error.@O@ event.@O@ \
 		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@ \
 		httpd.@O@ inet_aton.@O@ iterated_hash.@O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
@@ -69,8 +71,8 @@ SYMTBLOBJS =	backtrace-emptytbl.@O@
 # Alphabetically
 SRCS =		@ISC_EXTRA_SRCS@ \
 		assertions.c backtrace.c base32.c base64.c bitstring.c \
-		buffer.c bufferlist.c commandline.c counter.c \
-		error.c event.c heap.c hex.c hmacmd5.c hmacsha.c \
+		buffer.c bufferlist.c commandline.c error.c event.c \
+		heap.c hex.c hmacmd5.c hmacsha.c \
 		httpd.c inet_aton.c iterated_hash.c \
 		lex.c lfsr.c lib.c log.c \
 		md5.c mem.c mutexblock.c \
@@ -118,14 +120,12 @@ libisc.la: ${OBJS} ${SYMTBLOBJS}
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} ${SYMTBLOBJS} ${LIBS}
-	ln -sf .libs/libisc.so .
 
 libisc-nosymtbl.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc-nosymtbl.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} ${LIBS}
-	ln -sf .libs/libisc-nosymtbl.so .
 
 timestamp: libisc.@A@ libisc-nosymtbl.@A@
 	touch timestamp
@@ -139,4 +139,3 @@ install:: timestamp installdirs
 clean distclean::
 	rm -f libisc.@A@ libisc-nosymtbl.@A@ libisc.la \
 	libisc-nosymtbl.la timestamp
-	rm -f libisc.so libisc-nosymtbl.so

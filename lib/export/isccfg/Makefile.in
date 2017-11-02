@@ -30,11 +30,11 @@ CINCLUDES =	-I. ${DNS_INCLUDES} -I${export_srcdir}/isc/include \
 CDEFINES =
 CWARNINGS =
 
-ISCLIBS =	../isc/libisc-export.@A@
-DNSLIBS =	../dns/libdns-export.@A@ @DNS_CRYPTO_LIBS@
+ISCLIBS =	../isc/libisc.@A@
+DNSLIBS =	../dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
-ISCCFGDEPLIBS =	libisccfg-export.@A@
+ISCCFGDEPLIBS =	libisccfg.@A@
 
 LIBS =		@LIBS@
 
@@ -58,26 +58,26 @@ version.@O@: ${srcdir}/version.c
 		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
-libisccfg-export.@SA@: ${OBJS}
+libisccfg.@SA@: ${OBJS}
 	${AR} ${ARFLAGS} $@ ${OBJS}
 	${RANLIB} $@
 
-libisccfg-export.la: ${OBJS}
+libisccfg.la: ${OBJS}
 	 ${LIBTOOL_MODE_LINK} \
-		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccfg-export.la \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccfg.la \
 		-rpath ${export_libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${LIBS} ${ISCLIBS}
+		${OBJS} ${LIBS} ${DNSLIBS} ${ISCLIBS}
 
-timestamp: libisccfg-export.@A@
+timestamp: libisccfg.@A@
 	touch timestamp
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${export_libdir}
 
 install:: timestamp installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} libisccfg-export.@A@ \
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} libisccfg.@A@ \
 	${DESTDIR}${export_libdir}/
 
 clean distclean::
-	rm -f libisccfg-export.@A@ timestamp
+	rm -f libisccfg.@A@ timestamp

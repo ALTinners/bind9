@@ -35,9 +35,9 @@ CDEFINES =	-DUSE_MD5 @USE_OPENSSL@ @USE_GSSAPI@
 
 CWARNINGS =
 
-ISCLIBS =	../isc/libisc-export.@A@
+ISCLIBS =	../isc/libisc.@A@
 
-ISCDEPLIBS =	../isc/libisc-export.@A@
+ISCDEPLIBS =	../isc/libisc.@A@
 
 LIBS =		@LIBS@
 
@@ -116,29 +116,29 @@ version.@O@: ${srcdir}/version.c
 		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
-libdns-export.@SA@: ${OBJS}
+libdns.@SA@: ${OBJS}
 	${AR} ${ARFLAGS} $@ ${OBJS}
 	${RANLIB} $@
 
-libdns-export.la: ${OBJS}
+libdns.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
-		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libdns-export.la \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libdns.la \
 		-rpath ${export_libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
 
-timestamp: libdns-export.@A@
+timestamp: libdns.@A@
 	touch timestamp
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${export_libdir}
 
 install:: timestamp installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} libdns-export.@A@ \
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} libdns.@A@ \
 	${DESTDIR}${export_libdir}/
 
 clean distclean::
-	rm -f libdns-export.@A@ timestamp
+	rm -f libdns.@A@ timestamp
 	rm -f gen code.h include/dns/enumtype.h include/dns/enumclass.h
 	rm -f include/dns/rdatastruct.h
 

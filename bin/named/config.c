@@ -144,8 +144,6 @@ options {\n\
 	lame-ttl 600;\n\
 	max-ncache-ttl 10800; /* 3 hours */\n\
 	max-cache-ttl 604800; /* 1 week */\n\
-	min-ncache-ttl 0; /* 0 hours */\n\
-	min-cache-ttl 0; /* 0 seconds */\n\
 	transfer-format many-answers;\n\
 	max-cache-size 0;\n\
 	check-names master fail;\n\
@@ -162,8 +160,6 @@ options {\n\
 	dnssec-accept-expired no;\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
-	max-recursion-depth 7;\n\
-	max-recursion-queries 50;\n\
 	zero-no-soa-ttl-cache no;\n\
 	nsec3-test-zone no;\n\
 	allow-new-zones no;\n\
