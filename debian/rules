@@ -29,7 +29,7 @@ SED_VERSION_EXTENSIONS := \
 	sed -e 's,^EXTENSIONS=,EXTENSIONS="$$(dpkg-parsechangelog --file=../debian/changelog | sed -n '/^Version/s/[^-]*//p')-$$(dpkg-vendor --query Vendor)",'
 
 %:
-	dh $@ --with python3 --fail-missing --exclude=.la --exclude=lwresd --exclude=__pycache__
+	dh $@ --with autotools-dev,systemd,autoreconf,python3 --parallel --fail-missing --exclude=.la --exclude=lwresd --exclude=__pycache__
 
 prepare_version_extensions:
 	if [ ! -f version.bak ]; then \
