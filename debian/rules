@@ -46,7 +46,7 @@ SED_NATIVE_PKCS11 := \
 	    -e 's,@DNS_CRYPTO_LIBS@,@DNS_CRYPTO_PK11_LIBS@,g'
 
 %:
-	dh $@ --with python3 --fail-missing --exclude=.la --exclude=lwresd --exclude=__pycache__
+	dh $@ --with autotools-dev,systemd,autoreconf,python3 --parallel --fail-missing --exclude=.la --exclude=lwresd --exclude=__pycache__
 
 prepare_native_pkcs11:
 	rm -rf bin/named-pkcs11 && cp -r bin/named bin/named-pkcs11
