@@ -1,8 +1,8 @@
 Source: bind9
 Section: net
 Priority: optional
-Maintainer: LaMont Jones <lamont@debian.org>
-Uploaders: Michael Gilbert <mgilbert@debian.org>, Robie Basak <robie.basak@canonical.com>
+Maintainer: Debian DNS Packaging <pkg-dns-devel@lists.alioth.debian.org>
+Uploaders: LaMont Jones <lamont@debian.org>, Michael Gilbert <mgilbert@debian.org>, Robie Basak <robie.basak@canonical.com>, Ondřej Surý <ondrej@debian.org>
 Build-Depends: debhelper (>= 9), 
   dh-exec,
   libkrb5-dev,
