@@ -33,3 +33,5 @@ CVE-2017-3138.patch
 CVE-2017-3142+CVE-2017-3143.patch
 CVE-2017-3142_regression.patch
 860794-new-dnssec-keys.patch
+
+CVE-2017-3145.patch

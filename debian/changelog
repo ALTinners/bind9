@@ -1,3 +1,11 @@
+bind9 (1:9.10.3.dfsg.P4-12.3+deb9u4) stretch-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Addresses could be referenced after being freed in resolver.c, causing an
+    assertion failure. (CVE-2017-3145)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 15 Jan 2018 22:40:17 +0100
+
 bind9 (1:9.10.3.dfsg.P4-12.3+deb9u3) stretch; urgency=medium
 
   [ Bernhard Schmidt ]
