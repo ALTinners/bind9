@@ -1,3 +1,11 @@
+bind9 (1:9.9.5.dfsg-9+deb8u15) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Addresses could be referenced after being freed in resolver.c, causing an
+    assertion failure. (CVE-2017-3145)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 15 Jan 2018 22:58:53 +0100
+
 bind9 (1:9.9.5.dfsg-9+deb8u14) jessie; urgency=high
 
   [ Bernhard Schmidt ]
