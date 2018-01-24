@@ -4,11 +4,14 @@ Priority: optional
 Maintainer: Debian DNS Team <team+dns@tracker.debian.org>
 Uploaders: Ondřej Surý <ondrej@debian.org>,
            Bernhard Schmidt <berni@debian.org>
-Build-Depends: bison,
-               debhelper-compat (= 12),
+Build-Depends: autotools-dev,
+               bison,
+               debhelper (>= 9),
                dh-apparmor,
+               dh-autoreconf,
                dh-exec,
                dh-python,
+               dh-systemd,
                docbook-xml,
                docbook-xsl,
                libcap2-dev [linux-any],
