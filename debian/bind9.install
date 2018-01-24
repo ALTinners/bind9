@@ -1,7 +1,14 @@
+debian/extras/apparmor.d/* /etc/apparmor.d/
+debian/extras/etc/* /etc/bind/
+debian/extras/if-reconfig.d/* /etc/network/if-down.d
+debian/extras/if-reconfig.d/* /etc/network/if-up.d/
+debian/extras/if-reconfig.d/* /etc/ppp/ip-down.d/
+debian/extras/if-reconfig.d/* /etc/ppp/ip-up.d/
+debian/extras/insserv.conf.d/* /etc/insserv.conf.d/
+debian/extras/ufw/* /etc/ufw/applications.d/
 etc/bind/bind.keys
 usr/bin/arpaname
 usr/bin/bind9-config
-usr/bin/delv
 usr/bin/named-rrchecker
 usr/sbin/ddns-confgen
 usr/sbin/dnssec-importkey
@@ -9,12 +16,12 @@ usr/sbin/genrandom
 usr/sbin/isc-hmac-fixup
 usr/sbin/named
 usr/sbin/named-journalprint
+usr/sbin/named-nzd2nzf
 usr/sbin/named-pkcs11
 usr/sbin/nsec3hash
 usr/sbin/tsig-keygen
 usr/share/man/man1/arpaname.1
 usr/share/man/man1/bind9-config.1
-usr/share/man/man1/delv.1
 usr/share/man/man1/isc-config.sh.1
 usr/share/man/man1/named-rrchecker.1
 usr/share/man/man5/named.conf.5
@@ -25,6 +32,7 @@ usr/share/man/man8/dnssec-importkey.8
 usr/share/man/man8/genrandom.8
 usr/share/man/man8/isc-hmac-fixup.8
 usr/share/man/man8/named-journalprint.8
+usr/share/man/man8/named-nzd2nzf.8
 usr/share/man/man8/named.8
 usr/share/man/man8/nsec3hash.8
 usr/share/man/man8/tsig-keygen.8

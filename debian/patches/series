@@ -8,3 +8,6 @@
 75_ctxstart_no_sighandling.diff
 80_reproducible_build.diff
 Add_--install-layout=deb_to_setup.py_call.patch
+0011-Use-C11-s-stdatomic.h-instead-of-isc_atomic-where-av.patch
+0012-Use-stdatomic.h-in-acache-code-46085.patch
+0013-Check-if-latomic-is-needed-to-handle-64-bit-stdatomi.patch

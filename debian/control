@@ -18,6 +18,7 @@ Build-Depends: bison,
                libjson-c-dev,
                libkrb5-dev,
                libldap2-dev,
+               liblmdb-dev,
                libssl-dev,
                libtool,
                libxml2-dev,
@@ -231,6 +232,8 @@ Depends: bind9-host | host,
          ${misc:Depends},
          ${shlibs:Depends}
 Suggests: rblcheck
+Breaks: bind9 (<< 1:9.11.2+dfsg-6~)
+Replaces: bind9 (<< 1:9.11.2+dfsg-6)
 Description: Clients provided with BIND
  The Berkeley Internet Name Domain (BIND) implements an Internet domain
  name server.  BIND is the most widely-used name server software on the

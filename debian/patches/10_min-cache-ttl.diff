@@ -164,7 +164,7 @@ index e328778..4cb122d 100644
  						trust = rdataset->trust;
  					/*
 diff --git a/lib/dns/resolver.c b/lib/dns/resolver.c
-index 8eb1d97..a508edd 100644
+index eb1ebcf..0ee77bf 100644
 --- a/lib/dns/resolver.c
 +++ b/lib/dns/resolver.c
 @@ -558,7 +558,9 @@ static isc_boolean_t fctx_unlink(fetchctx_t *fctx);
@@ -178,7 +178,7 @@ index 8eb1d97..a508edd 100644
  				      isc_boolean_t optout,
  				      isc_boolean_t secure,
  				      dns_rdataset_t *ardataset,
-@@ -4976,7 +4978,7 @@ validated(isc_task_t *task, isc_event_t *event) {
+@@ -4985,7 +4987,7 @@ validated(isc_task_t *task, isc_event_t *event) {
  			ttl = 0;
  
  		result = ncache_adderesult(fctx->rmessage, fctx->cache, node,
@@ -187,7 +187,7 @@ index 8eb1d97..a508edd 100644
  					   vevent->secure, ardataset, &eresult);
  		if (result != ISC_R_SUCCESS)
  			goto noanswer_response;
-@@ -5445,6 +5447,12 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
+@@ -5454,6 +5456,12 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
  			rdataset->ttl = res->view->maxcachettl;
  
  		/*
@@ -200,7 +200,7 @@ index 8eb1d97..a508edd 100644
  		 * Mark the rdataset as being prefetch eligible.
  		 */
  		if (rdataset->ttl > fctx->res->view->prefetch_eligible)
-@@ -5790,7 +5798,7 @@ cache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_stdtime_t now)
+@@ -5799,7 +5807,7 @@ cache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_stdtime_t now)
   */
  static isc_result_t
  ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
@@ -209,7 +209,7 @@ index 8eb1d97..a508edd 100644
  		  isc_boolean_t optout, isc_boolean_t secure,
  		  dns_rdataset_t *ardataset, isc_result_t *eresultp)
  {
-@@ -5803,10 +5811,10 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
+@@ -5812,10 +5820,10 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
  	}
  	if (secure)
  		result = dns_ncache_addoptout(message, cache, node, covers,
@@ -222,7 +222,7 @@ index 8eb1d97..a508edd 100644
  	if (result == DNS_R_UNCHANGED || result == ISC_R_SUCCESS) {
  		/*
  		 * If the cache now contains a negative entry and we
-@@ -5981,7 +5989,7 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
+@@ -5990,7 +5998,7 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
  		ttl = 0;
  
  	result = ncache_adderesult(fctx->rmessage, fctx->cache, node,

@@ -1,0 +1,786 @@
+From: Mukund Sivaraman <muks@isc.org>
+Date: Tue, 19 Sep 2017 15:42:54 +0530
+Subject: Use C11's stdatomic.h instead of isc_atomic where available
+
+(cherry picked from commit 404c9b1c53fd13f3a7f404522b13f48e2a71a8a0)
+---
+ config.h.in                       |   3 +
+ configure                         |  19 +++++
+ configure.in                      |   7 ++
+ lib/isc/include/isc/platform.h.in |   6 ++
+ lib/isc/include/isc/refcount.h    |  54 +++++++++++-
+ lib/isc/include/isc/rwlock.h      |  21 ++++-
+ lib/isc/refcount.c                |   2 +-
+ lib/isc/rwlock.c                  | 175 ++++++++++++++++++++++++++++++--------
+ lib/isc/stats.c                   |  72 ++++++++++++++--
+ 9 files changed, 311 insertions(+), 48 deletions(-)
+
+diff --git a/config.h.in b/config.h.in
+index b7befbb..27248e0 100644
+--- a/config.h.in
++++ b/config.h.in
+@@ -431,6 +431,9 @@ int sigwait(const unsigned int *set, int *sig);
+ /* Define to 1 if you have the `setresuid' function. */
+ #undef HAVE_SETRESUID
+ 
++/* Define to 1 if you have the <stdatomic.h> header file. */
++#undef HAVE_STDATOMIC_H
++
+ /* Define to 1 if you have the <stdint.h> header file. */
+ #undef HAVE_STDINT_H
+ 
+diff --git a/configure b/configure
+index e10f513..5acc4de 100755
+--- a/configure
++++ b/configure
+@@ -718,6 +718,7 @@ ISC_PLATFORM_HAVEATOMICSTORE
+ ISC_PLATFORM_HAVECMPXCHG
+ ISC_PLATFORM_HAVEXADDQ
+ ISC_PLATFORM_HAVEXADD
++ISC_PLATFORM_HAVESTDATOMIC
+ ISC_PLATFORM_HAVEIFNAMETOINDEX
+ ISC_PLATFORM_HAVESTRINGSH
+ ISC_PLATFORM_BRACEPTHREADONCEINIT
+@@ -20136,6 +20137,21 @@ done
+ #
+ # Machine architecture dependent features
+ #
++for ac_header in stdatomic.h
++do :
++  ac_fn_c_check_header_mongrel "$LINENO" "stdatomic.h" "ac_cv_header_stdatomic_h" "$ac_includes_default"
++if test "x$ac_cv_header_stdatomic_h" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_STDATOMIC_H 1
++_ACEOF
++ ISC_PLATFORM_HAVESTDATOMIC="#define ISC_PLATFORM_HAVESTDATOMIC 1"
++else
++  ISC_PLATFORM_HAVESTDATOMIC="#undef ISC_PLATFORM_HAVESTDATOMIC"
++fi
++
++done
++
++
+ # Check whether --enable-atomic was given.
+ if test "${enable_atomic+set}" = set; then :
+   enableval=$enable_atomic; enable_atomic="$enableval"
+@@ -20211,11 +20227,14 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ 		esac
+ 		;;
+ 	no)
++		ISC_PLATFORM_HAVESTDATOMIC="#undef ISC_PLATFORM_HAVESTDATOMIC"
+ 		use_atomic=no
+ 		arch=noatomic
+ 		;;
+ esac
+ 
++
++
+ ISC_PLATFORM_USEOSFASM="#undef ISC_PLATFORM_USEOSFASM"
+ ISC_PLATFORM_USEGCCASM="#undef ISC_PLATFORM_USEGCCASM"
+ ISC_PLATFORM_USESTDASM="#undef ISC_PLATFORM_USESTDASM"
+diff --git a/configure.in b/configure.in
+index 82cdb46..9585f4d 100644
+--- a/configure.in
++++ b/configure.in
+@@ -3947,6 +3947,10 @@ AC_CHECK_FUNCS(nanosleep usleep)
+ #
+ # Machine architecture dependent features
+ #
++AC_CHECK_HEADERS(stdatomic.h,
++		 [ISC_PLATFORM_HAVESTDATOMIC="#define ISC_PLATFORM_HAVESTDATOMIC 1"],
++		 [ISC_PLATFORM_HAVESTDATOMIC="#undef ISC_PLATFORM_HAVESTDATOMIC"])
++
+ AC_ARG_ENABLE(atomic,
+ 	[  --enable-atomic	  enable machine specific atomic operations
+ 			  [[default=autodetect]]],
+@@ -3989,11 +3993,14 @@ case "$enable_atomic" in
+ 		esac
+ 		;;
+ 	no)
++		ISC_PLATFORM_HAVESTDATOMIC="#undef ISC_PLATFORM_HAVESTDATOMIC"
+ 		use_atomic=no
+ 		arch=noatomic
+ 		;;
+ esac
+ 
++AC_SUBST(ISC_PLATFORM_HAVESTDATOMIC)
++
+ ISC_PLATFORM_USEOSFASM="#undef ISC_PLATFORM_USEOSFASM"
+ ISC_PLATFORM_USEGCCASM="#undef ISC_PLATFORM_USEGCCASM"
+ ISC_PLATFORM_USESTDASM="#undef ISC_PLATFORM_USESTDASM"
+diff --git a/lib/isc/include/isc/platform.h.in b/lib/isc/include/isc/platform.h.in
+index 24b61db..333de55 100644
+--- a/lib/isc/include/isc/platform.h.in
++++ b/lib/isc/include/isc/platform.h.in
+@@ -307,6 +307,12 @@
+ @ISC_PLATFORM_HAVECMPXCHG@
+ 
+ /*
++ * If <stdatomic.h> is available on this architecture,
++ * ISC_PLATFORM_HAVESTDATOMIC will be defined.
++ */
++@ISC_PLATFORM_HAVESTDATOMIC@
++
++/*
+  * Define if gcc ASM extension is available
+  */
+ @ISC_PLATFORM_USEGCCASM@
+diff --git a/lib/isc/include/isc/refcount.h b/lib/isc/include/isc/refcount.h
+index a2b7f5f..8550ea3 100644
+--- a/lib/isc/include/isc/refcount.h
++++ b/lib/isc/include/isc/refcount.h
+@@ -18,6 +18,10 @@
+ #include <isc/types.h>
+ #include <isc/util.h>
+ 
++#if defined(ISC_PLATFORM_HAVESTDATOMIC)
++#include <stdatomic.h>
++#endif
++
+ /*! \file isc/refcount.h
+  * \brief Implements a locked reference counter.
+  *
+@@ -86,17 +90,59 @@ ISC_LANG_BEGINDECLS
+  * Sample implementations
+  */
+ #ifdef ISC_PLATFORM_USETHREADS
+-#ifdef ISC_PLATFORM_HAVEXADD
+-
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || defined(ISC_PLATFORM_HAVEXADD)
+ #define ISC_REFCOUNT_HAVEATOMIC 1
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE))
++#define ISC_REFCOUNT_HAVESTDATOMIC 1
++#endif
+ 
+ typedef struct isc_refcount {
++#if defined(ISC_REFCOUNT_HAVESTDATOMIC)
++	atomic_int_fast32_t refs;
++#else
+ 	isc_int32_t refs;
++#endif
+ } isc_refcount_t;
+ 
+ #define isc_refcount_destroy(rp) REQUIRE((rp)->refs == 0)
+ #define isc_refcount_current(rp) ((unsigned int)((rp)->refs))
+ 
++#if defined(ISC_REFCOUNT_HAVESTDATOMIC)
++
++#define isc_refcount_increment0(rp, tp)				\
++	do {							\
++		unsigned int *_tmp = (unsigned int *)(tp);	\
++		isc_int32_t prev;				\
++		prev = atomic_fetch_add_explicit		\
++			(&(rp)->refs, 1, memory_order_relaxed); \
++		if (_tmp != NULL)				\
++			*_tmp = prev + 1;			\
++	} while (0)
++
++#define isc_refcount_increment(rp, tp)				\
++	do {							\
++		unsigned int *_tmp = (unsigned int *)(tp);	\
++		isc_int32_t prev;				\
++		prev = atomic_fetch_add_explicit		\
++			(&(rp)->refs, 1, memory_order_relaxed); \
++		REQUIRE(prev > 0);				\
++		if (_tmp != NULL)				\
++			*_tmp = prev + 1;			\
++	} while (0)
++
++#define isc_refcount_decrement(rp, tp)				\
++	do {							\
++		unsigned int *_tmp = (unsigned int *)(tp);	\
++		isc_int32_t prev;				\
++		prev = atomic_fetch_sub_explicit		\
++			(&(rp)->refs, 1, memory_order_relaxed); \
++		REQUIRE(prev > 0);				\
++		if (_tmp != NULL)				\
++			*_tmp = prev - 1;			\
++	} while (0)
++
++#else /* ISC_REFCOUNT_HAVESTDATOMIC */
++
+ #define isc_refcount_increment0(rp, tp)				\
+ 	do {							\
+ 		unsigned int *_tmp = (unsigned int *)(tp);	\
+@@ -126,6 +172,8 @@ typedef struct isc_refcount {
+ 			*_tmp = prev - 1;			\
+ 	} while (0)
+ 
++#endif /* ISC_REFCOUNT_HAVESTDATOMIC */
++
+ #else  /* ISC_PLATFORM_HAVEXADD */
+ 
+ typedef struct isc_refcount {
+@@ -176,7 +224,7 @@ typedef struct isc_refcount {
+ 		UNLOCK(&(rp)->lock);				\
+ 	} while (0)
+ 
+-#endif /* ISC_PLATFORM_HAVEXADD */
++#endif /* (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || defined(ISC_PLATFORM_HAVEXADD) */
+ #else  /* ISC_PLATFORM_USETHREADS */
+ 
+ typedef struct isc_refcount {
+diff --git a/lib/isc/include/isc/rwlock.h b/lib/isc/include/isc/rwlock.h
+index 6f8d378..2917174 100644
+--- a/lib/isc/include/isc/rwlock.h
++++ b/lib/isc/include/isc/rwlock.h
+@@ -18,6 +18,10 @@
+ #include <isc/platform.h>
+ #include <isc/types.h>
+ 
++#if defined(ISC_PLATFORM_HAVESTDATOMIC)
++#include <stdatomic.h>
++#endif
++
+ ISC_LANG_BEGINDECLS
+ 
+ typedef enum {
+@@ -27,8 +31,11 @@ typedef enum {
+ } isc_rwlocktype_t;
+ 
+ #ifdef ISC_PLATFORM_USETHREADS
+-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || (defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG))
+ #define ISC_RWLOCK_USEATOMIC 1
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE))
++#define ISC_RWLOCK_USESTDATOMIC 1
++#endif
+ #endif
+ 
+ struct isc_rwlock {
+@@ -37,7 +44,7 @@ struct isc_rwlock {
+ 	isc_mutex_t		lock;
+ 	isc_int32_t		spins;
+ 
+-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
++#if defined(ISC_RWLOCK_USEATOMIC)
+ 	/*
+ 	 * When some atomic instructions with hardware assistance are
+ 	 * available, rwlock will use those so that concurrent readers do not
+@@ -52,9 +59,15 @@ struct isc_rwlock {
+ 	 */
+ 
+ 	/* Read or modified atomically. */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++	atomic_int_fast32_t	write_requests;
++	atomic_int_fast32_t	write_completions;
++	atomic_int_fast32_t	cnt_and_flag;
++#else
+ 	isc_int32_t		write_requests;
+ 	isc_int32_t		write_completions;
+ 	isc_int32_t		cnt_and_flag;
++#endif
+ 
+ 	/* Locked by lock. */
+ 	isc_condition_t		readable;
+@@ -67,7 +80,7 @@ struct isc_rwlock {
+ 	/* Unlocked. */
+ 	unsigned int		write_quota;
+ 
+-#else  /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
++#else  /* ISC_RWLOCK_USEATOMIC */
+ 
+ 	/*%< Locked by lock. */
+ 	isc_condition_t		readable;
+@@ -89,7 +102,7 @@ struct isc_rwlock {
+ 	unsigned int		read_quota;
+ 	unsigned int		write_quota;
+ 	isc_rwlocktype_t	original;
+-#endif  /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
++#endif  /* ISC_RWLOCK_USEATOMIC */
+ };
+ #else /* ISC_PLATFORM_USETHREADS */
+ struct isc_rwlock {
+diff --git a/lib/isc/refcount.c b/lib/isc/refcount.c
+index 3af4d19..ad1fd5b 100644
+--- a/lib/isc/refcount.c
++++ b/lib/isc/refcount.c
+@@ -21,7 +21,7 @@ isc_refcount_init(isc_refcount_t *ref, unsigned int n) {
+ 	REQUIRE(ref != NULL);
+ 
+ 	ref->refs = n;
+-#if defined(ISC_PLATFORM_USETHREADS) && !defined(ISC_PLATFORM_HAVEXADD)
++#if defined(ISC_PLATFORM_USETHREADS) && !defined(ISC_REFCOUNT_HAVEATOMIC)
+ 	return (isc_mutex_init(&ref->lock));
+ #else
+ 	return (ISC_R_SUCCESS);
+diff --git a/lib/isc/rwlock.c b/lib/isc/rwlock.c
+index 3caa865..4e3f64a 100644
+--- a/lib/isc/rwlock.c
++++ b/lib/isc/rwlock.c
+@@ -39,7 +39,7 @@
+ #define RWLOCK_MAX_ADAPTIVE_COUNT 100
+ #endif
+ 
+-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
++#if defined(ISC_RWLOCK_USEATOMIC)
+ static isc_result_t
+ isc__rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type);
+ #endif
+@@ -86,7 +86,7 @@ isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
+ 	rwl->magic = 0;
+ 
+ 	rwl->spins = 0;
+-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
++#if defined(ISC_RWLOCK_USEATOMIC)
+ 	rwl->write_requests = 0;
+ 	rwl->write_completions = 0;
+ 	rwl->cnt_and_flag = 0;
+@@ -155,7 +155,7 @@ void
+ isc_rwlock_destroy(isc_rwlock_t *rwl) {
+ 	REQUIRE(VALID_RWLOCK(rwl));
+ 
+-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
++#if defined(ISC_RWLOCK_USEATOMIC)
+ 	REQUIRE(rwl->write_requests == rwl->write_completions &&
+ 		rwl->cnt_and_flag == 0 && rwl->readers_waiting == 0);
+ #else
+@@ -172,7 +172,7 @@ isc_rwlock_destroy(isc_rwlock_t *rwl) {
+ 	DESTROYLOCK(&rwl->lock);
+ }
+ 
+-#if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
++#if defined(ISC_RWLOCK_USEATOMIC)
+ 
+ /*
+  * When some architecture-dependent atomic operations are available,
+@@ -262,7 +262,13 @@ isc__rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 			UNLOCK(&rwl->lock);
+ 		}
+ 
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		cntflag = atomic_fetch_add_explicit(&rwl->cnt_and_flag,
++						    READER_INCR,
++						    memory_order_relaxed);
++#else
+ 		cntflag = isc_atomic_xadd(&rwl->cnt_and_flag, READER_INCR);
++#endif
+ 		POST(cntflag);
+ 		while (1) {
+ 			if ((rwl->cnt_and_flag & WRITER_ACTIVE) == 0)
+@@ -312,7 +318,12 @@ isc__rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 		isc_int32_t prev_writer;
+ 
+ 		/* enter the waiting queue, and wait for our turn */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		prev_writer = atomic_fetch_add_explicit(&rwl->write_requests, 1,
++							memory_order_relaxed);
++#else
+ 		prev_writer = isc_atomic_xadd(&rwl->write_requests, 1);
++#endif
+ 		while (rwl->write_completions != prev_writer) {
+ 			LOCK(&rwl->lock);
+ 			if (rwl->write_completions != prev_writer) {
+@@ -325,9 +336,18 @@ isc__rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 		}
+ 
+ 		while (1) {
+-			cntflag = isc_atomic_cmpxchg(&rwl->cnt_and_flag, 0,
+-						     WRITER_ACTIVE);
+-			if (cntflag == 0)
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++			atomic_int_fast32_t cntflag2 = 0;
++			atomic_compare_exchange_strong_explicit
++				(&rwl->cnt_and_flag, &cntflag2, WRITER_ACTIVE,
++				 memory_order_relaxed, memory_order_relaxed);
++#else
++			isc_int32_t cntflag2;
++			cntflag2 = isc_atomic_cmpxchg(&rwl->cnt_and_flag, 0,
++						      WRITER_ACTIVE);
++#endif
++
++			if (cntflag2 == 0)
+ 				break;
+ 
+ 			/* Another active reader or writer is working. */
+@@ -390,14 +410,26 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 			return (ISC_R_LOCKBUSY);
+ 
+ 		/* Otherwise, be ready for reading. */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		cntflag = atomic_fetch_add_explicit(&rwl->cnt_and_flag,
++						    READER_INCR,
++						    memory_order_relaxed);
++#else
+ 		cntflag = isc_atomic_xadd(&rwl->cnt_and_flag, READER_INCR);
++#endif
+ 		if ((cntflag & WRITER_ACTIVE) != 0) {
+ 			/*
+ 			 * A writer is working.  We lose, and cancel the read
+ 			 * request.
+ 			 */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++			cntflag = atomic_fetch_sub_explicit
++				(&rwl->cnt_and_flag, READER_INCR,
++				 memory_order_relaxed);
++#else
+ 			cntflag = isc_atomic_xadd(&rwl->cnt_and_flag,
+ 						  -READER_INCR);
++#endif
+ 			/*
+ 			 * If no other readers are waiting and we've suspended
+ 			 * new writers in this short period, wake them up.
+@@ -413,16 +445,29 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 		}
+ 	} else {
+ 		/* Try locking without entering the waiting queue. */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		atomic_int_fast32_t zero = 0;
++		if (!atomic_compare_exchange_strong_explicit
++		    (&rwl->cnt_and_flag, &zero, WRITER_ACTIVE,
++		     memory_order_relaxed, memory_order_relaxed))
++			return (ISC_R_LOCKBUSY);
++#else
+ 		cntflag = isc_atomic_cmpxchg(&rwl->cnt_and_flag, 0,
+ 					     WRITER_ACTIVE);
+ 		if (cntflag != 0)
+ 			return (ISC_R_LOCKBUSY);
++#endif
+ 
+ 		/*
+ 		 * XXXJT: jump into the queue, possibly breaking the writer
+ 		 * order.
+ 		 */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		atomic_fetch_sub_explicit(&rwl->write_completions, 1,
++					  memory_order_relaxed);
++#else
+ 		(void)isc_atomic_xadd(&rwl->write_completions, -1);
++#endif
+ 
+ 		rwl->write_granted++;
+ 	}
+@@ -437,31 +482,60 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 
+ isc_result_t
+ isc_rwlock_tryupgrade(isc_rwlock_t *rwl) {
+-	isc_int32_t prevcnt;
+-
+ 	REQUIRE(VALID_RWLOCK(rwl));
+ 
+-	/* Try to acquire write access. */
+-	prevcnt = isc_atomic_cmpxchg(&rwl->cnt_and_flag,
+-				     READER_INCR, WRITER_ACTIVE);
+-	/*
+-	 * There must have been no writer, and there must have been at least
+-	 * one reader.
+-	 */
+-	INSIST((prevcnt & WRITER_ACTIVE) == 0 &&
+-	       (prevcnt & ~WRITER_ACTIVE) != 0);
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++	{
++		atomic_int_fast32_t reader_incr = READER_INCR;
+ 
+-	if (prevcnt == READER_INCR) {
++		/* Try to acquire write access. */
++		atomic_compare_exchange_strong_explicit
++			(&rwl->cnt_and_flag, &reader_incr, WRITER_ACTIVE,
++			 memory_order_relaxed, memory_order_relaxed);
+ 		/*
+-		 * We are the only reader and have been upgraded.
+-		 * Now jump into the head of the writer waiting queue.
++		 * There must have been no writer, and there must have
++		 * been at least one reader.
+ 		 */
+-		(void)isc_atomic_xadd(&rwl->write_completions, -1);
+-	} else
+-		return (ISC_R_LOCKBUSY);
++		INSIST((reader_incr & WRITER_ACTIVE) == 0 &&
++		       (reader_incr & ~WRITER_ACTIVE) != 0);
+ 
+-	return (ISC_R_SUCCESS);
++		if (reader_incr == READER_INCR) {
++			/*
++			 * We are the only reader and have been upgraded.
++			 * Now jump into the head of the writer waiting queue.
++			 */
++			atomic_fetch_sub_explicit(&rwl->write_completions, 1,
++						  memory_order_relaxed);
++		} else
++			return (ISC_R_LOCKBUSY);
+ 
++	}
++#else
++	{
++		isc_int32_t prevcnt;
++
++		/* Try to acquire write access. */
++		prevcnt = isc_atomic_cmpxchg(&rwl->cnt_and_flag,
++					     READER_INCR, WRITER_ACTIVE);
++		/*
++		 * There must have been no writer, and there must have
++		 * been at least one reader.
++		 */
++		INSIST((prevcnt & WRITER_ACTIVE) == 0 &&
++		       (prevcnt & ~WRITER_ACTIVE) != 0);
++
++		if (prevcnt == READER_INCR) {
++			/*
++			 * We are the only reader and have been upgraded.
++			 * Now jump into the head of the writer waiting queue.
++			 */
++			(void)isc_atomic_xadd(&rwl->write_completions, -1);
++		} else
++			return (ISC_R_LOCKBUSY);
++	}
++#endif
++
++	return (ISC_R_SUCCESS);
+ }
+ 
+ void
+@@ -470,14 +544,33 @@ isc_rwlock_downgrade(isc_rwlock_t *rwl) {
+ 
+ 	REQUIRE(VALID_RWLOCK(rwl));
+ 
+-	/* Become an active reader. */
+-	prev_readers = isc_atomic_xadd(&rwl->cnt_and_flag, READER_INCR);
+-	/* We must have been a writer. */
+-	INSIST((prev_readers & WRITER_ACTIVE) != 0);
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++	{
++		/* Become an active reader. */
++		prev_readers = atomic_fetch_add_explicit(&rwl->cnt_and_flag,
++							 READER_INCR,
++							 memory_order_relaxed);
++		/* We must have been a writer. */
++		INSIST((prev_readers & WRITER_ACTIVE) != 0);
++
++		/* Complete write */
++		atomic_fetch_sub_explicit(&rwl->cnt_and_flag, WRITER_ACTIVE,
++					  memory_order_relaxed);
++		atomic_fetch_add_explicit(&rwl->write_completions, 1,
++					  memory_order_relaxed);
++	}
++#else
++	{
++		/* Become an active reader. */
++		prev_readers = isc_atomic_xadd(&rwl->cnt_and_flag, READER_INCR);
++		/* We must have been a writer. */
++		INSIST((prev_readers & WRITER_ACTIVE) != 0);
+ 
+-	/* Complete write */
+-	(void)isc_atomic_xadd(&rwl->cnt_and_flag, -WRITER_ACTIVE);
+-	(void)isc_atomic_xadd(&rwl->write_completions, 1);
++		/* Complete write */
++		(void)isc_atomic_xadd(&rwl->cnt_and_flag, -WRITER_ACTIVE);
++		(void)isc_atomic_xadd(&rwl->write_completions, 1);
++	}
++#endif
+ 
+ 	/* Resume other readers */
+ 	LOCK(&rwl->lock);
+@@ -498,8 +591,13 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ #endif
+ 
+ 	if (type == isc_rwlocktype_read) {
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		prev_cnt = atomic_fetch_sub_explicit(&rwl->cnt_and_flag,
++						     READER_INCR,
++						     memory_order_relaxed);
++#else
+ 		prev_cnt = isc_atomic_xadd(&rwl->cnt_and_flag, -READER_INCR);
+-
++#endif
+ 		/*
+ 		 * If we're the last reader and any writers are waiting, wake
+ 		 * them up.  We need to wake up all of them to ensure the
+@@ -518,8 +616,15 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 		 * Reset the flag, and (implicitly) tell other writers
+ 		 * we are done.
+ 		 */
++#if defined(ISC_RWLOCK_USESTDATOMIC)
++		atomic_fetch_sub_explicit(&rwl->cnt_and_flag, WRITER_ACTIVE,
++					  memory_order_relaxed);
++		atomic_fetch_add_explicit(&rwl->write_completions, 1,
++					  memory_order_relaxed);
++#else
+ 		(void)isc_atomic_xadd(&rwl->cnt_and_flag, -WRITER_ACTIVE);
+ 		(void)isc_atomic_xadd(&rwl->write_completions, 1);
++#endif
+ 
+ 		if (rwl->write_granted >= rwl->write_quota ||
+ 		    rwl->write_requests == rwl->write_completions ||
+@@ -557,7 +662,7 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 	return (ISC_R_SUCCESS);
+ }
+ 
+-#else /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
++#else /* ISC_RWLOCK_USEATOMIC */
+ 
+ static isc_result_t
+ doit(isc_rwlock_t *rwl, isc_rwlocktype_t type, isc_boolean_t nonblock) {
+@@ -763,7 +868,7 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
+ 	return (ISC_R_SUCCESS);
+ }
+ 
+-#endif /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
++#endif /* ISC_RWLOCK_USEATOMIC */
+ #else /* ISC_PLATFORM_USETHREADS */
+ 
+ isc_result_t
+diff --git a/lib/isc/stats.c b/lib/isc/stats.c
+index 85f485c..b9d7496 100644
+--- a/lib/isc/stats.c
++++ b/lib/isc/stats.c
+@@ -24,6 +24,10 @@
+ #include <isc/stats.h>
+ #include <isc/util.h>
+ 
++#if defined(ISC_PLATFORM_HAVESTDATOMIC)
++#include <stdatomic.h>
++#endif
++
+ #define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
+ #define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
+ 
+@@ -32,8 +36,12 @@
+  * increment and store operations, just to make
+  * the later macros simpler
+  */
+-#if defined(ISC_PLATFORM_HAVEXADDQ) && defined(ISC_PLATFORM_HAVEATOMICSTOREQ)
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_LONG_LOCK_FREE)) || \
++	(defined(ISC_PLATFORM_HAVEXADDQ) && defined(ISC_PLATFORM_HAVEATOMICSTOREQ))
+ #define ISC_STATS_HAVEATOMICQ 1
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_LONG_LOCK_FREE))
++#define ISC_STATS_HAVESTDATOMICQ 1
++#endif
+ #else
+ #define ISC_STATS_HAVEATOMICQ 0
+ #endif
+@@ -61,20 +69,32 @@
+  * Otherwise, just rely on standard 64-bit data types
+  * and operations
+  */
+-#if !ISC_STATS_HAVEATOMICQ && defined(ISC_PLATFORM_HAVEXADD)
++#if !ISC_STATS_HAVEATOMICQ && ((defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || defined(ISC_PLATFORM_HAVEXADD))
+ #define ISC_STATS_USEMULTIFIELDS 1
++#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE))
++#define ISC_STATS_HAVESTDATOMIC 1
++#endif
+ #else
+ #define ISC_STATS_USEMULTIFIELDS 0
+ #endif
+ 
+ #if ISC_STATS_USEMULTIFIELDS
+ typedef struct {
++#if defined(ISC_STATS_HAVESTDATOMIC)
++	atomic_int_fast32_t hi;
++	atomic_int_fast32_t lo;
++#else
+ 	isc_uint32_t hi;
+ 	isc_uint32_t lo;
++#endif
+ } isc_stat_t;
+ #else
++#if defined(ISC_STATS_HAVESTDATOMICQ)
++typedef atomic_int_fast64_t isc_stat_t;
++#else
+ typedef isc_uint64_t isc_stat_t;
+ #endif
++#endif
+ 
+ struct isc_stats {
+ 	/*% Unlocked */
+@@ -232,7 +252,12 @@ incrementcounter(isc_stats_t *stats, int counter) {
+ #endif
+ 
+ #if ISC_STATS_USEMULTIFIELDS
++#if defined(ISC_STATS_HAVESTDATOMIC)
++	prev = atomic_fetch_add_explicit(&stats->counters[counter].lo, 1,
++					 memory_order_relaxed);
++#else
+ 	prev = isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].lo, 1);
++#endif
+ 	/*
+ 	 * If the lower 32-bit field overflows, increment the higher field.
+ 	 * Note that it's *theoretically* possible that the lower field
+@@ -241,11 +266,22 @@ incrementcounter(isc_stats_t *stats, int counter) {
+ 	 * isc_stats_copy() is called where the whole process is protected
+ 	 * by the write (exclusive) lock.
+ 	 */
+-	if (prev == (isc_int32_t)0xffffffff)
++	if (prev == (isc_int32_t)0xffffffff) {
++#if defined(ISC_STATS_HAVESTDATOMIC)
++		atomic_fetch_add_explicit(&stats->counters[counter].hi, 1,
++					  memory_order_relaxed);
++#else
+ 		isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].hi, 1);
++#endif
++	}
+ #elif ISC_STATS_HAVEATOMICQ
+ 	UNUSED(prev);
++#if defined(ISC_STATS_HAVESTDATOMICQ)
++	atomic_fetch_add_explicit(&stats->counters[counter], 1,
++				  memory_order_relaxed);
++#else
+ 	isc_atomic_xaddq((isc_int64_t *)&stats->counters[counter], 1);
++#endif
+ #else
+ 	UNUSED(prev);
+ 	stats->counters[counter]++;
+@@ -265,13 +301,29 @@ decrementcounter(isc_stats_t *stats, int counter) {
+ #endif
+ 
+ #if ISC_STATS_USEMULTIFIELDS
++#if defined(ISC_STATS_HAVESTDATOMIC)
++	prev = atomic_fetch_sub_explicit(&stats->counters[counter].lo, 1,
++					 memory_order_relaxed);
++#else
+ 	prev = isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].lo, -1);
+-	if (prev == 0)
++#endif
++	if (prev == 0) {
++#if defined(ISC_STATS_HAVESTDATOMIC)
++		atomic_fetch_sub_explicit(&stats->counters[counter].hi, 1,
++					  memory_order_relaxed);
++#else
+ 		isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].hi,
+ 				-1);
++#endif
++	}
+ #elif ISC_STATS_HAVEATOMICQ
+ 	UNUSED(prev);
++#if defined(ISC_STATS_HAVESTDATOMICQ)
++	atomic_fetch_sub_explicit(&stats->counters[counter], 1,
++				  memory_order_relaxed);
++#else
+ 	isc_atomic_xaddq((isc_int64_t *)&stats->counters[counter], -1);
++#endif
+ #else
+ 	UNUSED(prev);
+ 	stats->counters[counter]--;
+@@ -300,9 +352,15 @@ copy_counters(isc_stats_t *stats) {
+ 			(isc_uint64_t)(stats->counters[i].hi) << 32 |
+ 			stats->counters[i].lo;
+ #elif ISC_STATS_HAVEATOMICQ
++#if defined(ISC_STATS_HAVESTDATOMICQ)
++		stats->copiedcounters[i] =
++			atomic_load_explicit(&stats->counters[i],
++					     memory_order_relaxed);
++#else
+ 		/* use xaddq(..., 0) as an atomic load */
+ 		stats->copiedcounters[i] =
+ 			(isc_uint64_t)isc_atomic_xaddq((isc_int64_t *)&stats->counters[i], 0);
++#endif
+ #else
+ 		stats->copiedcounters[i] = stats->counters[i];
+ #endif
+@@ -373,7 +431,12 @@ isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
+ 	stats->counters[counter].hi = (isc_uint32_t)((val >> 32) & 0xffffffff);
+ 	stats->counters[counter].lo = (isc_uint32_t)(val & 0xffffffff);
+ #elif ISC_STATS_HAVEATOMICQ
++#if defined(ISC_STATS_HAVESTDATOMICQ)
++	atomic_store_explicit(&stats->counters[counter], val,
++			      memory_order_relaxed);
++#else
+ 	isc_atomic_storeq((isc_int64_t *)&stats->counters[counter], val);
++#endif
+ #else
+ 	stats->counters[counter] = val;
+ #endif
+@@ -382,4 +445,3 @@ isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
+ 	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_write);
+ #endif
+ }
+-

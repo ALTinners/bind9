@@ -1,8 +1,43 @@
-bind9 (1:9.11.2+dfsg-5~bpo9+1) stretch-backports; urgency=medium
+bind9 (1:9.11.2.P1-1) unstable; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * New upstream version 9.11.2-P1
+  * Refresh patches for new release
 
- -- Bernhard Schmidt <berni@debian.org>  Sat, 16 Dec 2017 14:43:54 +0100
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 17 Jan 2018 06:06:04 +0000
+
+bind9 (1:9.11.2+dfsg-10) unstable; urgency=medium
+
+  * Disable lmdb usage in export version of libraries (Closes: #887407)
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 16 Jan 2018 05:59:31 +0000
+
+bind9 (1:9.11.2+dfsg-9) unstable; urgency=medium
+
+  * Fix various mistakes in bind9 conffiles (Closes: #887398)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 15 Jan 2018 23:12:43 +0000
+
+bind9 (1:9.11.2+dfsg-8) unstable; urgency=medium
+
+  * Pull more stdatomic patch to fix builds on 32-bit architectures
+  * Remove extra native pkcs11 patch (it has been replaced by sed rules)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 15 Jan 2018 21:02:30 +0000
+
+bind9 (1:9.11.2+dfsg-7) unstable; urgency=medium
+
+  * Pull upstream patch to use C11 stdatomic where available (Closes: #778720)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 15 Jan 2018 15:59:48 +0000
+
+bind9 (1:9.11.2+dfsg-6) unstable; urgency=medium
+
+  * Add named-nzd2nzf to bind9 package
+  * Simplify installation rules
+  * Enable lmdb (to actually build named-nzd2nzf)
+  * Move delv from bind9 to dnsutils package (Closes: #887326)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 15 Jan 2018 14:19:31 +0000
 
 bind9 (1:9.11.2+dfsg-5) unstable; urgency=medium
 
