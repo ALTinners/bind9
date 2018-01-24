@@ -109,7 +109,6 @@ Description: Static Libraries and Headers used by BIND
 
 Package: libbind9-160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: libdns169 (= ${binary:Version}),
@@ -127,7 +126,6 @@ Description: BIND9 Shared Library used by BIND
 
 Package: libdns169
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: libisc166 (= ${binary:Version}),
@@ -143,7 +141,6 @@ Description: DNS Shared Library used by BIND
 
 Package: libirs160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: libisc166 (= ${binary:Version}),
@@ -159,7 +156,6 @@ Description: DNS Shared Library used by BIND
 
 Package: libisc166
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends},
@@ -174,7 +170,6 @@ Description: ISC Shared Library used by BIND
 
 Package: liblwres160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends},
@@ -204,7 +199,6 @@ Description: Command Channel Library used by BIND
 
 Package: libisccfg160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: libdns169 (= ${binary:Version}),
