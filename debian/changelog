@@ -1,3 +1,9 @@
+bind9 (1:9.11.2.P1-1~bpo9+1) stretch-backports; urgency=medium
+
+  * Rebuild for stretch-backports.
+
+ -- Bernhard Schmidt <berni@debian.org>  Wed, 24 Jan 2018 23:16:03 +0100
+
 bind9 (1:9.11.2.P1-1) unstable; urgency=medium
 
   * New upstream version 9.11.2-P1
