@@ -1,0 +1,4 @@
+bind source: maintainer-address-causes-mail-loops-or-bounces *
+bind source: build-depends-on-obsolete-package build-depends: *
+bind source: debhelper-tools-from-autotools-dev-are-deprecated *
+bind source: out-of-date-standards-version *
