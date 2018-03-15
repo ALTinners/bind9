@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -157,8 +157,8 @@ print_open(cfg_printer_t *pctx) {
 	}
 }
 
-static void
-print_indent(cfg_printer_t *pctx) {
+void
+cfg_print_indent(cfg_printer_t *pctx) {
 	int indent = pctx->indent;
 	if ((pctx->flags & CFG_PRINTER_ONELINE) != 0) {
 		cfg_print_cstr(pctx, " ");
@@ -174,7 +174,7 @@ static void
 print_close(cfg_printer_t *pctx) {
 	if ((pctx->flags & CFG_PRINTER_ONELINE) == 0) {
 		pctx->indent--;
-		print_indent(pctx);
+		cfg_print_indent(pctx);
 	}
 	cfg_print_cstr(pctx, "}");
 }
@@ -307,7 +307,7 @@ cfg_print_tuple(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 
 void
 cfg_doc_tuple(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const cfg_tuplefielddef_t *fields = type->of;
+	const cfg_tuplefielddef_t *fields;
 	const cfg_tuplefielddef_t *f;
 	isc_boolean_t need_space = ISC_FALSE;
 
@@ -566,7 +566,8 @@ parse2(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 
 	if (result != ISC_R_SUCCESS) {
 		/* Parsing failed but no errors have been logged. */
-		cfg_parser_error(pctx, 0, "parsing failed");
+		cfg_parser_error(pctx, 0, "parsing failed: %s",
+				 isc_result_totext(result));
 		goto cleanup;
 	}
 
@@ -1466,7 +1467,7 @@ print_list(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 			cfg_print_obj(pctx, elt->obj);
 			cfg_print_cstr(pctx, "; ");
 		} else {
-			print_indent(pctx);
+			cfg_print_indent(pctx);
 			cfg_print_obj(pctx, elt->obj);
 			cfg_print_cstr(pctx, ";\n");
 		}
@@ -1908,7 +1909,7 @@ cfg_parse_netprefix_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **
 static void
 print_symval(cfg_printer_t *pctx, const char *name, cfg_obj_t *obj) {
 	if ((pctx->flags & CFG_PRINTER_ONELINE) == 0)
-		print_indent(pctx);
+		cfg_print_indent(pctx);
 
 	cfg_print_cstr(pctx, name);
 	cfg_print_cstr(pctx, " ");
@@ -1983,8 +1984,8 @@ static struct flagtext {
 	{ 0, NULL }
 };
 
-static void
-print_clause_flags(cfg_printer_t *pctx, unsigned int flags) {
+void
+cfg_print_clauseflags(cfg_printer_t *pctx, unsigned int flags) {
 	struct flagtext *p;
 	isc_boolean_t first = ISC_TRUE;
 	for (p = flagtexts; p->flag != 0; p++) {
@@ -2008,14 +2009,12 @@ cfg_doc_mapbody(cfg_printer_t *pctx, const cfg_type_t *type) {
 	REQUIRE(type != NULL);
 
 	for (clauseset = type->of; *clauseset != NULL; clauseset++) {
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
+		for (clause = *clauseset; clause->name != NULL; clause++) {
 			cfg_print_cstr(pctx, clause->name);
 			cfg_print_cstr(pctx, " ");
 			cfg_doc_obj(pctx, clause->type);
 			cfg_print_cstr(pctx, ";");
-			print_clause_flags(pctx, clause->flags);
+			cfg_print_clauseflags(pctx, clause->flags);
 			cfg_print_cstr(pctx, "\n\n");
 		}
 	}
@@ -2057,16 +2056,14 @@ cfg_doc_map(cfg_printer_t *pctx, const cfg_type_t *type) {
 	print_open(pctx);
 
 	for (clauseset = type->of; *clauseset != NULL; clauseset++) {
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
-			print_indent(pctx);
+		for (clause = *clauseset; clause->name != NULL; clause++) {
+			cfg_print_indent(pctx);
 			cfg_print_cstr(pctx, clause->name);
 			if (clause->type->print != cfg_print_void)
 				cfg_print_cstr(pctx, " ");
 			cfg_doc_obj(pctx, clause->type);
 			cfg_print_cstr(pctx, ";");
-			print_clause_flags(pctx, clause->flags);
+			cfg_print_clauseflags(pctx, clause->flags);
 			cfg_print_cstr(pctx, "\n");
 		}
 	}
@@ -2112,6 +2109,55 @@ cfg_map_count(const cfg_obj_t *mapobj) {
 
 	map = &mapobj->value.map;
 	return (isc_symtab_count(map->symtab));
+}
+
+const char *
+cfg_map_firstclause(const cfg_type_t *map, const void **clauses,
+		    unsigned int *idx)
+{
+	cfg_clausedef_t * const * clauseset;
+
+	REQUIRE(map != NULL && map->rep == &cfg_rep_map);
+	REQUIRE(idx != NULL);
+	REQUIRE(clauses != NULL && *clauses == NULL);
+
+	clauseset = map->of;
+	if (*clauseset == NULL) {
+		return (NULL);
+	}
+	*clauses = *clauseset;
+	*idx = 0;
+	while ((*clauseset)[*idx].name == NULL) {
+		*clauses = (*++clauseset);
+		if (*clauses == NULL)
+			return (NULL);
+	}
+	return ((*clauseset)[*idx].name);
+}
+
+const char *
+cfg_map_nextclause(const cfg_type_t *map, const void **clauses,
+		   unsigned int *idx)
+{
+	cfg_clausedef_t * const * clauseset;
+
+	REQUIRE(map != NULL && map->rep == &cfg_rep_map);
+	REQUIRE(idx != NULL);
+	REQUIRE(clauses != NULL && *clauses != NULL);
+
+	clauseset = map->of;
+	while (*clauseset != NULL && *clauseset != *clauses) {
+		clauseset++;
+	}
+	INSIST(*clauseset == *clauses);
+	(*idx)++;
+	while ((*clauseset)[*idx].name == NULL) {
+		*idx = 0;
+		*clauses = (*++clauseset);
+		if (*clauses == NULL)
+			return (NULL);
+	}
+	return ((*clauseset)[*idx].name);
 }
 
 /* Parse an arbitrary token, storing its raw text representation. */
@@ -2240,27 +2286,25 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 				return (ISC_R_SUCCESS);
 			}
 		}
-		if ((flags & CFG_ADDR_V4PREFIXOK) != 0 &&
-		    strlen(s) <= 15U) {
+		if ((flags & CFG_ADDR_V4PREFIXOK) != 0 && strlen(s) <= 15U) {
 			char buf[64];
 			int i;
 
-			strcpy(buf, s);
+			strlcpy(buf, s, sizeof(buf));
 			for (i = 0; i < 3; i++) {
-				strcat(buf, ".0");
+				strlcat(buf, ".0", sizeof(buf));
 				if (inet_pton(AF_INET, buf, &in4a) == 1) {
 					isc_netaddr_fromin(na, &in4a);
 					return (ISC_R_SUCCESS);
 				}
 			}
 		}
-		if ((flags & CFG_ADDR_V6OK) != 0 &&
-		    strlen(s) <= 127U) {
+		if ((flags & CFG_ADDR_V6OK) != 0 && strlen(s) <= 127U) {
 			char buf[128]; /* see lib/bind9/getaddresses.c */
 			char *d; /* zone delimiter */
 			isc_uint32_t zone = 0; /* scope zone ID */
 
-			strcpy(buf, s);
+			strlcpy(buf, s, sizeof(buf));
 			d = strchr(buf, '%');
 			if (d != NULL)
 				*d = '\0';
@@ -2914,9 +2958,10 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 
 	len = vsnprintf(message, sizeof(message), format, args);
 #define ELIPSIS " ... "
-	if (len >= sizeof(message))
-		strcpy(message + sizeof(message) - sizeof(ELIPSIS) - 1,
-		       ELIPSIS);
+	if (len >= sizeof(message)) {
+		message[sizeof(message) - sizeof(ELIPSIS)] = 0;
+		strlcat(message, ELIPSIS, sizeof(message));
+	}
 
 	if ((flags & (CFG_LOG_NEAR|CFG_LOG_BEFORE|CFG_LOG_NOPREP)) != 0) {
 		isc_region_t r;

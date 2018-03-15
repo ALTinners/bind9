@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,7 +175,7 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 
 static void
 addserver(dns_client_t *client, const char *addrstr, const char *port,
-	  const char *namespace)
+	  const char *name_space)
 {
 	struct addrinfo hints, *res;
 	int gaierror;
@@ -206,9 +206,9 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	ISC_LIST_INIT(servers);
 	ISC_LIST_APPEND(servers, &sa, link);
 
-	if (namespace != NULL) {
-		namelen = strlen(namespace);
-		isc_buffer_constinit(&b, namespace, namelen);
+	if (name_space != NULL) {
+		namelen = strlen(name_space);
+		isc_buffer_constinit(&b, name_space, namelen);
 		isc_buffer_add(&b, namelen);
 		dns_fixedname_init(&fname);
 		name = dns_fixedname_name(&fname);

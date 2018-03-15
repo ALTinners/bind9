@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -192,16 +192,16 @@ tables_init(void) {
  * This function destroys (modifies) the data passed in bits.
  */
 static isc_uint32_t
-matrix_binaryrank(isc_uint32_t *bits, ssize_t rows, ssize_t cols) {
-	ssize_t i, j, k;
-	int rt = 0;
+matrix_binaryrank(isc_uint32_t *bits, size_t rows, size_t cols) {
+	size_t i, j, k;
+	unsigned int rt = 0;
 	isc_uint32_t rank = 0;
 	isc_uint32_t tmp;
 
 	for (k = 0; k < rows; k++) {
 		i = k;
 
-		while (((bits[i] >> rt) & 1) == 0) {
+		while (rt >= cols || ((bits[i] >> rt) & 1) == 0) {
 			i++;
 
 			if (i < rows)

@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1999-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,7 @@
 #include <isc/print.h>
 #include <isc/refcount.h>
 #include <isc/random.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -227,6 +228,12 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA256]));
 	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA384]));
 #endif
+#ifdef HAVE_OPENSSL_ED25519
+	RETERR(dst__openssleddsa_init(&dst_t_func[DST_ALG_ED25519]));
+#endif
+#ifdef HAVE_OPENSSL_ED448
+	RETERR(dst__openssleddsa_init(&dst_t_func[DST_ALG_ED448]));
+#endif
 #elif PKCS11CRYPTO
 	RETERR(dst__pkcs11_init(mctx, engine));
 #ifndef PK11_MD5_DISABLE
@@ -246,6 +253,12 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 #ifdef HAVE_PKCS11_ECDSA
 	RETERR(dst__pkcs11ecdsa_init(&dst_t_func[DST_ALG_ECDSA256]));
 	RETERR(dst__pkcs11ecdsa_init(&dst_t_func[DST_ALG_ECDSA384]));
+#endif
+#ifdef HAVE_PKCS11_ED25519
+	RETERR(dst__pkcs11eddsa_init(&dst_t_func[DST_ALG_ED25519]));
+#endif
+#ifdef HAVE_PKCS11_ED448
+	RETERR(dst__pkcs11eddsa_init(&dst_t_func[DST_ALG_ED448]));
 #endif
 #ifdef HAVE_PKCS11_GOST
 	RETERR(dst__pkcs11gost_init(&dst_t_func[DST_ALG_ECCGOST]));
@@ -1233,8 +1246,8 @@ dst_key_free(dst_key_t **keyp) {
 	if (key->key_tkeytoken) {
 		isc_buffer_free(&key->key_tkeytoken);
 	}
-	memset(key, 0, sizeof(dst_key_t));
-	isc_mem_putanddetach(&mctx, key, sizeof(dst_key_t));
+	isc_safe_memwipe(key, sizeof(*key));
+	isc_mem_putanddetach(&mctx, key, sizeof(*key));
 	*keyp = NULL;
 }
 
@@ -1288,6 +1301,12 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 		break;
 	case DST_ALG_ECDSA384:
 		*n = DNS_SIG_ECDSA384SIZE;
+		break;
+	case DST_ALG_ED25519:
+		*n = DNS_SIG_ED25519SIZE;
+		break;
+	case DST_ALG_ED448:
+		*n = DNS_SIG_ED448SIZE;
 		break;
 #ifndef PK11_MD5_DISABLE
 	case DST_ALG_HMACMD5:
@@ -1631,6 +1650,8 @@ issymmetric(const dst_key_t *key) {
 	case DST_ALG_ECCGOST:
 	case DST_ALG_ECDSA256:
 	case DST_ALG_ECDSA384:
+	case DST_ALG_ED25519:
+	case DST_ALG_ED448:
 		return (ISC_FALSE);
 #ifndef PK11_MD5_DISABLE
 	case DST_ALG_HMACMD5:
@@ -1842,8 +1863,9 @@ buildfilename(dns_name_t *name, dns_keytag_t id,
 	len = 1 + 3 + 1 + 5 + strlen(suffix) + 1;
 	if (isc_buffer_availablelength(out) < len)
 		return (ISC_R_NOSPACE);
-	sprintf((char *) isc_buffer_used(out), "+%03d+%05d%s", alg, id,
-		suffix);
+	snprintf((char *) isc_buffer_used(out),
+		 (int)isc_buffer_availablelength(out),
+		 "+%03d+%05d%s", alg, id, suffix);
 	isc_buffer_add(out, len);
 
 	return (ISC_R_SUCCESS);
@@ -1919,7 +1941,8 @@ algorithm_status(unsigned int alg) {
 	    alg == DST_ALG_NSEC3RSASHA1 ||
 	    alg == DST_ALG_RSASHA256 || alg == DST_ALG_RSASHA512 ||
 	    alg == DST_ALG_ECCGOST ||
-	    alg == DST_ALG_ECDSA256 || alg == DST_ALG_ECDSA384)
+	    alg == DST_ALG_ECDSA256 || alg == DST_ALG_ECDSA384 ||
+	    alg == DST_ALG_ED25519 || alg == DST_ALG_ED448)
 		return (DST_R_NOCRYPTO);
 #endif
 	return (DST_R_UNSUPPORTEDALG);

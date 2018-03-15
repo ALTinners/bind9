@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,6 +83,31 @@ usage(void) {
 	exit(1);
 }
 
+#ifdef _WIN32
+static void
+InitSockets(void) {
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+
+	wVersionRequested = MAKEWORD(2, 0);
+
+	err = WSAStartup(wVersionRequested, &wsaData);
+	if (err != 0) {
+		fprintf(stderr, "WSAStartup() failed: %d\n", err);
+		exit(1);
+	}
+}
+
+static void
+DestroySockets(void) {
+	WSACleanup();
+}
+#else
+#define InitSockets() ((void)0)
+#define DestroySockets() ((void)0)
+#endif
+
 static isc_boolean_t
 addserver(const char *server, isc_sockaddrlist_t *list,
 	   isc_sockaddr_t *sockaddr)
@@ -100,10 +125,12 @@ addserver(const char *server, isc_sockaddrlist_t *list,
 #ifdef AI_NUMERICSERV
 	hints.ai_flags |= AI_NUMERICSERV;
 #endif
+	InitSockets();
 	gaierror = getaddrinfo(server, port, &hints, &res);
 	if (gaierror != 0) {
 		fprintf(stderr, "getaddrinfo(%s) failed: %s\n",
 			server, gai_strerror(gaierror));
+		DestroySockets();
 		return (ISC_FALSE);
 	}
 	INSIST(res->ai_addrlen <= sizeof(sockaddr->type));
@@ -112,6 +139,7 @@ addserver(const char *server, isc_sockaddrlist_t *list,
 	ISC_LINK_INIT(sockaddr, link);
 	ISC_LIST_APPEND(*list, sockaddr, link);
 	freeaddrinfo(res);
+	DestroySockets();
 	return (ISC_TRUE);
 }
 
@@ -137,12 +165,14 @@ main(int argc, char *argv[]) {
 	dns_rdata_t *rdata;
 	dns_namelist_t updatelist, prereqlist, *prereqlistp = NULL;
 	isc_mem_t *umctx = NULL;
-	isc_boolean_t sendtwice;
+	isc_boolean_t sendtwice = ISC_FALSE;
 
 	ISC_LIST_INIT(auth_servers);
 	ISC_LIST_INIT(rec_servers);
 
-	while ((ch = isc_commandline_parse(argc, argv, "a:k:p:P:r:sz:")) != EOF) {
+	while ((ch = isc_commandline_parse(argc, argv,
+					   "a:k:p:P:r:sz:")) != EOF)
+	{
 		switch (ch) {
 		case 'k':
 			keyfilename = isc_commandline_argument;

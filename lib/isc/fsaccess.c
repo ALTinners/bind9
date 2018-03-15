@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001, 2004, 2005, 2007, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2004, 2005, 2007, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
  * This file contains the OS-independent functionality of the API.
  */
 #include <isc/fsaccess.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
 

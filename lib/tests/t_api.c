@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2005, 2007-2010, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2005, 2007-2010, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,6 +30,7 @@
 
 #include <isc/boolean.h>
 #include <isc/commandline.h>
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/mem.h>
@@ -358,11 +359,11 @@ t_main(int argc, char **argv)
 }
 
 void
-t_assert(const char *component, int anum, int class, const char *what, ...) {
+t_assert(const char *component, int anum, int tclass, const char *what, ...) {
 	va_list	args;
 	char buf[T_BIGBUF];
 
-	(void)printf("T:%s:%d:%s\n", component, anum, class == T_REQUIRED ?
+	(void)printf("T:%s:%d:%s\n", component, anum, tclass == T_REQUIRED ?
 		     "A" : "C");
 
 	/*
@@ -596,9 +597,16 @@ t_getdate(char *buf, size_t buflen) {
 	size_t		n;
 	time_t		t;
 	struct tm	*p;
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
+	struct tm	tm;
+#endif
 
 	t = time(NULL);
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
+	p = localtime_r(&t, &tm);
+#else
 	p = localtime(&t);
+#endif
 	n = strftime(buf, buflen - 1, "%A %d %B %H:%M:%S %Y\n", p);
 	return(n != 0U ? buf : NULL);
 }

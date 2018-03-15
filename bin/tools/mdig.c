@@ -1041,8 +1041,7 @@ plus_option(char *option, struct query *query, isc_boolean_t global)
 	isc_boolean_t state = ISC_TRUE;
 	size_t n;
 
-	strncpy(option_store, option, sizeof(option_store));
-	option_store[sizeof(option_store) - 1] = 0;
+	strlcpy(option_store, option, sizeof(option_store));
 	ptr = option_store;
 	cmd = next_token(&ptr, "=");
 	if (cmd == NULL) {
@@ -1657,8 +1656,7 @@ dash_option(const char *option, char *next, struct query *query,
 		return (value_from_next);
 	case 'x':
 		get_reverse(textname, sizeof(textname), value, query->ip6_int);
-		strncpy(query->textname, textname, sizeof(query->textname));
-		query->textname[sizeof(query->textname) - 1] = 0;
+		strlcpy(query->textname, textname, sizeof(query->textname));
 		query->rdtype = dns_rdatatype_ptr;
 		query->rdclass = dns_rdataclass_in;
 		*setname = ISC_TRUE;
@@ -1714,6 +1712,7 @@ preparse_args(int argc, char **argv) {
 	int rc;
 	char **rv;
 	char *option;
+	isc_boolean_t ipv4only = ISC_FALSE, ipv6only = ISC_FALSE;
 
 	rc = argc;
 	rv = argv;
@@ -1726,6 +1725,18 @@ preparse_args(int argc, char **argv) {
 			case 'm':
 				isc_mem_debugging = ISC_MEM_DEBUGTRACE |
 					ISC_MEM_DEBUGRECORD;
+				break;
+			case '4':
+				if (ipv6only) {
+					fatal("only one of -4 and -6 allowed");
+				}
+				ipv4only = ISC_TRUE;
+				break;
+			case '6':
+				if (ipv4only) {
+					fatal("only one of -4 and -6 allowed");
+				}
+				ipv6only = ISC_TRUE;
 				break;
 			}
 			option = &option[1];
@@ -1832,9 +1843,8 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 			 */
 			if (query == &default_query)
 				query = clone_default_query();
-			strncpy(query->textname, rv[0],
+			strlcpy(query->textname, rv[0],
 				sizeof(query->textname));
-			query->textname[sizeof(query->textname) - 1] = 0;
 			ISC_LIST_APPEND(queries, query, link);
 
 			query = clone_default_query();
@@ -1884,6 +1894,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 int
 main(int argc, char *argv[]) {
 	struct query *query;
+	isc_result_t result;
 	isc_sockaddr_t bind_any;
 	isc_log_t *lctx;
 	isc_logconfig_t *lcfg;
@@ -1932,7 +1943,12 @@ main(int argc, char *argv[]) {
 		fatal("a server '@xxx' is required");
 
 	ns = 0;
-	RUNCHECK(bind9_getaddresses(server, port, &dstaddr, 1, &ns));
+	result = bind9_getaddresses(server, port, &dstaddr, 1, &ns);
+	if (result != ISC_R_SUCCESS) {
+		fatal("couldn't get address for '%s': %s",
+		      server, isc_result_totext(result));
+	}
+
 	if (isc_sockaddr_pf(&dstaddr) == PF_INET && have_ipv6) {
 		isc_net_disableipv6();
 		have_ipv6 = ISC_FALSE;

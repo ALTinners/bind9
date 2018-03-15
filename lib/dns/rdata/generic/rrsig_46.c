@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2003-2005, 2007, 2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -145,7 +145,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_rrsig(ARGS_TOTEXT) {
 	isc_region_t sr;
-	char buf[sizeof("4294967295")];
+	char buf[sizeof("4294967295")];	/* Also TYPE65000. */
 	dns_rdatatype_t covered;
 	unsigned long ttl;
 	unsigned long when;
@@ -170,7 +170,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	if (dns_rdatatype_isknown(covered) && covered != 0) {
 		RETERR(dns_rdatatype_totext(covered, target));
 	} else {
-		sprintf(buf, "TYPE%u", covered);
+		snprintf(buf, sizeof(buf), "TYPE%u", covered);
 		RETERR(str_totext(buf, target));
 	}
 	RETERR(str_totext(" ", target));
@@ -178,7 +178,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	/*
 	 * Algorithm.
 	 */
-	sprintf(buf, "%u", sr.base[0]);
+	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
@@ -186,7 +186,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	/*
 	 * Labels.
 	 */
-	sprintf(buf, "%u", sr.base[0]);
+	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
@@ -196,7 +196,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	 */
 	ttl = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu", ttl);
+	snprintf(buf, sizeof(buf), "%lu", ttl);
 	RETERR(str_totext(buf, target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
@@ -224,7 +224,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	 */
 	foot = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", foot);
+	snprintf(buf, sizeof(buf), "%lu", foot);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 

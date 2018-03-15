@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,8 +38,6 @@ const char *s;
 char str[2 * ISC_SHA512_DIGESTLENGTH + 3];
 unsigned char key[20];
 
-isc_result_t
-tohexstr(unsigned char *d, unsigned int len, char *out);
 /*
  * Precondition: a hexadecimal number in *d, the length of that number in len,
  *   and a pointer to a character array to put the output (*out).
@@ -50,19 +48,17 @@ tohexstr(unsigned char *d, unsigned int len, char *out);
  *
  * Return values: ISC_R_SUCCESS if the operation is sucessful
  */
-
-isc_result_t
-tohexstr(unsigned char *d, unsigned int len, char *out) {
-
-	out[0]='\0';
+static isc_result_t
+tohexstr(unsigned char *d, unsigned int len, char *out, size_t out_size) {
 	char c_ret[] = "AA";
 	unsigned int i;
-	strcat(out, "0x");
+
+	out[0] = '\0';
+	strlcat(out, "0x", out_size);
 	for (i = 0; i < len; i++) {
-		sprintf(c_ret, "%02X", d[i]);
-		strcat(out, c_ret);
+		snprintf(c_ret, sizeof(c_ret), "%02X", d[i]);
+		strlcat(out, c_ret, out_size);
 	}
-	strcat(out, "\0");
 	return (ISC_R_SUCCESS);
 }
 
@@ -205,7 +201,7 @@ ATF_TC_BODY(isc_sha1, tc) {
 					testcase->input_len);
 		}
 		isc_sha1_final(&sha1, digest);
-		tohexstr(digest, ISC_SHA1_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA1_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -338,7 +334,7 @@ ATF_TC_BODY(isc_sha224, tc) {
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
-		tohexstr(digest, ISC_SHA224_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA224_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -470,7 +466,7 @@ ATF_TC_BODY(isc_sha256, tc) {
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
-		tohexstr(digest, ISC_SHA256_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA256_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -616,7 +612,7 @@ ATF_TC_BODY(isc_sha384, tc) {
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
-		tohexstr(digest, ISC_SHA384_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA384_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -763,7 +759,7 @@ ATF_TC_BODY(isc_sha512, tc) {
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
-		tohexstr(digest, ISC_SHA512_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA512_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -837,7 +833,7 @@ ATF_TC_BODY(isc_md5, tc) {
 				       testcase->input_len);
 		}
 		isc_md5_final(&md5, digest);
-		tohexstr(digest, ISC_MD5_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_MD5_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -967,7 +963,7 @@ ATF_TC_BODY(isc_hmacsha1, tc) {
 				    (const isc_uint8_t *) testcase->input,
 				    testcase->input_len);
 		isc_hmacsha1_sign(&hmacsha1, digest, ISC_SHA1_DIGESTLENGTH);
-		tohexstr(digest, ISC_SHA1_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA1_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1130,7 +1126,7 @@ ATF_TC_BODY(isc_hmacsha224, tc) {
 				      (const isc_uint8_t *) testcase->input,
 				      testcase->input_len);
 		isc_hmacsha224_sign(&hmacsha224, digest, ISC_SHA224_DIGESTLENGTH);
-		tohexstr(digest, ISC_SHA224_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA224_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1293,7 +1289,7 @@ ATF_TC_BODY(isc_hmacsha256, tc) {
 				      (const isc_uint8_t *) testcase->input,
 				      testcase->input_len);
 		isc_hmacsha256_sign(&hmacsha256, digest, ISC_SHA256_DIGESTLENGTH);
-		tohexstr(digest, ISC_SHA256_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA256_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1462,7 +1458,7 @@ ATF_TC_BODY(isc_hmacsha384, tc) {
 				      (const isc_uint8_t *) testcase->input,
 				      testcase->input_len);
 		isc_hmacsha384_sign(&hmacsha384, digest, ISC_SHA384_DIGESTLENGTH);
-		tohexstr(digest, ISC_SHA384_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA384_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1631,7 +1627,7 @@ ATF_TC_BODY(isc_hmacsha512, tc) {
 				      (const isc_uint8_t *) testcase->input,
 				      testcase->input_len);
 		isc_hmacsha512_sign(&hmacsha512, digest, ISC_SHA512_DIGESTLENGTH);
-		tohexstr(digest, ISC_SHA512_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_SHA512_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1775,7 +1771,7 @@ ATF_TC_BODY(isc_hmacmd5, tc) {
 				   (const isc_uint8_t *) testcase->input,
 				   testcase->input_len);
 		isc_hmacmd5_sign(&hmacmd5, digest);
-		tohexstr(digest, ISC_MD5_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_MD5_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1802,29 +1798,29 @@ ATF_TC_BODY(isc_crc64, tc) {
 		},
 		{
 			TEST_INPUT("a"),
-			"0x9AA9C0AC27F473CE", 1
+			"0xCE73F427ACC0A99A", 1
 		},
 		{
 			TEST_INPUT("abc"),
-			"0x0297F4F93A818B04", 1
+			"0x048B813AF9F49702", 1
 		},
 		{
 			TEST_INPUT("message digest"),
-			"0xF47B357AEAF97352", 1
+			"0x5273F9EA7A357BF4", 1
 		},
 		{
 			TEST_INPUT("abcdefghijklmnopqrstuvwxyz"),
-			"0xA1AA8B21F979F059", 1
+			"0x59F079F9218BAAA1", 1
 		},
 		{
 			TEST_INPUT("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm"
 				   "nopqrstuvwxyz0123456789"),
-			"0xFBB6781EF7A86DA3", 1
+			"0xA36DA8F71E78B6FB", 1
 		},
 		{
 			TEST_INPUT("123456789012345678901234567890123456789"
 				   "01234567890123456789012345678901234567890"),
-			"0x4A87E7C873EBE581", 1
+			"0x81E5EB73C8E7874A", 1
 		},
 		{ NULL, 0, NULL, 1 }
 	};
@@ -1839,7 +1835,8 @@ ATF_TC_BODY(isc_crc64, tc) {
 				       testcase->input_len);
 		}
 		isc_crc64_final(&crc);
-		tohexstr((unsigned char *) &crc, sizeof(crc), str);
+		snprintf(str, sizeof(str),
+			 "0x%016" ISC_PRINT_QUADFORMAT "X", crc);
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;
@@ -1963,6 +1960,42 @@ ATF_TC_BODY(isc_hash_initializer, tc) {
 	ATF_CHECK_EQ(h1, h2);
 }
 
+#ifndef PK11_MD5_DISABLE
+ATF_TC(md5_check);
+ATF_TC_HEAD(md5_check, tc) {
+	atf_tc_set_md_var(tc, "descr", "Startup MD5 check test");
+}
+ATF_TC_BODY(md5_check, tc) {
+	UNUSED(tc);
+
+	ATF_REQUIRE(isc_md5_check(ISC_FALSE));
+	ATF_CHECK(!isc_md5_check(ISC_TRUE));
+
+	ATF_REQUIRE(isc_hmacmd5_check(0));
+	ATF_CHECK(!isc_hmacmd5_check(1));
+	ATF_CHECK(!isc_hmacmd5_check(2));
+	ATF_CHECK(!isc_hmacmd5_check(3));
+	ATF_CHECK(!isc_hmacmd5_check(4));
+}
+#endif
+
+ATF_TC(sha1_check);
+ATF_TC_HEAD(sha1_check, tc) {
+	atf_tc_set_md_var(tc, "descr", "Startup SHA-1 check test");
+}
+ATF_TC_BODY(sha1_check, tc) {
+	UNUSED(tc);
+
+	ATF_REQUIRE(isc_sha1_check(ISC_FALSE));
+	ATF_CHECK(!isc_sha1_check(ISC_TRUE));
+
+	ATF_REQUIRE(isc_hmacsha1_check(0));
+	ATF_CHECK(!isc_hmacsha1_check(1));
+	ATF_CHECK(!isc_hmacsha1_check(2));
+	ATF_CHECK(!isc_hmacsha1_check(3));
+	ATF_CHECK(!isc_hmacsha1_check(4));
+}
+
 /*
  * Main
  */
@@ -1971,6 +2004,11 @@ ATF_TP_ADD_TCS(tp) {
 	 * Tests of hash functions, including isc_hash and the
 	 * various cryptographic hashes.
 	 */
+#ifndef PK11_MD5_DISABLE
+	ATF_TP_ADD_TC(tp, md5_check);
+#endif
+	ATF_TP_ADD_TC(tp, sha1_check);
+
 	ATF_TP_ADD_TC(tp, isc_hash_function);
 	ATF_TP_ADD_TC(tp, isc_hash_function_reverse);
 	ATF_TP_ADD_TC(tp, isc_hash_initializer);

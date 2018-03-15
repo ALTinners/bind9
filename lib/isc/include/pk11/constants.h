@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,12 @@ static CK_BYTE pk11_ecc_prime256v1[] = {
 };
 static CK_BYTE pk11_ecc_secp384r1[] = {
 	0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22
+};
+static CK_BYTE pk11_ecc_ed25519[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x70
+};
+static CK_BYTE pk11_ecc_ed448[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x71
 };
 #endif
 

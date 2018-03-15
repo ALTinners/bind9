@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002, 2004-2007, 2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004-2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,7 +93,6 @@ dns_compress_init(dns_compress_t *cctx, int edns, isc_mem_t *mctx);
  *
  *	Returns:
  *	\li	#ISC_R_SUCCESS
- *	\li	failures from dns_rbt_create()
  */
 
 void

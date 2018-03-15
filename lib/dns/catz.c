@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,11 @@
 #include <isc/hex.h>
 #include <isc/mem.h>
 #include <isc/parseint.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/sha2.h>
 #include <isc/task.h>
+#include <isc/util.h>
 
 #include <dns/catz.h>
 #include <dns/dbiterator.h>
@@ -120,6 +122,7 @@ isc_result_t
 dns_catz_options_copy(isc_mem_t *mctx, const dns_catz_options_t *src,
 		      dns_catz_options_t *dst)
 {
+	REQUIRE(src != NULL);
 	REQUIRE(dst != NULL);
 	REQUIRE(dst->masters.count == 0);
 	REQUIRE(dst->allow_query == NULL);
@@ -999,7 +1002,7 @@ catz_process_version(dns_catz_zone_t *zone, dns_rdataset_t *value) {
 		result = ISC_R_BADNUMBER;
 		goto cleanup;
 	}
-	memcpy(t, rdatastr.data, rdatastr.length);
+	memmove(t, rdatastr.data, rdatastr.length);
 	t[rdatastr.length] = 0;
 	result = isc_parse_uint32(&tversion, t, 10);
 	if (result != ISC_R_SUCCESS) {
@@ -1094,7 +1097,7 @@ catz_process_masters(dns_catz_zone_t *zone, dns_ipkeylist_t *ipkl,
 			if (keyname == NULL)
 				return (ISC_R_NOMEMORY);
 			dns_name_init(keyname, 0);
-			memcpy(keycbuf, rdatastr.data, rdatastr.length);
+			memmove(keycbuf, rdatastr.data, rdatastr.length);
 			keycbuf[rdatastr.length] = 0;
 			result = dns_name_fromstring(keyname, keycbuf, 0, mctx);
 			if (result != ISC_R_SUCCESS) {
@@ -1123,8 +1126,8 @@ catz_process_masters(dns_catz_zone_t *zone, dns_ipkeylist_t *ipkl,
 			if (value->type == dns_rdatatype_txt)
 				ipkl->keys[i] = keyname;
 			else /* A/AAAA */
-				memcpy(&ipkl->addrs[i], &sockaddr,
-				       sizeof(isc_sockaddr_t));
+				memmove(&ipkl->addrs[i], &sockaddr,
+					sizeof(isc_sockaddr_t));
 		} else {
 			result = dns_ipkeylist_resize(mctx, ipkl,
 						      i+1);
@@ -1155,8 +1158,8 @@ catz_process_masters(dns_catz_zone_t *zone, dns_ipkeylist_t *ipkl,
 			if (value->type == dns_rdatatype_txt)
 				ipkl->keys[i] = keyname;
 			else /* A/AAAA */
-				memcpy(&ipkl->addrs[i], &sockaddr,
-				       sizeof(isc_sockaddr_t));
+				memmove(&ipkl->addrs[i], &sockaddr,
+					sizeof(isc_sockaddr_t));
 			ipkl->count++;
 		}
 		return (ISC_R_SUCCESS);
@@ -1248,7 +1251,8 @@ catz_process_apl(dns_catz_zone_t *zone, isc_buffer_t **aclbp,
 		result = dns_rdata_apl_current(&rdata_apl, &apl_ent);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		memset(buf, 0, sizeof(buf));
-		memcpy(buf, apl_ent.data, apl_ent.length);
+		if (apl_ent.data != NULL && apl_ent.length > 0)
+			memmove(buf, apl_ent.data, apl_ent.length);
 		if (apl_ent.family == 1)
 			isc_netaddr_fromin(&addr, (struct in_addr*) buf);
 		else if (apl_ent.family == 2)
@@ -1505,7 +1509,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 	 * We have to generate a text buffer with regular zone config:
 	 * zone foo.bar {
 	 * 	type slave;
-	 * 	masters { ip1 port1; ip2 port2; };
+	 * 	masters [ dscp X ] { ip1 port port1; ip2 port port2; };
 	 * }
 	 */
 	isc_buffer_t *buffer = NULL;
@@ -1513,6 +1517,8 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 	isc_result_t result;
 	isc_uint32_t i;
 	isc_netaddr_t netaddr;
+	char pbuf[sizeof("65535")]; /* used both for port number and DSCP */
+	char zname[DNS_NAME_FORMATSIZE];
 
 	REQUIRE(zone != NULL);
 	REQUIRE(entry != NULL);
@@ -1520,7 +1526,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 
 	/*
 	 * The buffer will be reallocated if something won't fit,
-	 * ISC_BUFFER_INC seems like a good start.
+	 * ISC_BUFFER_INCR seems like a good start.
 	 */
 	result = isc_buffer_allocate(zone->catzs->mctx, &buffer,
 				     ISC_BUFFER_INCR);
@@ -1531,14 +1537,51 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 	isc_buffer_setautorealloc(buffer, ISC_TRUE);
 	isc_buffer_putstr(buffer, "zone ");
 	dns_name_totext(&entry->name, ISC_TRUE, buffer);
-	isc_buffer_putstr(buffer, " { type slave; masters { ");
+	isc_buffer_putstr(buffer, " { type slave; masters");
+
+	/*
+	 * DSCP value has no default, but when it is specified, it is identical
+	 * for all masters and cannot be overriden for a specific master IP, so
+	 * use the DSCP value set for the first master
+	 */
+	if (entry->opts.masters.count > 0 &&
+	    entry->opts.masters.dscps[0] != -1) {
+		isc_buffer_putstr(buffer, " dscp ");
+		snprintf(pbuf, sizeof(pbuf), "%u",
+			 entry->opts.masters.dscps[0]);
+		isc_buffer_putstr(buffer, pbuf);
+	}
+
+	isc_buffer_putstr(buffer, " { ");
 	for (i = 0; i < entry->opts.masters.count; i++) {
-		/* TODO port and DSCP */
+		/*
+		 * Every master must have an IP address assigned.
+		 */
+		switch (entry->opts.masters.addrs[i].type.sa.sa_family) {
+		case AF_INET:
+		case AF_INET6:
+			break;
+		default:
+			dns_name_format(&entry->name, zname,
+					DNS_NAME_FORMATSIZE);
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+				      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
+				      "catz: zone '%s' uses an invalid master "
+				      "(no IP address assigned)",
+				      zname);
+			result = ISC_R_FAILURE;
+			goto cleanup;
+		}
 		isc_netaddr_fromsockaddr(&netaddr,
 					 &entry->opts.masters.addrs[i]);
 		isc_buffer_reserve(&buffer, INET6_ADDRSTRLEN);
 		result = isc_netaddr_totext(&netaddr, buffer);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+
+		isc_buffer_putstr(buffer, " port ");
+		snprintf(pbuf, sizeof(pbuf), "%u",
+			 isc_sockaddr_getport(&entry->opts.masters.addrs[i]));
+		isc_buffer_putstr(buffer, pbuf);
 
 		if (entry->opts.masters.keys[i] != NULL) {
 			isc_buffer_putstr(buffer, " key ");
@@ -1549,26 +1592,26 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 		}
 		isc_buffer_putstr(buffer, "; ");
 	}
-	isc_buffer_putstr(buffer, "};");
+	isc_buffer_putstr(buffer, "}; ");
 	if (entry->opts.in_memory == ISC_FALSE) {
 		isc_buffer_putstr(buffer, "file \"");
 		result = dns_catz_generate_masterfilename(zone, entry, &buffer);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
-		isc_buffer_putstr(buffer, "\";");
+		isc_buffer_putstr(buffer, "\"; ");
 
 	}
 	if (entry->opts.allow_query != NULL) {
 		isc_buffer_putstr(buffer, "allow-query { ");
 		isc_buffer_usedregion(entry->opts.allow_query, &region);
 		isc_buffer_copyregion(buffer, &region);
-		isc_buffer_putstr(buffer, "};");
+		isc_buffer_putstr(buffer, "}; ");
 	}
 	if (entry->opts.allow_transfer != NULL) {
 		isc_buffer_putstr(buffer, "allow-transfer { ");
 		isc_buffer_usedregion(entry->opts.allow_transfer, &region);
 		isc_buffer_copyregion(buffer, &region);
-		isc_buffer_putstr(buffer, "};");
+		isc_buffer_putstr(buffer, "}; ");
 	}
 
 	isc_buffer_putstr(buffer, "};");
@@ -1576,11 +1619,10 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 	return (ISC_R_SUCCESS);
 
 cleanup:
-	if (buffer)
+	if (buffer != NULL)
 		isc_buffer_free(&buffer);
 	return (result);
 }
-
 
 void
 dns_catz_update_taskaction(isc_task_t *task, isc_event_t *event) {
@@ -1801,21 +1843,22 @@ dns_catz_update_from_db(dns_db_t *db, dns_catz_zones_t *catzs) {
 							 &rdataset);
 			if (result != ISC_R_SUCCESS) {
 				char cname[DNS_NAME_FORMATSIZE];
-				char type[DNS_RDATATYPE_FORMATSIZE];
-				char class[DNS_RDATACLASS_FORMATSIZE];
+				char typebuf[DNS_RDATATYPE_FORMATSIZE];
+				char classbuf[DNS_RDATACLASS_FORMATSIZE];
 
 				dns_name_format(name, cname,
 						DNS_NAME_FORMATSIZE);
-				dns_rdataclass_format(rdataset.rdclass, class,
-						      sizeof(class));
-				dns_rdatatype_format(rdataset.type, type,
-						     sizeof(type));
+				dns_rdataclass_format(rdataset.rdclass,
+						      classbuf,
+						      sizeof(classbuf));
+				dns_rdatatype_format(rdataset.type, typebuf,
+						     sizeof(typebuf));
 				isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 					      DNS_LOGMODULE_MASTER,
 					      ISC_LOG_WARNING,
 					      "catz: unknown record in catalog "
 					      "zone - %s %s %s(%s) - ignoring",
-					      cname, class, type,
+					      cname, classbuf, typebuf,
 					      isc_result_totext(result));
 			}
 			dns_rdataset_disassociate(&rdataset);

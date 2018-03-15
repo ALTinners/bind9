@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2012, 2014-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,8 @@ int verbose;
 static const char *algs = "RSA | RSAMD5 | DH | DSA | RSASHA1 |"
 			  " NSEC3DSA | NSEC3RSASHA1 |"
 			  " RSASHA256 | RSASHA512 | ECCGOST |"
-			  " ECDSAP256SHA256 | ECDSAP384SHA384";
+			  " ECDSAP256SHA256 | ECDSAP384SHA384 |"
+			  " ED25519 | ED448";
 
 ISC_PLATFORM_NORETURN_PRE static void
 usage(void) ISC_PLATFORM_NORETURN_POST;
@@ -155,7 +156,7 @@ main(int argc, char **argv) {
 	char		*label = NULL;
 	dns_ttl_t	ttl = 0;
 	isc_stdtime_t	publish = 0, activate = 0, revoke = 0;
-	isc_stdtime_t	inactive = 0, delete = 0;
+	isc_stdtime_t	inactive = 0, deltime = 0;
 	isc_stdtime_t	now;
 	int		prepub = -1;
 	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
@@ -317,8 +318,8 @@ main(int argc, char **argv) {
 			if (setdel || unsetdel)
 				fatal("-D specified more than once");
 
-			delete = strtotime(isc_commandline_argument,
-					   now, now, &setdel);
+			deltime = strtotime(isc_commandline_argument,
+					    now, now, &setdel);
 			unsetdel = !setdel;
 			break;
 		case 'S':
@@ -437,7 +438,8 @@ main(int argc, char **argv) {
 		    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
 		    alg != DST_ALG_RSASHA256 && alg != DST_ALG_RSASHA512 &&
 		    alg != DST_ALG_ECCGOST &&
-		    alg != DST_ALG_ECDSA256 && alg != DST_ALG_ECDSA384) {
+		    alg != DST_ALG_ECDSA256 && alg != DST_ALG_ECDSA384 &&
+		    alg != DST_ALG_ED25519 && alg != DST_ALG_ED448) {
 			fatal("%s is incompatible with NSEC3; "
 			      "do not use the -3 option", algname);
 		}
@@ -609,8 +611,13 @@ main(int argc, char **argv) {
 	isc_buffer_init(&buf, filename, sizeof(filename) - 1);
 
 	/* associate the key */
-	ret = dst_key_fromlabel(name, alg, flags, protocol,
-				rdclass, "pkcs11", label, NULL, mctx, &key);
+	ret = dst_key_fromlabel(name, alg, flags, protocol, rdclass,
+#ifdef PKCS11CRYPTO
+				"pkcs11",
+#else
+				engine,
+#endif
+				label, NULL, mctx, &key);
 	isc_entropy_stopcallbacksources(ectx);
 
 	if (ret != ISC_R_SUCCESS) {
@@ -662,7 +669,7 @@ main(int argc, char **argv) {
 			dst_key_settime(key, DST_TIME_INACTIVE, inactive);
 
 		if (setdel)
-			dst_key_settime(key, DST_TIME_DELETE, delete);
+			dst_key_settime(key, DST_TIME_DELETE, deltime);
 	if (setsyncadd)
 		dst_key_settime(key, DST_TIME_SYNCPUBLISH, syncadd);
 	if (setsyncdel)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,7 +144,7 @@ command is one of the following:\n\
   nta -remove domain [view]\n\
 		Remove a negative trust anchor, re-enabling validation\n\
 		for the given domain.\n\
-  querylog newstate\n\
+  querylog [ on | off ]\n\
 		Enable / disable query logging.\n\
   reconfig	Reload configuration file and new zones only.\n\
   recursing	Dump the queries that are currently recursing (named.recursing)\n\
@@ -197,7 +197,7 @@ command is one of the following:\n\
 		Delete a TKEY-negotiated TSIG key.\n\
   tsig-list	List all currently active TSIG keys, including both statically\n\
 		configured and TKEY-negotiated keys.\n\
-  validation newstate [view]\n\
+  validation [ yes | no | status ] [view]\n\
 		Enable / disable DNSSEC validation.\n\
   zonestatus zone [class [view]]\n\
 		Display the current status of a zone.\n\
@@ -398,6 +398,7 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 
 	isc_event_free(&event);
 	isccc_sexpr_free(&response);
+	isccc_sexpr_free(&request);
 	return;
 }
 
@@ -463,6 +464,7 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 					   NULL));
 	sends++;
 	isc_event_free(&event);
+	isccc_sexpr_free(&request);
 }
 
 static void

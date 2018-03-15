@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,13 @@ class PolicyTest(unittest.TestCase):
                          (False, 'ZSK pre/post-publish periods '
                                  '(5184000/5184000) combined exceed '
                                  'rollover period 7776000'))
+
+    def test_numeric_zone(self):
+        pol = policy.dnssec_policy()
+        pol.load('test-policies/05-numeric-zone.pol')
+
+        p = pol.policy('99example.test', novalidate=True)
+        self.assertEqual(p.validate(), (True, ""))
 
 if __name__ == "__main__":
     unittest.main()

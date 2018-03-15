@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2018  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,10 @@ rm -f ns1/root.db.signed
 rm -f ns2/bits.db
 rm -f ns2/bits.db.jnl
 rm -f ns1/signer.out
+rm -f ns2/inactiveksk.db
+rm -f ns2/inactiveksk.db.jnl
+rm -f ns2/inactivezsk.db
+rm -f ns2/inactivezsk.db.jnl
 rm -f ns2/retransfer.db
 rm -f ns2/retransfer.db.jnl
 rm -f ns2/retransfer3.db
@@ -44,6 +48,14 @@ rm -f ns3/expired.db
 rm -f ns3/expired.db.jnl
 rm -f ns3/expired.db.signed
 rm -f ns3/expired.db.signed.jnl
+rm -f ns3/inactiveksk.bk
+rm -f ns3/inactiveksk.bk.jnl
+rm -f ns3/inactiveksk.bk.signed
+rm -f ns3/inactiveksk.bk.signed.jnl
+rm -f ns3/inactivezsk.bk
+rm -f ns3/inactivezsk.bk.jnl
+rm -f ns3/inactivezsk.bk.signed
+rm -f ns3/inactivezsk.bk.signed.jnl
 rm -f ns3/nsec3.db
 rm -f ns3/nsec3.db.jnl
 rm -f ns3/nsec3.db.signed
@@ -68,6 +80,10 @@ rm -f ns5/bits.bk
 rm -f ns5/bits.bk.jnl
 rm -f ns5/bits.bk.signed
 rm -f ns5/bits.bk.signed.jnl
+rm -f ns7/K*
+rm -f ns7/nsec3-loop.db
+rm -f ns7/nsec3-loop.db.signed
+rm -f ns7/nsec3-loop.db.signed.jnl
 rm -f */*.jbk
 rm -f dig.out.ns*
 rm -f signing.out*
@@ -83,3 +99,4 @@ rm -f ns3/a-file
 rm -f ns*/named.lock
 rm -f dig.out.*
 rm -f ns3/nzf-*
+rm -f rndc.out.ns*

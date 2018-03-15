@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2011, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2011, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,10 +14,6 @@ SYSTEMTESTTOP=..
 status=0
 
 DIGOPTS="@10.53.0.1 -p 5300"
-
-# we don't want a KRB5_CONFIG setting breaking the tests
-KRB5_CONFIG=/dev/null
-export KRB5_CONFIG
 
 test_update() {
     host="$1"
@@ -80,6 +76,23 @@ output=`$DIG $DIGOPTS +short cname fred.example.nil.`
 [ -n "$output" ] || ret=1
 [ $ret -eq 0 ] || echo "I:failed"
 status=`expr $status + $ret`
+
+echo "I:ensure too long realm name is fatal in non-interactive mode"
+ret=0
+$NSUPDATE <<END > nsupdate.out 2>&1 && ret=1
+    realm namenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamename
+END
+grep "realm is too long" nsupdate.out > /dev/null || ret=1
+grep "syntax error" nsupdate.out > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+echo "I:ensure too long realm name is not fatal in interactive mode"
+ret=0
+$NSUPDATE -i <<END > nsupdate.out 2>&1 || ret=1
+    realm namenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamename
+END
+grep "realm is too long" nsupdate.out > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
 
 [ $status -eq 0 ] && echo "I:tsiggss tests all OK"
 

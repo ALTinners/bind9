@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1996-2001, 2004, 2005, 2007, 2008, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1996-2001, 2004, 2005, 2007, 2008, 2012-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,8 +82,8 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 	int base;
 	ptrdiff_t n;
 	unsigned char c;
-	isc_uint8_t parts[4];
-	isc_uint8_t *pp = parts;
+	isc_uint32_t parts[4];
+	isc_uint32_t *pp = parts;
 	int digit;
 
 	c = *cp;
@@ -135,7 +135,7 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 			 */
 			if (pp >= parts + 3 || val > 0xffU)
 				return (0);
-			*pp++ = (isc_uint8_t)val;
+			*pp++ = val;
 			c = *++cp;
 		} else
 			break;

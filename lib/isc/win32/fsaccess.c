@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002, 2004, 2007, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002, 2004, 2007, 2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,7 @@
 
 #include <isc/file.h>
 #include <isc/stat.h>
+#include <isc/string.h>
 
 #include "errno2result.h"
 
@@ -69,28 +70,25 @@ is_ntfs(const char * file) {
 	 */
 	if (isalpha(filename[0]) && filename[1] == ':' &&
 		(filename[2] == '\\' || filename[2] == '/')) {
-		strncpy(drive, filename, 3);
-		drive[3] = '\0';
-	}
-
-	else if ((filename[0] == '\\') && (filename[1] == '\\')) {
+		/* Copy 'c:\' or 'c:/' and NUL terminate. */
+		strlcpy(drive, filename, ISC_MIN(3 + 1, sizeof(drive)));
+	} else if ((filename[0] == '\\') && (filename[1] == '\\')) {
 		/* Find the machine and share name and rebuild the UNC */
-		strcpy(tmpbuf, filename);
+		strlcpy(tmpbuf, filename, sizeof(tmpbuf));
 		machinename = strtok(tmpbuf, "\\");
 		sharename = strtok(NULL, "\\");
-		strcpy(drive, "\\\\");
-		strcat(drive, machinename);
-		strcat(drive, "\\");
-		strcat(drive, sharename);
-		strcat(drive, "\\");
+		strlcpy(drive, "\\\\", sizeof(drive));
+		strlcat(drive, machinename, sizeof(drive));
+		strlcat(drive, "\\", sizeof(drive));
+		strlcat(drive, sharename, sizeof(drive));
+		strlcat(drive, "\\", sizeof(drive));
 
-	}
-	else /* Not determinable */
+	} else /* Not determinable */
 		return (FALSE);
 
 	GetVolumeInformation(drive, NULL, 0, NULL, 0, NULL, FSType,
 			     sizeof(FSType));
-	if(strcmp(FSType,"NTFS") == 0)
+	if (strcmp(FSType, "NTFS") == 0)
 		return (TRUE);
 	else
 		return (FALSE);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <isc/stats.h>
 #include <isc/string.h>
 #include <isc/task.h>
+#include <isc/util.h>
 
 #include <dns/cache.h>
 #include <dns/db.h>
@@ -287,6 +288,7 @@ init_desc(void) {
 		"resulted in a successful remote lookup",
 		"QryNXRedirRLookup");
 	SET_NSSTATDESC(badcookie, "sent badcookie response", "QryBADCOOKIE");
+	SET_NSSTATDESC(keytagopt, "Keytag option received", "KeyTagOpt");
 	INSIST(i == dns_nsstatscounter_max);
 
 	/* Initialize resolver statistics */
@@ -596,7 +598,7 @@ init_desc(void) {
 	} while (0)
 	i = 0;
 	SET_DNSTAPSTATDESC(success, "dnstap messges written", "DNSTAPsuccess");
-	SET_DNSTAPSTATDESC(drop, "dnstap messages dropped", "DNSSECdropped");
+	SET_DNSTAPSTATDESC(drop, "dnstap messages dropped", "DNSTAPdropped");
 	INSIST(i == dns_dnstapcounter_max);
 
 	/* Sanity check */
@@ -1253,8 +1255,8 @@ rdatasetstats_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
 	case isc_statsformat_json:
 #ifdef HAVE_JSON
 		zoneobj = (json_object *) dumparg->arg;
-		sprintf(buf, "%s%s%s", stale ? "#" : "",
-				       nxrrset ? "!" : "", typestr);
+		snprintf(buf, sizeof(buf), "%s%s%s",
+			 stale ? "#" : "", nxrrset ? "!" : "", typestr);
 		obj = json_object_new_int64(val);
 		if (obj == NULL)
 			return;
@@ -2131,7 +2133,7 @@ wrap_jsonfree(isc_buffer_t *buffer, void *arg) {
 }
 
 static json_object *
-addzone(char *name, char *class, const char *ztype,
+addzone(char *name, char *classname, const char *ztype,
 	isc_uint32_t serial, isc_boolean_t add_serial)
 {
 	json_object *node = json_object_new_object();
@@ -2140,7 +2142,8 @@ addzone(char *name, char *class, const char *ztype,
 		return (NULL);
 
 	json_object_object_add(node, "name", json_object_new_string(name));
-	json_object_object_add(node, "class", json_object_new_string(class));
+	json_object_object_add(node, "class",
+			       json_object_new_string(classname));
 	if (add_serial)
 		json_object_object_add(node, "serial",
 				       json_object_new_int64(serial));
@@ -2154,7 +2157,7 @@ static isc_result_t
 zone_jsonrender(dns_zone_t *zone, void *arg) {
 	isc_result_t result = ISC_R_SUCCESS;
 	char buf[1024 + 32];	/* sufficiently large for zone name and class */
-	char class[1024 + 32];	/* sufficiently large for zone name and class */
+	char classbuf[64];	/* sufficiently large for class */
 	char *zone_name_only = NULL;
 	char *class_only = NULL;
 	dns_rdataclass_t rdclass;
@@ -2174,8 +2177,8 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 	zone_name_only = buf;
 
 	rdclass = dns_zone_getclass(zone);
-	dns_rdataclass_format(rdclass, class, sizeof(class));
-	class_only = class;
+	dns_rdataclass_format(rdclass, classbuf, sizeof(classbuf));
+	class_only = classbuf;
 
 	if (dns_zone_getserial2(zone, &serial) != ISC_R_SUCCESS)
 		zoneobj = addzone(zone_name_only, class_only,

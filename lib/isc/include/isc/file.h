@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001, 2004-2007, 2009, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2004-2007, 2009, 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -252,7 +252,6 @@ isc_file_progname(const char *filename, char *buf, size_t buflen);
  * \brief Given an operating system specific file name "filename"
  * referring to a program, return the canonical program name.
  *
- *
  * Any directory prefix or executable file name extension (if
  * used on the OS in case) is stripped.  On systems where program
  * names are case insensitive, the name is canonicalized to all
@@ -383,6 +382,12 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
  * Returns:
  * - ISC_R_SUCCESS on success
  * - ISC_R_NOSPACE if the resulting path would be longer than 'length'
+ */
+
+isc_boolean_t
+isc_file_isdirwritable(const char *path);
+/*%<
+ *	Return true if the path is a directory and is writable
  */
 
 ISC_LANG_ENDDECLS

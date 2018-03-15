@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2015-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -656,7 +656,7 @@ setaddr(dns_dtmsg_t *dm, isc_sockaddr_t *sa, isc_boolean_t tcp,
 		*port = ntohs(sa->type.sin6.sin6_port);
 	} else {
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET;
-		addr->data = (uint8_t *) &sa->type.sin.sin_addr.s_addr;
+		addr->data = (isc_uint8_t *) &sa->type.sin.sin_addr.s_addr;
 		addr->len = 4;
 		*port = ntohs(sa->type.sin.sin_port);
 	}
@@ -812,7 +812,7 @@ static isc_boolean_t
 dnstap_file(struct fstrm_reader *r) {
 	fstrm_res res;
 	const struct fstrm_control *control = NULL;
-	const uint8_t *rtype = NULL;
+	const isc_uint8_t *rtype = NULL;
 	size_t dlen = strlen(DNSTAP_CONTENT_TYPE), rlen = 0;
 	size_t n = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002, 2004, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002, 2004, 2007, 2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -202,8 +202,8 @@ isc_file_safemovefile(const char *oldname, const char *newname) {
 	 */
 	if (stat(newname, &sbuf) == 0) {
 		exists = TRUE;
-		strcpy(buf, newname);
-		strcat(buf, ".XXXXX");
+		strlcpy(buf, newname, sizeof(buf));
+		strlcat(buf, ".XXXXX", sizeof(buf));
 		tmpfd = mkstemp(buf, ISC_TRUE);
 		if (tmpfd > 0)
 			_close(tmpfd);
@@ -331,17 +331,18 @@ isc_file_template(const char *path, const char *templet, char *buf,
 	s = strrchr(path, '\\');
 
 	if (s != NULL) {
-	  if ((s - path + 1 + strlen(templet) + 1) > (ssize_t)buflen)
+		size_t prefixlen = s - path + 1;
+		if ((prefixlen + strlen(templet) + 1) > buflen)
 			return (ISC_R_NOSPACE);
 
-		strncpy(buf, path, s - path + 1);
-		buf[s - path + 1] = '\0';
-		strcat(buf, templet);
+		/* Copy 'prefixlen' bytes and NUL terminate. */
+		strlcpy(buf, path, ISC_MIN(prefixlen + 1, buflen));
+		strlcat(buf, templet, buflen);
 	} else {
 		if ((strlen(templet) + 1) > buflen)
 			return (ISC_R_NOSPACE);
 
-		strcpy(buf, templet);
+		strlcpy(buf, templet, buflen);
 	}
 
 	return (ISC_R_SUCCESS);
@@ -602,7 +603,7 @@ isc_file_progname(const char *filename, char *progname, size_t namelen) {
 		if (namelen <= strlen(s))
 			return (ISC_R_NOSPACE);
 
-		strcpy(progname, s);
+		strlcpy(progname, s, namelen);
 		return (ISC_R_SUCCESS);
 	}
 
@@ -613,8 +614,8 @@ isc_file_progname(const char *filename, char *progname, size_t namelen) {
 	if (len >= namelen)
 		return (ISC_R_NOSPACE);
 
-	strncpy(progname, s, len);
-	progname[len] = '\0';
+	/* Copy up to 'len' bytes and NUL terminate. */
+	strlcpy(progname, s, ISC_MIN(len + 1, namelen));
 	return (ISC_R_SUCCESS);
 }
 
@@ -837,4 +838,86 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		base, ext != NULL ? "." : "", ext != NULL ? ext : "");
 	strlcpy(path, buf, length);
 	return (ISC_R_SUCCESS);
+}
+
+/*
+ * Based on http://blog.aaronballman.com/2011/08/how-to-check-access-rights/
+ */
+isc_boolean_t
+isc_file_isdirwritable(const char *path) {
+	DWORD length = 0;
+	HANDLE hToken = NULL;
+	PSECURITY_DESCRIPTOR security = NULL;
+	isc_boolean_t answer = ISC_FALSE;
+
+	if (isc_file_isdirectory(path) != ISC_R_SUCCESS) {
+		return (answer);
+	}
+
+	/*
+	 * Figure out buffer size. GetFileSecurity() should not succeed.
+	 */
+	if (GetFileSecurity(path, OWNER_SECURITY_INFORMATION |
+				  GROUP_SECURITY_INFORMATION |
+				  DACL_SECURITY_INFORMATION,
+			    NULL, 0, &length))
+	{
+		return (answer);
+	}
+
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+		return (answer);
+	}
+
+	security = malloc(length);
+	if (security == NULL) {
+		return (answer);
+	}
+
+	/*
+	 * GetFileSecurity() should succeed.
+	 */
+	if (!GetFileSecurity(path, OWNER_SECURITY_INFORMATION |
+				   GROUP_SECURITY_INFORMATION |
+				   DACL_SECURITY_INFORMATION,
+			     security, length, &length))
+	{
+		return (answer);
+	}
+
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_IMPERSONATE |
+			     TOKEN_QUERY | TOKEN_DUPLICATE |
+			     STANDARD_RIGHTS_READ, &hToken))
+	{
+		HANDLE hImpersonatedToken = NULL;
+
+		if (DuplicateToken(hToken, SecurityImpersonation,
+				   &hImpersonatedToken))
+		{
+			GENERIC_MAPPING mapping;
+			PRIVILEGE_SET privileges = { 0 };
+			DWORD grantedAccess = 0;
+			DWORD privilegesLength = sizeof(privileges);
+			BOOL result = FALSE;
+			DWORD genericAccessRights = GENERIC_WRITE;
+
+			mapping.GenericRead = FILE_GENERIC_READ;
+			mapping.GenericWrite = FILE_GENERIC_WRITE;
+			mapping.GenericExecute = FILE_GENERIC_EXECUTE;
+			mapping.GenericAll = FILE_ALL_ACCESS;
+
+			MapGenericMask(&genericAccessRights, &mapping);
+			if (AccessCheck(security, hImpersonatedToken,
+					genericAccessRights, &mapping,
+					&privileges, &privilegesLength,
+					&grantedAccess, &result))
+			{
+				answer = ISC_TF(result);
+			}
+			CloseHandle(hImpersonatedToken);
+		}
+		CloseHandle(hToken);
+	}
+	free(security);
+	return (answer);
 }

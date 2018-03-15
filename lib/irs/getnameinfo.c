@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
-/* $Id$ */
 
 /*! \file */
 
@@ -95,6 +93,7 @@
 #include <isc/netaddr.h>
 #include <isc/print.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/byaddr.h>
@@ -205,11 +204,11 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 		if ((strlen(numserv) + 1) > servlen)
 			ERR(EAI_OVERFLOW);
-		strcpy(serv, numserv);
+		strlcpy(serv, numserv, servlen);
 	} else {
 		if ((strlen(sp->s_name) + 1) > servlen)
 			ERR(EAI_OVERFLOW);
-		strcpy(serv, sp->s_name);
+		strlcpy(serv, sp->s_name, servlen);
 	}
 
 #if 0
@@ -266,7 +265,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 #endif
 		if (strlen(numaddr) + 1 > hostlen)
 			ERR(EAI_OVERFLOW);
-		strcpy(host, numaddr);
+		strlcpy(host, numaddr, hostlen);
 	} else {
 		isc_netaddr_t netaddr;
 		dns_fixedname_t ptrfname;
@@ -320,8 +319,13 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 		case DNS_R_NOVALIDKEY:
 		case DNS_R_NOVALIDDS:
 		case DNS_R_NOVALIDSIG:
-			ERR(EAI_INSECUREDATA);
-			break;
+			/*
+			 * Don't use ERR as GCC 7 wants to raise a
+			 * warning with ERR about possible falling
+			 * through which is impossible.
+			 */
+			result = EAI_INSECUREDATA;
+			goto cleanup;
 		default:
 			ERR(EAI_FAIL);
 		}
@@ -392,7 +396,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 				ERR(EAI_SYSTEM);
 			if ((strlen(numaddr) + 1) > hostlen)
 				ERR(EAI_OVERFLOW);
-			strcpy(host, numaddr);
+			strlcpy(host, numaddr, hostlen);
 		}
 	}
 	result = SUCCESS;

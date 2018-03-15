@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,8 @@
 
 #include <config.h>
 
+#include <atf-c.h>
+
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
@@ -19,6 +21,8 @@
 #include <isc/entropy.h>
 #include <isc/file.h>
 #include <isc/hash.h>
+#include <isc/hex.h>
+#include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/os.h>
 #include <isc/print.h>
@@ -97,7 +101,7 @@ create_managers(void) {
 	CHECK(isc_task_create(taskmgr, 0, &maintask));
 	return (ISC_R_SUCCESS);
 
-  cleanup:
+ cleanup:
 	cleanup_managers();
 	return (result);
 }
@@ -155,7 +159,7 @@ dns_test_begin(FILE *logfile, isc_boolean_t start_managers) {
 
 	return (ISC_R_SUCCESS);
 
-  cleanup:
+ cleanup:
 	dns_test_end();
 	return (result);
 }
@@ -353,6 +357,29 @@ fromhex(char c) {
 	/* NOTREACHED */
 }
 
+/*
+ * Format contents of given memory region as a hex string, using the buffer
+ * of length 'buflen' pointed to by 'buf'. 'buflen' must be at least three
+ * times 'len'. Always returns 'buf'.
+ */
+char *
+dns_test_tohex(const unsigned char *data, size_t len, char *buf, size_t buflen)
+{
+	isc_constregion_t source = {
+		.base = data,
+		.length = len
+	};
+	isc_buffer_t target;
+	isc_result_t result;
+
+	memset(buf, 0, buflen);
+	isc_buffer_init(&target, buf, buflen);
+	result = isc_hex_totext((isc_region_t *)&source, 1, " ", &target);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	return (buf);
+}
+
 isc_result_t
 dns_test_getdata(const char *file, unsigned char *buf,
 		 size_t bufsiz, size_t *sizep)
@@ -406,5 +433,60 @@ dns_test_getdata(const char *file, unsigned char *buf,
 
  cleanup:
 	isc_stdio_close(f);
+	return (result);
+}
+
+isc_result_t
+dns_test_rdata_fromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
+			  dns_rdatatype_t rdtype, unsigned char *dst,
+			  size_t dstlen, const char *src)
+{
+	isc_buffer_t source, target;
+	isc_lex_t *lex = NULL;
+	isc_result_t result;
+	size_t length;
+
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
+	REQUIRE(dst != NULL);
+	REQUIRE(src != NULL);
+
+	/*
+	 * Set up source to hold the input string.
+	 */
+	length = strlen(src);
+	isc_buffer_constinit(&source, src, length);
+	isc_buffer_add(&source, length);
+
+	/*
+	 * Create a lexer as one is required by dns_rdata_fromtext().
+	 */
+	result = isc_lex_create(mctx, 64, &lex);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+
+	/*
+	 * Point lexer at source.
+	 */
+	result = isc_lex_openbuffer(lex, &source);
+	if (result != ISC_R_SUCCESS) {
+		goto destroy_lexer;
+	}
+
+	/*
+	 * Set up target for storing uncompressed wire form of provided RDATA.
+	 */
+	isc_buffer_init(&target, dst, dstlen);
+
+	/*
+	 * Parse input string, determining result.
+	 */
+	result = dns_rdata_fromtext(rdata, rdclass, rdtype, lex, dns_rootname,
+				    0, NULL, &target, NULL);
+
+ destroy_lexer:
+	isc_lex_destroy(&lex);
+
 	return (result);
 }

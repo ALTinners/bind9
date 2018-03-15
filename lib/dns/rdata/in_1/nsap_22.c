@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002, 2004, 2005, 2007, 2009, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004, 2005, 2007, 2009, 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ totext_in_nsap(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	RETERR(str_totext("0x", target));
 	while (region.length != 0) {
-		sprintf(buf, "%02x", region.base[0]);
+		snprintf(buf, sizeof(buf), "%02x", region.base[0]);
 		isc_region_consume(&region, 1);
 		RETERR(str_totext(buf, target));
 	}

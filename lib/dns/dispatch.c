@@ -420,10 +420,10 @@ static isc_uint32_t
 dns_hash(dns_qid_t *qid, isc_sockaddr_t *dest, dns_messageid_t id,
 	 in_port_t port)
 {
-	unsigned int ret;
+	isc_uint32_t ret;
 
 	ret = isc_sockaddr_hash(dest, ISC_TRUE);
-	ret ^= (id << 16) | port;
+	ret ^= ((isc_uint32_t)id << 16) | port;
 	ret %= qid->qid_nbuckets;
 
 	INSIST(ret < qid->qid_nbuckets);
@@ -3717,7 +3717,6 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event) {
 	isc_socketevent_t *sevent, *newsevent;
 
 	REQUIRE(VALID_DISPATCH(disp));
-	REQUIRE((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) != 0);
 	REQUIRE(event != NULL);
 
 	if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0)

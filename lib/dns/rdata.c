@@ -312,14 +312,8 @@ generic_freestruct_tlsa(ARGS_FREESTRUCT);
 static unsigned char gc_msdcs_data[]  = "\002gc\006_msdcs";
 static unsigned char gc_msdcs_offset [] = { 0, 3 };
 
-static const dns_name_t gc_msdcs = {
-	DNS_NAME_MAGIC,
-	gc_msdcs_data, 10, 2,
-	DNS_NAMEATTR_READONLY,
-	gc_msdcs_offset, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t const gc_msdcs =
+	DNS_NAME_INITNONABSOLUTE(gc_msdcs_data, gc_msdcs_offset);
 
 /*%
  *	convert presentation level address to network order binary form.
@@ -385,7 +379,7 @@ getquad(const void *src, struct in_addr *dst,
 	isc_lex_t *lexer, dns_rdatacallbacks_t *callbacks)
 {
 	int result;
-	struct in_addr *tmp;
+	struct in_addr tmp;
 
 	result = inet_aton(src, dst);
 	if (result == 1 && callbacks != NULL &&
@@ -521,7 +515,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 					RETERR(dns_rdatatype_totext(t, target));
 				} else {
 					char buf[sizeof("TYPE65535")];
-					sprintf(buf, "TYPE%u", t);
+					snprintf(buf, sizeof(buf), "TYPE%u", t);
 					RETERR(str_totext(buf, target));
 				}
 			}
@@ -1335,8 +1329,12 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 		char *endp;
 		unsigned int val;
 
-		strncpy(buf, source->base + 4, source->length - 4);
-		buf[source->length - 4] = '\0';
+		/*
+		 * source->base is not required to be NUL terminated.
+		 * Copy up to remaining bytes and NUL terminate.
+		 */
+		snprintf(buf, sizeof(buf), "%.*s",
+			 (int)(source->length - 4), source->base + 4);
 		val = strtoul(buf, &endp, 10);
 		if (*endp == '\0' && val <= 0xffff) {
 			*typep = (dns_rdatatype_t)val;
@@ -1794,10 +1792,10 @@ uint32_fromregion(isc_region_t *region) {
 	isc_uint32_t value;
 
 	REQUIRE(region->length >= 4);
-	value = region->base[0] << 24;
-	value |= region->base[1] << 16;
-	value |= region->base[2] << 8;
-	value |= region->base[3];
+	value = (isc_uint32_t)region->base[0] << 24;
+	value |= (isc_uint32_t)region->base[1] << 16;
+	value |= (isc_uint32_t)region->base[2] << 8;
+	value |= (isc_uint32_t)region->base[3];
 	return(value);
 }
 

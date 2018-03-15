@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2004, 2005, 2007, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2004, 2005, 2007, 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 
 /*! \file */
 
-typedef char				isc_int8_t;
+typedef signed char			isc_int8_t;
 typedef unsigned char			isc_uint8_t;
 typedef short				isc_int16_t;
 typedef unsigned short			isc_uint16_t;

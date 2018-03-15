@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002, 2004, 2006, 2007, 2009, 2011, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004, 2006, 2007, 2009, 2011, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <isc/commandline.h>
 #include <isc/log.h>
 #include <isc/print.h>
+#include <isc/string.h>
 
 #include <named/globals.h>
 #include <named/ntservice.h>
@@ -49,8 +50,8 @@ ntservice_init(void) {
 		}
 		UpdateSCM(SERVICE_RUNNING);
 	} else {
-		strcpy(ConsoleTitle, "BIND Version ");
-		strcat(ConsoleTitle, VERSION);
+		strlcpy(ConsoleTitle, "BIND Version ", sizeof(ConsoleTitle));
+		strlcat(ConsoleTitle, VERSION, sizeof(ConsoleTitle));
 		SetConsoleTitle(ConsoleTitle);
 	}
 }

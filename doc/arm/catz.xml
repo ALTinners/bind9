@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,7 +84,7 @@
     <para>
       Removing a member zone from a slave server requires nothing more than
       deleting the member zone's entry in the catalog zone. The change to the
-      catalog cone is propagated to the slave server using the normal AXFR/IXFR
+      catalog zone is propagated to the slave server using the normal AXFR/IXFR
       transfer mechanism.  The slave server, on processing the update, will
       notice that the member zone has been removed.  It will stop serving the
       zone and remove it from its list of configured zones.  (Removing the

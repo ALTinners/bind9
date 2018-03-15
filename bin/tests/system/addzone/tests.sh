@@ -493,5 +493,42 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:check delzone after reconfig failure ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone 'inlineslave.example. IN { type slave; file "inlineslave.db"; masterfile-format text; masters { testmaster; }; };' > /dev/null 2>&1 || ret=1
+cp -f ns3/named2.conf ns3/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reconfig > /dev/null 2>&1 && ret=1
+sleep 5
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 delzone inlineslave.example > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+if ! $FEATURETEST --with-lmdb
+then
+    echo "I:check that addzone is fully reversed on failure (--with-lmdb=no) ($n)"
+    ret=0
+    $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone "test1.baz" '{ type master; file "e.db"; };' > /dev/null 2>&1 || ret=1
+    $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone "test2.baz" '{ type master; file "dne.db"; };' > /dev/null 2>&1 && ret=1
+    $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone "test3.baz" '{ type master; file "e.db"; };' > /dev/null 2>&1 || ret=1
+    $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 delzone "test3.baz" > /dev/null 2>&1 || ret=1
+    grep test2.baz ns3/_default.nzf > /dev/null && ret=1
+    n=`expr $n + 1`
+    if [ $ret != 0 ]; then echo "I:failed"; fi
+    status=`expr $status + $ret`
+fi
+
+echo "I:check that named restarts with multiple added zones ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone "test4.baz" '{ type master; file "e.db"; };' > /dev/null 2>&1 || ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 addzone "test5.baz" '{ type master; file "e.db"; };' > /dev/null 2>&1 || ret=1
+$PERL $SYSTEMTESTTOP/stop.pl . ns3
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns3 || ret=1
+$DIG -p 5300 @10.53.0.3 version.bind txt ch > dig.out.test$n || ret=1
+grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 [ $status -eq 0 ] || exit 1

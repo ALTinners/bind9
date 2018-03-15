@@ -212,7 +212,7 @@ echo "I:testing with 'minimal-responses yes;'"
 minimal=yes
 dotests
 
-echo "I:reconfiguring server"
+echo "I:reconfiguring server: minimal-responses no"
 cp ns1/named2.conf ns1/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 reconfig 2>&1 | sed 's/^/I:ns1 /'
 sleep 2
@@ -230,7 +230,7 @@ if [ $ret -eq 1 ] ; then
     echo "I: failed"; status=1
 fi
 
-echo "I:reconfiguring server"
+echo "I:reconfiguring server: minimal-any yes"
 cp ns1/named3.conf ns1/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 reconfig 2>&1 | sed 's/^/I:ns1 /'
 sleep 2
@@ -266,7 +266,7 @@ echo "I:testing with 'minimal-responses no-auth;'"
 minimal=no-auth
 dotests
 
-echo "I:reconfiguring server"
+echo "I:reconfiguring server: minimal-responses no-auth-recursive"
 cp ns1/named4.conf ns1/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 reconfig 2>&1 | sed 's/^/I:ns1 /'
 sleep 2
@@ -293,6 +293,31 @@ $DIG -t srv _xmpp-client._tcp.srv.example @10.53.0.1 -p 5300 > dig.out.$n || ret
 grep "_xmpp-client\._tcp\.srv\.example\..*SRV.1 0 5222 server\.srv\.example" dig.out.$n > /dev/null || ret=1
 grep "server\.srv\.example\..*A.1\.2\.3\.4" dig.out.$n > /dev/null || ret=1
 grep "_5222\._tcp\.server\.srv\.example\..*TLSA.3 0 1 5B30F9602297D558EB719162C225088184FAA32CA45E1ED15DE58A21 D9FCE383" dig.out.$n > /dev/null || ret=1
+if [ $ret -eq 1 ] ; then
+    echo "I: failed"; status=1
+fi
+
+echo "I:reconfiguring server: minimal-responses no"
+cp ns1/named2.conf ns1/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 reconfig 2>&1 | sed 's/^/I:ns1 /'
+sleep 2
+
+n=`expr $n + 1`
+echo "I:testing NS handling in ANY responses (authoritative) ($n)"
+ret=0
+$DIG -t ANY rt.example @10.53.0.1 -p 5300 > dig.out.$n || ret=1
+grep "AUTHORITY: 0" dig.out.$n  > /dev/null || ret=1
+grep "NS[ 	]*ns" dig.out.$n  > /dev/null || ret=1
+if [ $ret -eq 1 ] ; then
+    echo "I: failed"; status=1
+fi
+
+n=`expr $n + 1`
+echo "I:testing NS handling in ANY responses (recursive) ($n)"
+ret=0
+$DIG -t ANY rt.example @10.53.0.3 -p 5300 > dig.out.$n || ret=1
+grep "AUTHORITY: 0" dig.out.$n  > /dev/null || ret=1
+grep "NS[ 	]*ns" dig.out.$n  > /dev/null || ret=1
 if [ $ret -eq 1 ] ; then
     echo "I: failed"; status=1
 fi

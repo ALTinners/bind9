@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 1999-2002, 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
-/* $Id: interfacemgr.c,v 1.101 2011/11/09 18:44:03 each Exp $ */
 
 /*! \file */
 
@@ -355,8 +353,7 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	ifp->generation = mgr->generation;
 	ifp->addr = *addr;
 	ifp->flags = 0;
-	strncpy(ifp->name, name, sizeof(ifp->name));
-	ifp->name[sizeof(ifp->name)-1] = '\0';
+	strlcpy(ifp->name, name, sizeof(ifp->name));
 	ifp->clientmgr = NULL;
 
 	result = isc_mutex_init(&ifp->lock);
@@ -955,11 +952,22 @@ do_scan(ns_interfacemgr_t *mgr, ns_listenlist_t *ext_listen,
 		}
 
 		if (adjusting == ISC_FALSE) {
+			/*
+			 * If running with -T fixedlocal, then we only
+			 * want 127.0.0.1 and ::1 in the localhost ACL.
+			 */
+			if (ns_g_fixedlocal &&
+			    !isc_netaddr_isloopback(&interface.address))
+			{
+				goto listenon;
+			}
+
 			result = setup_locals(mgr, &interface);
 			if (result != ISC_R_SUCCESS)
 				goto ignore_interface;
 		}
 
+ listenon:
 		ll = (family == AF_INET) ? mgr->listenon4 : mgr->listenon6;
 		dolistenon = ISC_TRUE;
 		for (le = ISC_LIST_HEAD(ll->elts);

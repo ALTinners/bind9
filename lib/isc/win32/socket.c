@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,7 @@
 #include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/strerror.h>
+#include <isc/string.h>
 #include <isc/syslog.h>
 #include <isc/task.h>
 #include <isc/thread.h>
@@ -640,10 +641,10 @@ initialise(void) {
 		exit(1);
 	}
 	/*
-	 * The following APIs do not exist as functions in a library, but we must
-	 * ask winsock for them.  They are "extensions" -- but why they cannot be
-	 * actual functions is beyond me.  So, ask winsock for the pointers to the
-	 * functions we need.
+	 * The following APIs do not exist as functions in a library, but
+	 * we must ask winsock for them.  They are "extensions" -- but why
+	 * they cannot be actual functions is beyond me.  So, ask winsock
+	 * for the pointers to the functions we need.
 	 */
 	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	INSIST(sock != INVALID_SOCKET);
@@ -881,7 +882,7 @@ socket_log(int lineno, isc_socket_t *sock, isc_sockaddr_t *address,
 		isc_sockaddr_format(address, peerbuf, sizeof(peerbuf));
 		isc_log_iwrite(isc_lctx, category, module, level,
 			       msgcat, msgset, message,
-				   "socket %p line %d peer %s: %s", sock, lineno,
+				   "socket %p line %d %s: %s", sock, lineno,
 				   peerbuf, msgbuf);
 	}
 
@@ -3947,8 +3948,7 @@ isc__socket_setname(isc_socket_t *socket, const char *name, void *tag) {
 	REQUIRE(VALID_SOCKET(socket));
 
 	LOCK(&socket->lock);
-	memset(socket->name, 0, sizeof(socket->name));
-	strncpy(socket->name, name, sizeof(socket->name) - 1);
+	strlcpy(socket->name, name, sizeof(socket->name));
 	socket->tag = tag;
 	UNLOCK(&socket->lock);
 }
@@ -4152,7 +4152,7 @@ isc_socketmgr_renderjson(isc_socketmgr_t *mgr, json_object *stats) {
 
 		LOCK(&sock->lock);
 
-		sprintf(buf, "%p", sock);
+		snprintf(buf, sizeof(buf), "%p", sock);
 		obj = json_object_new_string(buf);
 		CHECKMEM(obj);
 		json_object_object_add(entry, "id", obj);

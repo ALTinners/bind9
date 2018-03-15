@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001, 2003, 2004, 2006-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2003, 2004, 2006-2009, 2012-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <windows.h>
 
 #include <isc/assertions.h>
+#include <isc/string.h>
 #include <isc/time.h>
 #include <isc/tm.h>
 #include <isc/util.h>
@@ -271,7 +272,10 @@ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	char DateBuf[50];
 	char TimeBuf[50];
 
+	REQUIRE(t != NULL);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
+
 	if (FileTimeToLocalFileTime(&t->absolute, &localft) &&
 	    FileTimeToSystemTime(&localft, &st)) {
 		GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, "dd-MMM-yyyy",
@@ -283,8 +287,7 @@ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 			 st.wMilliseconds);
 
 	} else {
-		strncpy(buf, "99-Bad-9999 99:99:99.999", len);
-		buf[len - 1] = 0;
+		strlcpy(buf, "99-Bad-9999 99:99:99.999", len);
 	}
 }
 
@@ -296,7 +299,10 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 
 /* strftime() format: "%a, %d %b %Y %H:%M:%S GMT" */
 
+	REQUIRE(t != NULL);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
+
 	if (FileTimeToSystemTime(&t->absolute, &st)) {
 		GetDateFormat(LOCALE_USER_DEFAULT, 0, &st,
 			      "ddd',' dd MMM yyyy", DateBuf, 50);
@@ -318,6 +324,7 @@ isc_time_parsehttptimestamp(char *buf, isc_time_t *t) {
 
 	REQUIRE(buf != NULL);
 	REQUIRE(t != NULL);
+
 	p = isc_tm_strptime(buf, "%a, %d %b %Y %H:%M:%S", &t_tm);
 	if (p == NULL)
 		return (ISC_R_UNEXPECTED);
@@ -336,7 +343,10 @@ isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
 
 	/* strtime() format: "%Y-%m-%dT%H:%M:%SZ" */
 
+	REQUIRE(t != NULL);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
+
 	if (FileTimeToSystemTime(&t->absolute, &st)) {
 		GetDateFormat(LOCALE_NEUTRAL, 0, &st, "yyyy-MM-dd",
 			      DateBuf, 50);
@@ -357,7 +367,10 @@ isc_time_formatISO8601ms(const isc_time_t *t, char *buf, unsigned int len) {
 
 	/* strtime() format: "%Y-%m-%dT%H:%M:%S.SSSZ" */
 
+	REQUIRE(t != NULL);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
+
 	if (FileTimeToSystemTime(&t->absolute, &st)) {
 		GetDateFormat(LOCALE_NEUTRAL, 0, &st, "yyyy-MM-dd",
 			      DateBuf, 50);

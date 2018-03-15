@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,9 @@
 #ifndef DNS_RPZ_H
 #define DNS_RPZ_H 1
 
+#include <isc/deprecated.h>
+#include <isc/event.h>
+#include <isc/ht.h>
 #include <isc/lang.h>
 #include <isc/refcount.h>
 #include <isc/rwlock.h>

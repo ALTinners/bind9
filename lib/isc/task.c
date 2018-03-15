@@ -705,6 +705,7 @@ isc__task_purgerange(isc_task_t *task0, void *sender, isc_eventtype_t first,
 
 	for (event = HEAD(events); event != NULL; event = next_event) {
 		next_event = NEXT(event, ev_link);
+		ISC_LIST_UNLINK(events, event, ev_link);
 		isc_event_free(&event);
 	}
 
@@ -884,8 +885,7 @@ isc__task_setname(isc_task_t *task0, const char *name, void *tag) {
 	REQUIRE(VALID_TASK(task));
 
 	LOCK(&task->lock);
-	memset(task->name, 0, sizeof(task->name));
-	strncpy(task->name, name, sizeof(task->name) - 1);
+	strlcpy(task->name, name, sizeof(task->name));
 	task->tag = tag;
 	UNLOCK(&task->lock);
 }
@@ -1978,7 +1978,7 @@ isc_taskmgr_renderjson(isc_taskmgr_t *mgr0, json_object *tasks) {
 		CHECKMEM(taskobj);
 		json_object_array_add(array, taskobj);
 
-		sprintf(buf, "%p", task);
+		snprintf(buf, sizeof(buf), "%p", task);
 		obj = json_object_new_string(buf);
 		CHECKMEM(obj);
 		json_object_object_add(taskobj, "id", obj);

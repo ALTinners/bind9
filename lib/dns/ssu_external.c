@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,7 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -124,7 +125,7 @@ dns_ssu_external_match(dns_name_t *identity,
 	int fd;
 	const char *sock_path;
 	unsigned int req_len;
-	isc_region_t token_region;
+	isc_region_t token_region = {NULL, 0};
 	unsigned char *data;
 	isc_buffer_t buf;
 	isc_uint32_t token_len = 0;

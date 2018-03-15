@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1997-2010, 2012-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -198,14 +198,19 @@ struct isc__mempool {
 #define DELETE_TRACE(a, b, c, d, e)
 #define ISC_MEMFUNC_SCOPE
 #else
+#define TRACE_OR_RECORD (ISC_MEM_DEBUGTRACE|ISC_MEM_DEBUGRECORD)
 #define ADD_TRACE(a, b, c, d, e) \
 	do { \
-		if ((isc_mem_debugging & (ISC_MEM_DEBUGTRACE | \
-					  ISC_MEM_DEBUGRECORD)) != 0 && \
+		if ((isc_mem_debugging & TRACE_OR_RECORD) != 0 && \
 		     b != NULL) \
 			 add_trace_entry(a, b, c, d, e); \
 	} while (0)
-#define DELETE_TRACE(a, b, c, d, e)	delete_trace_entry(a, b, c, d, e)
+#define DELETE_TRACE(a, b, c, d, e)					\
+	do {								\
+		if ((isc_mem_debugging & TRACE_OR_RECORD) != 0 &&	\
+		    b != NULL)						\
+			delete_trace_entry(a, b, c, d, e);		\
+	} while(0)
 
 static void
 print_active(isc__mem_t *ctx, FILE *out);
@@ -506,7 +511,7 @@ quantize(size_t size) {
 
 static inline isc_boolean_t
 more_basic_blocks(isc__mem_t *ctx) {
-	void *new;
+	void *tmp;
 	unsigned char *curr, *next;
 	unsigned char *first, *last;
 	unsigned char **table;
@@ -542,16 +547,16 @@ more_basic_blocks(isc__mem_t *ctx) {
 		ctx->basic_table_size = table_size;
 	}
 
-	new = (ctx->memalloc)(ctx->arg, NUM_BASIC_BLOCKS * ctx->mem_target);
-	if (new == NULL) {
+	tmp = (ctx->memalloc)(ctx->arg, NUM_BASIC_BLOCKS * ctx->mem_target);
+	if (tmp == NULL) {
 		ctx->memalloc_failures++;
 		return (ISC_FALSE);
 	}
 	ctx->total += increment;
-	ctx->basic_table[ctx->basic_table_count] = new;
+	ctx->basic_table[ctx->basic_table_count] = tmp;
 	ctx->basic_table_count++;
 
-	curr = new;
+	curr = tmp;
 	next = curr + ctx->mem_target;
 	for (i = 0; i < (NUM_BASIC_BLOCKS - 1); i++) {
 		((element *)curr)->next = (element *)next;
@@ -563,13 +568,13 @@ more_basic_blocks(isc__mem_t *ctx) {
 	 * array.
 	 */
 	((element *)curr)->next = NULL;
-	first = new;
+	first = tmp;
 	last = first + NUM_BASIC_BLOCKS * ctx->mem_target - 1;
 	if (first < ctx->lowest || ctx->lowest == NULL)
 		ctx->lowest = first;
 	if (last > ctx->highest)
 		ctx->highest = last;
-	ctx->basic_blocks = new;
+	ctx->basic_blocks = tmp;
 
 	return (ISC_TRUE);
 }
@@ -578,7 +583,7 @@ static inline isc_boolean_t
 more_frags(isc__mem_t *ctx, size_t new_size) {
 	int i, frags;
 	size_t total_size;
-	void *new;
+	void *tmp;
 	unsigned char *curr, *next;
 
 	/*!
@@ -599,7 +604,7 @@ more_frags(isc__mem_t *ctx, size_t new_size) {
 	}
 
 	total_size = ctx->mem_target;
-	new = ctx->basic_blocks;
+	tmp = ctx->basic_blocks;
 	ctx->basic_blocks = ctx->basic_blocks->next;
 	frags = (int)(total_size / new_size);
 	ctx->stats[new_size].blocks++;
@@ -608,7 +613,7 @@ more_frags(isc__mem_t *ctx, size_t new_size) {
 	 * Set up a linked-list of blocks of size
 	 * "new_size".
 	 */
-	curr = new;
+	curr = tmp;
 	next = curr + new_size;
 	total_size -= new_size;
 	for (i = 0; i < (frags - 1); i++) {
@@ -631,7 +636,7 @@ more_frags(isc__mem_t *ctx, size_t new_size) {
 	 * array.
 	 */
 	((element *)curr)->next = NULL;
-	ctx->freelists[new_size] = new;
+	ctx->freelists[new_size] = tmp;
 
 	return (ISC_TRUE);
 }
@@ -1508,9 +1513,7 @@ isc___mem_allocate(isc_mem_t *ctx0, size_t size FLARG) {
 	if (((ctx->flags & ISC_MEMFLAG_INTERNAL) == 0) && (si != NULL))
 		mem_getstats(ctx, si[-1].u.size);
 
-#if ISC_MEM_TRACKLINES
 	ADD_TRACE(ctx, si, si[-1].u.size, file, line);
-#endif
 	if (ctx->hi_water != 0U && ctx->inuse > ctx->hi_water &&
 	    !ctx->is_overmem) {
 		ctx->is_overmem = ISC_TRUE;
@@ -1642,12 +1645,12 @@ isc___mem_strdup(isc_mem_t *mctx0, const char *s FLARG) {
 	REQUIRE(VALID_CONTEXT(mctx));
 	REQUIRE(s != NULL);
 
-	len = strlen(s);
+	len = strlen(s) + 1;
 
-	ns = isc__mem_allocate((isc_mem_t *)mctx, len + 1 FLARG_PASS);
+	ns = isc__mem_allocate((isc_mem_t *)mctx, len FLARG_PASS);
 
 	if (ns != NULL)
-		strncpy(ns, s, len + 1);
+		strlcpy(ns, s, len);
 
 	return (ns);
 }
@@ -1798,8 +1801,7 @@ isc_mem_setname(isc_mem_t *ctx0, const char *name, void *tag) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
 	LOCK(&ctx->lock);
-	memset(ctx->name, 0, sizeof(ctx->name));
-	strncpy(ctx->name, name, sizeof(ctx->name) - 1);
+	strlcpy(ctx->name, name, sizeof(ctx->name));
 	ctx->tag = tag;
 	UNLOCK(&ctx->lock);
 }
@@ -1884,8 +1886,7 @@ isc__mempool_setname(isc_mempool_t *mpctx0, const char *name) {
 	if (mpctx->lock != NULL)
 		LOCK(mpctx->lock);
 
-	strncpy(mpctx->name, name, sizeof(mpctx->name) - 1);
-	mpctx->name[sizeof(mpctx->name) - 1] = '\0';
+	strlcpy(mpctx->name, name, sizeof(mpctx->name));
 
 	if (mpctx->lock != NULL)
 		UNLOCK(mpctx->lock);
@@ -2033,7 +2034,7 @@ isc___mempool_get(isc_mempool_t *mpctx0 FLARG) {
 		UNLOCK(mpctx->lock);
 
 #if ISC_MEM_TRACKLINES
-	if (item != NULL) {
+	if (((isc_mem_debugging & TRACE_OR_RECORD) != 0) && item != NULL) {
 		MCTXLOCK(mctx, &mctx->lock);
 		ADD_TRACE(mctx, item, mpctx->size, file, line);
 		MCTXUNLOCK(mctx, &mctx->lock);
@@ -2062,9 +2063,11 @@ isc___mempool_put(isc_mempool_t *mpctx0, void *mem FLARG) {
 	mpctx->allocated--;
 
 #if ISC_MEM_TRACKLINES
-	MCTXLOCK(mctx, &mctx->lock);
-	DELETE_TRACE(mctx, mem, mpctx->size, file, line);
-	MCTXUNLOCK(mctx, &mctx->lock);
+	if ((isc_mem_debugging & TRACE_OR_RECORD) != 0) {
+		MCTXLOCK(mctx, &mctx->lock);
+		DELETE_TRACE(mctx, mem, mpctx->size, file, line);
+		MCTXUNLOCK(mctx, &mctx->lock);
+	}
 #endif /* ISC_MEM_TRACKLINES */
 
 	/*
@@ -2288,17 +2291,19 @@ isc_mem_checkdestroyed(FILE *file) {
 	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 
 	LOCK(&contextslock);
-	if (!ISC_LIST_EMPTY(contexts))  {
+	if (!ISC_LIST_EMPTY(contexts)) {
 #if ISC_MEM_TRACKLINES
-		isc__mem_t *ctx;
+		if ((isc_mem_debugging & TRACE_OR_RECORD) != 0) {
+			isc__mem_t *ctx;
 
-		for (ctx = ISC_LIST_HEAD(contexts);
-		     ctx != NULL;
-		     ctx = ISC_LIST_NEXT(ctx, link)) {
-			fprintf(file, "context: %p\n", ctx);
-			print_active(ctx, file);
+			for (ctx = ISC_LIST_HEAD(contexts);
+			     ctx != NULL;
+			     ctx = ISC_LIST_NEXT(ctx, link)) {
+				fprintf(file, "context: %p\n", ctx);
+				print_active(ctx, file);
+			}
+			fflush(file);
 		}
-		fflush(file);
 #endif
 		INSIST(0);
 	}
@@ -2319,14 +2324,12 @@ isc_mem_references(isc_mem_t *ctx0) {
 	return (references);
 }
 
-#if defined(HAVE_LIBXML2) || defined(HAVE_JSON)
 typedef struct summarystat {
 	isc_uint64_t	total;
 	isc_uint64_t	inuse;
 	isc_uint64_t	blocksize;
 	isc_uint64_t	contextsize;
 } summarystat_t;
-#endif
 
 #ifdef HAVE_LIBXML2
 #define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
@@ -2533,7 +2536,7 @@ json_renderctx(isc__mem_t *ctx, summarystat_t *summary, json_object *array) {
 	ctxobj = json_object_new_object();
 	CHECKMEM(ctxobj);
 
-	sprintf(buf, "%p", ctx);
+	snprintf(buf, sizeof(buf), "%p", ctx);
 	obj = json_object_new_string(buf);
 	CHECKMEM(obj);
 	json_object_object_add(ctxobj, "id", obj);
