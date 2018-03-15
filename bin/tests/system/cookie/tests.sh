@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,10 +32,21 @@ havetc() {
 
 for bad in bad*.conf
 do
+	n=`expr $n + 1`
+        echo "I:checking that named-checkconf detects error in $bad ($n)"
         ret=0
-        echo "I:checking that named-checkconf detects error in $bad"
-        $CHECKCONF $bad > /dev/null 2>&1
-        if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+        $CHECKCONF $bad > /dev/null 2>&1 && ret=1
+        if [ $ret != 0 ]; then echo "I:failed"; fi
+        status=`expr $status + $ret`
+done
+
+for good in good*.conf
+do
+	n=`expr $n + 1`
+        echo "I:checking that named-checkconf detects accepts $good ($n)"
+        ret=0
+        $CHECKCONF $good > /dev/null 2>&1 || ret=1
+        if [ $ret != 0 ]; then echo "I:failed"; fi
         status=`expr $status + $ret`
 done
 

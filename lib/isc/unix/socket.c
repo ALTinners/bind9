@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 #include <sys/time.h>
 #include <sys/uio.h>
 
@@ -51,6 +54,7 @@
 #include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/strerror.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/util.h>
@@ -1445,6 +1449,9 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 #endif
 
 	memset(msg, 0, sizeof(*msg));
+	if (sock->sendcmsgbuflen != 0U) {
+		memset(sock->sendcmsgbuf, 0, sock->sendcmsgbuflen);
+	}
 
 	if (!sock->connected) {
 		msg->msg_name = (void *)&dev->address.type.sa;
@@ -2655,20 +2662,20 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	 */
 	if (manager->reserved != 0 && sock->type == isc_sockettype_udp &&
 	    sock->fd >= 0 && sock->fd < manager->reserved) {
-		int new, tmp;
-		new = fcntl(sock->fd, F_DUPFD, manager->reserved);
+		int newfd, tmp;
+		newfd = fcntl(sock->fd, F_DUPFD, manager->reserved);
 		tmp = errno;
 		(void)close(sock->fd);
 		errno = tmp;
-		sock->fd = new;
+		sock->fd = newfd;
 		err = "isc_socket_create: fcntl/reserved";
 	} else if (sock->fd >= 0 && sock->fd < 20) {
-		int new, tmp;
-		new = fcntl(sock->fd, F_DUPFD, 20);
+		int newfd, tmp;
+		newfd = fcntl(sock->fd, F_DUPFD, 20);
 		tmp = errno;
 		(void)close(sock->fd);
 		errno = tmp;
-		sock->fd = new;
+		sock->fd = newfd;
 		err = "isc_socket_create: fcntl";
 	}
 #endif
@@ -3582,12 +3589,12 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	 * Leave a space for stdio to work in.
 	 */
 	if (fd >= 0 && fd < 20) {
-		int new, tmp;
-		new = fcntl(fd, F_DUPFD, 20);
+		int newfd, tmp;
+		newfd = fcntl(fd, F_DUPFD, 20);
 		tmp = errno;
 		(void)close(fd);
 		errno = tmp;
-		fd = new;
+		fd = newfd;
 		err = "accept/fcntl";
 	}
 #endif
@@ -3721,6 +3728,12 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		 */
 		dev->address = NEWCONNSOCK(dev)->peer_address;
 
+		if (NEWCONNSOCK(dev)->active == 0) {
+			inc_stats(manager->stats,
+				  NEWCONNSOCK(dev)->statsindex[STATID_ACTIVE]);
+			NEWCONNSOCK(dev)->active = 1;
+		}
+
 		LOCK(&manager->fdlock[lockid]);
 		manager->fds[fd] = NEWCONNSOCK(dev);
 		manager->fdstate[fd] = MANAGED;
@@ -3746,7 +3759,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		UNLOCK(&manager->lock);
 
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPT]);
-		inc_stats(manager->stats, sock->statsindex[STATID_ACTIVE]);
 	} else {
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPTFAIL]);
 		NEWCONNSOCK(dev)->references--;
@@ -5220,6 +5232,8 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 			break;
 		}
 
+		/* FALLTHROUGH */
+
 	case DOIO_HARD:
 	case DOIO_SUCCESS:
 		if ((flags & ISC_SOCKFLAG_IMMEDIATE) == 0)
@@ -5499,17 +5513,19 @@ isc__socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 
 	REQUIRE(sockaddr->type.sa.sa_family == AF_UNIX);
 	INSIST(strlen(sockaddr->type.sunix.sun_path) < sizeof(path));
-	strcpy(path, sockaddr->type.sunix.sun_path);
+	strlcpy(path, sockaddr->type.sunix.sun_path, sizeof(path));
 
 #ifdef NEED_SECURE_DIRECTORY
 	slash = strrchr(path, '/');
 	if (slash != NULL) {
-		if (slash != path)
+		if (slash != path) {
 			*slash = '\0';
-		else
-			strcpy(path, "/");
-	} else
-		strcpy(path, ".");
+		} else {
+			strlcpy(path, "/", sizeof(path));
+		}
+	} else {
+		strlcpy(path, ".", sizeof(path));
+	}
 #endif
 
 	if (chmod(path, perm) < 0) {
@@ -5630,7 +5646,7 @@ isc__socket_filter(isc_socket_t *sock0, const char *filter) {
 
 #if defined(SO_ACCEPTFILTER) && defined(ENABLE_ACCEPTFILTER)
 	bzero(&afa, sizeof(afa));
-	strncpy(afa.af_name, filter, sizeof(afa.af_name));
+	strlcpy(afa.af_name, filter, sizeof(afa.af_name));
 	if (setsockopt(sock->fd, SOL_SOCKET, SO_ACCEPTFILTER,
 			 &afa, sizeof(afa)) == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
@@ -5642,6 +5658,69 @@ isc__socket_filter(isc_socket_t *sock0, const char *filter) {
 	return (ISC_R_SUCCESS);
 #else
 	return (ISC_R_NOTIMPLEMENTED);
+#endif
+}
+
+/*
+ * Try enabling TCP Fast Open for a given socket if the OS supports it.
+ */
+static void
+set_tcp_fastopen(isc__socket_t *sock, unsigned int backlog) {
+#if defined(ISC_PLATFORM_HAVETFO) && defined(TCP_FASTOPEN)
+	char strbuf[ISC_STRERRORSIZE];
+
+/*
+ * FreeBSD, as of versions 10.3 and 11.0, defines TCP_FASTOPEN while also
+ * shipping a default kernel without TFO support, so we special-case it by
+ * performing an additional runtime check for TFO support using sysctl to
+ * prevent setsockopt() errors from being logged.
+ */
+#if defined(__FreeBSD__) && defined(HAVE_SYSCTLBYNAME)
+#define SYSCTL_TFO "net.inet.tcp.fastopen.enabled"
+	unsigned int enabled;
+	size_t enabledlen = sizeof(enabled);
+	static isc_boolean_t tfo_notice_logged = ISC_FALSE;
+
+	if (sysctlbyname(SYSCTL_TFO, &enabled, &enabledlen, NULL, 0) < 0) {
+		/*
+		 * This kernel does not support TCP Fast Open.  There is
+		 * nothing more we can do.
+		 */
+		return;
+	} else if (enabled == 0) {
+		/*
+		 * This kernel does support TCP Fast Open, but it is disabled
+		 * by sysctl.  Notify the user, but do not nag.
+		 */
+		if (!tfo_notice_logged) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_SOCKET, ISC_LOG_NOTICE,
+				      "TCP_FASTOPEN support is disabled by "
+				      "sysctl (" SYSCTL_TFO " = 0)");
+			tfo_notice_logged = ISC_TRUE;
+		}
+		return;
+	}
+#endif
+
+#ifdef __APPLE__
+	backlog = 1;
+#else
+	backlog = backlog / 2;
+	if (backlog == 0)
+		backlog = 1;
+#endif
+	if (setsockopt(sock->fd, IPPROTO_TCP, TCP_FASTOPEN,
+		       (void *)&backlog, sizeof(backlog)) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "setsockopt(%d, TCP_FASTOPEN) failed with %s",
+				 sock->fd, strbuf);
+		/* TCP_FASTOPEN is experimental so ignore failures */
+	}
+#else
+	UNUSED(sock);
+	UNUSED(backlog);
 #endif
 }
 
@@ -5681,23 +5760,7 @@ isc__socket_listen(isc_socket_t *sock0, unsigned int backlog) {
 		return (ISC_R_UNEXPECTED);
 	}
 
-#if defined(ISC_PLATFORM_HAVETFO) && defined(TCP_FASTOPEN)
-#ifdef __APPLE__
-	backlog = 1;
-#else
-	backlog = backlog / 2;
-	if (backlog == 0)
-		backlog = 1;
-#endif
-	if (setsockopt(sock->fd, IPPROTO_TCP, TCP_FASTOPEN,
-		       (void *)&backlog, sizeof(backlog)) < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "setsockopt(%d, TCP_FASTOPEN) failed with %s",
-				 sock->fd, strbuf);
-		/* TCP_FASTOPEN is experimental so ignore failures */
-	}
-#endif
+	set_tcp_fastopen(sock, backlog);
 
 	sock->listener = 1;
 
@@ -6515,8 +6578,7 @@ isc__socket_setname(isc_socket_t *socket0, const char *name, void *tag) {
 	REQUIRE(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
-	memset(sock->name, 0, sizeof(sock->name));
-	strncpy(sock->name, name, sizeof(sock->name) - 1);
+	strlcpy(sock->name, name, sizeof(sock->name));
 	sock->tag = tag;
 	UNLOCK(&sock->lock);
 }
@@ -6713,7 +6775,7 @@ isc_socketmgr_renderjson(isc_socketmgr_t *mgr0, json_object *stats) {
 
 		LOCK(&sock->lock);
 
-		sprintf(buf, "%p", sock);
+		snprintf(buf, sizeof(buf), "%p", sock);
 		obj = json_object_new_string(buf);
 		CHECKMEM(obj);
 		json_object_object_add(entry, "id", obj);

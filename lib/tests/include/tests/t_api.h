@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2004-2007, 2010, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2004-2007, 2010, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,7 @@ t_main(int argc, char **argv);
 #endif
 
 void
-t_assert(const char *component, int anum, int class, const char *what, ...)
+t_assert(const char *component, int anum, int tclass, const char *what, ...)
      ISC_FORMAT_PRINTF(4, 5);
 
 void

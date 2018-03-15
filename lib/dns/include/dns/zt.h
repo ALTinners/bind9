@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002, 2004-2007, 2011, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004-2007, 2011, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -199,6 +199,26 @@ dns_zt_loadspending(dns_zt_t *zt);
  *
  * Requires:
  * \li	'zt' to be valid.
+ */
+
+void
+dns_zt_setviewcommit(dns_zt_t *zt);
+/*%<
+ * Commit dns_zone_setview() calls previously made for all zones in this
+ * zone table.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ */
+
+void
+dns_zt_setviewrevert(dns_zt_t *zt);
+/*%<
+ * Revert dns_zone_setview() calls previously made for all zones in this
+ * zone table.
+ *
+ * Requires:
+ *\li	'view' to be valid.
  */
 
 ISC_LANG_ENDDECLS

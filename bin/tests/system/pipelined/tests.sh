@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,6 +48,20 @@ ret=0
 $MDIG +noall +answer +vc -f inputb -p 5300 -b 10.53.0.7 @10.53.0.4 > rawb.mdig
 awk '{ print $1 " " $5 }' < rawb.mdig > outputb.mdig
 diff refb outputb.mdig || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check mdig -4 -6"
+ret=0
+$MDIG -4 -6 -f input @10.53.0.4 > output46.mdig 2>&1 && ret=1
+grep "only one of -4 and -6 allowed" output46.mdig > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check mdig -4 with an IPv6 server address"
+ret=0
+$MDIG -4 -f input @fd92:7065:b8e:ffff::2 > output4.mdig 2>&1 && ret=1
+grep "address family not supported" output4.mdig > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

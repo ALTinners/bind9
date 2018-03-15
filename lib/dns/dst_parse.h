@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2000-2002, 2004-2010, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2000-2002, 2004-2010, 2012, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,6 +76,11 @@
 #define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
 #define TAG_ECDSA_ENGINE	((DST_ALG_ECDSA256 << TAG_SHIFT) + 1)
 #define TAG_ECDSA_LABEL		((DST_ALG_ECDSA256 << TAG_SHIFT) + 2)
+
+#define EDDSA_NTAGS		4
+#define TAG_EDDSA_PRIVATEKEY	((DST_ALG_ED25519 << TAG_SHIFT) + 0)
+#define TAG_EDDSA_ENGINE	((DST_ALG_ED25519 << TAG_SHIFT) + 1)
+#define TAG_EDDSA_LABEL		((DST_ALG_ED25519 << TAG_SHIFT) + 2)
 
 #define OLD_HMACMD5_NTAGS	1
 #define HMACMD5_NTAGS		2

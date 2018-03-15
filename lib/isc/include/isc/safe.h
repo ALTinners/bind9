@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 /*! \file isc/safe.h */
 
 #include <isc/types.h>
+#include <stdlib.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -29,6 +30,18 @@ int
 isc_safe_memcompare(const void *b1, const void *b2, size_t len);
 /*%<
  * Clone of libc memcmp() which is safe to differential timing attacks.
+ */
+
+void
+isc_safe_memwipe(void *ptr, size_t len);
+/*%<
+ * Clear the memory of length `len` pointed to by `ptr`.
+ *
+ * Some crypto code calls memset() on stack allocated buffers just
+ * before return so that they are wiped. Such memset() calls can be
+ * optimized away by the compiler. We provide this external non-inline C
+ * function to perform the memset operation so that the compiler cannot
+ * infer about what the function does and optimize the call away.
  */
 
 ISC_LANG_ENDDECLS

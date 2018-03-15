@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -264,3 +264,41 @@ ksk=`$KEYGEN -3 -q -r $RANDFILE -fk -P sync now $zone 2> kg.out` || dumpit kg.ou
 $KEYGEN -3 -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
 $DSFROMKEY $ksk.key > dsset-${zone}$TP
 echo ns3/$ksk > ../sync.key
+
+#
+# A zone that has a published inactive key that is autosigned.
+#
+setup inacksk2.example
+cp $infile $zonefile
+ksk=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -Pnow -A now+3600 -fk $zone 2> kg.out` || dumpit kg.out
+$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
+
+#
+# A zone that has a published inactive key that is autosigned.
+#
+setup inaczsk2.example
+cp $infile $zonefile
+ksk=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
+$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -P now -A now+3600 $zone > kg.out 2>&1 || dumpit kg.out
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
+
+#
+#  A zone that starts with a active KSK + ZSK and a inactive ZSK.
+#
+setup inacksk3.example
+cp $infile $zonefile
+$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -P now -A now+3600 -fk $zone > kg.out 2>&1 || dumpit kg.out
+ksk=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
+$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
+
+#
+#  A zone that starts with a active KSK + ZSK and a inactive ZSK.
+#
+setup inaczsk3.example
+cp $infile $zonefile
+ksk=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
+$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
+$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -P now -A now+3600 $zone > kg.out 2>&1 || dumpit kg.out
+$DSFROMKEY $ksk.key > dsset-${zone}$TP

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2008, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2008, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -615,6 +615,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
 		/* NOTREACHED */
+		/* FALLTHROUGH */
 	default:
 		INSIST(0);
 		break;
@@ -1018,8 +1019,9 @@ xfrin_connect_done(isc_task_t *task, isc_event_t *event) {
 	result = isc_socket_getsockname(xfr->socket, &sockaddr);
 	if (result == ISC_R_SUCCESS) {
 		isc_sockaddr_format(&sockaddr, sourcetext, sizeof(sourcetext));
-	} else
-		strcpy(sourcetext, "<UNKNOWN>");
+	} else {
+		strlcpy(sourcetext, "<UNKNOWN>", sizeof(sourcetext));
+	}
 
 	if (xfr->tsigkey != NULL && xfr->tsigkey->key != NULL) {
 		dns_name_format(dst_key_name(xfr->tsigkey->key),

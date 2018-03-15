@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2005, 2007, 2009, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2005, 2007, 2009, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,7 @@
 #include <isc/mem.h>
 #include <isc/entropy.h>
 #include <isc/random.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -132,7 +133,8 @@ isc_random_get(isc_uint32_t *val) {
 	 */
 #if RAND_MAX >= 0xfffff
 	/* We have at least 20 bits.  Use lower 16 excluding lower most 4 */
-	*val = ((rand() >> 4) & 0xffff) | ((rand() << 12) & 0xffff0000);
+	*val = ((((unsigned int)rand()) & 0xffff0) >> 4) |
+	       ((((unsigned int)rand()) & 0xffff0) << 12);
 #elif RAND_MAX >= 0x7fff
 	/* We have at least 15 bits.  Use lower 10/11 excluding lower most 4 */
 	*val = ((rand() >> 4) & 0x000007ff) | ((rand() << 7) & 0x003ff800) |
@@ -342,13 +344,7 @@ chacha_stir(isc_rng_t *rng) {
 
 	chacha_rekey(rng, rnd.rnd, sizeof(rnd.rnd));
 
-	/*
-	 * The OpenBSD implementation explicit_bzero()s the random seed
-	 * rnd.rnd at this point, but it may not be required here. This
-	 * memset() may also be optimized away by the compiler as
-	 * rnd.rnd is not used further.
-	 */
-	memset(rnd.rnd, 0, sizeof(rnd.rnd));
+	isc_safe_memwipe(rnd.rnd, sizeof(rnd.rnd));
 
 	/* Invalidate the buffer too. */
 	rng->have = 0;

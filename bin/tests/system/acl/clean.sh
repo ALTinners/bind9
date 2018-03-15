@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,3 +15,5 @@ rm -f ns2/example.db ns2/tsigzone.db ns2/example.db.jnl ns2/named.conf
 rm -f */named.memstats
 rm -f */named.run
 rm -f ns*/named.lock
+rm -f ns*/_default.nzf
+rm -f ns*/_default.nzd*

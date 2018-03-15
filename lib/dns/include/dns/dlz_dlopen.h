@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 /* $Id$ */
 
-/*! \file dns/dlz_open.h */
+/*! \file dns/dlz_dlopen.h */
 
 #ifndef DLZ_DLOPEN_H
 #define DLZ_DLOPEN_H

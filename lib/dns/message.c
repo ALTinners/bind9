@@ -96,11 +96,11 @@ hexdump(const char *msg, const char *msg2, void *base, size_t len) {
  * XXXMLG These should come from a config setting.
  */
 #define SCRATCHPAD_SIZE		512
-#define NAME_COUNT		  8
+#define NAME_COUNT		 64
 #define OFFSET_COUNT		  4
 #define RDATA_COUNT		  8
 #define RDATALIST_COUNT		  8
-#define RDATASET_COUNT		 RDATALIST_COUNT
+#define RDATASET_COUNT	         64
 
 /*%
  * Text representation of the different items, for message_totext
@@ -740,6 +740,7 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
 	result = isc_mempool_create(m->mctx, sizeof(dns_name_t), &m->namepool);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
+	isc_mempool_setfillcount(m->namepool, NAME_COUNT);
 	isc_mempool_setfreemax(m->namepool, NAME_COUNT);
 	isc_mempool_setname(m->namepool, "msg:names");
 
@@ -747,7 +748,8 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
 				    &m->rdspool);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	isc_mempool_setfreemax(m->rdspool, NAME_COUNT);
+	isc_mempool_setfillcount(m->rdspool, RDATASET_COUNT);
+	isc_mempool_setfreemax(m->rdspool, RDATASET_COUNT);
 	isc_mempool_setname(m->rdspool, "msg:rdataset");
 
 	dynbuf = NULL;
@@ -3555,6 +3557,23 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 			} else if (optcode == DNS_OPT_PAD) {
 				INDENT(style);
 				ADD_STRING(target, "PAD");
+			} else if (optcode == DNS_OPT_KEY_TAG) {
+				INDENT(style);
+				ADD_STRING(target, "KEY-TAG");
+				if (optlen > 0U && (optlen % 2U) == 0U) {
+					const char *sep = ": ";
+					isc_uint16_t id;
+					while (optlen > 0U) {
+					    id = isc_buffer_getuint16(&optbuf);
+					    snprintf(buf, sizeof(buf), "%s%u",
+						     sep, id);
+					    ADD_STRING(target, buf);
+					    sep = ", ";
+					    optlen -= 2;
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
 			} else {
 				INDENT(style);
 				ADD_STRING(target, "OPT: ");
@@ -3786,6 +3805,22 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				ADD_STRING(target, "; EXPIRE");
 			} else if (optcode == DNS_OPT_PAD) {
 				ADD_STRING(target, "; PAD");
+			} else if (optcode == DNS_OPT_KEY_TAG) {
+				ADD_STRING(target, "; KEY-TAG");
+				if (optlen > 0U && (optlen % 2U) == 0U) {
+					const char *sep = ": ";
+					isc_uint16_t id;
+					while (optlen > 0U) {
+					    id = isc_buffer_getuint16(&optbuf);
+					    snprintf(buf, sizeof(buf), "%s%u",
+						     sep, id);
+					    ADD_STRING(target, buf);
+					    sep = ", ";
+					    optlen -= 2;
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
 			} else {
 				ADD_STRING(target, "; OPT=");
 				snprintf(buf, sizeof(buf), "%u", optcode);
@@ -4275,8 +4310,10 @@ dns_message_buildopt(dns_message_t *message, dns_rdataset_t **rdatasetp,
 		for (i = 0; i < count; i++)  {
 			isc_buffer_putuint16(buf, ednsopts[i].code);
 			isc_buffer_putuint16(buf, ednsopts[i].length);
-			isc_buffer_putmem(buf, ednsopts[i].value,
-					  ednsopts[i].length);
+			if (ednsopts[i].length != 0) {
+				isc_buffer_putmem(buf, ednsopts[i].value,
+						  ednsopts[i].length);
+			}
 		}
 		rdata->data = isc_buffer_base(buf);
 		rdata->length = len;

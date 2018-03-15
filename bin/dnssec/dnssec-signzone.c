@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1999-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -713,6 +713,17 @@ hashlist_init(hashlist_t *l, unsigned int nodes, unsigned int length) {
 	} else {
 		l->size = 0;
 		l->hashbuf = NULL;
+	}
+}
+
+static void
+hashlist_free(hashlist_t *l) {
+	if (l->hashbuf) {
+		free(l->hashbuf);
+		l->hashbuf = NULL;
+		l->entries = 0;
+		l->length = 0;
+		l->size = 0;
 	}
 }
 
@@ -1958,7 +1969,7 @@ addnsec3(dns_name_t *name, dns_dbnode_t *node,
  * any NSEC3 records which have the same parameters as the chain we
  * are building.
  *
- * XXXMPA Should we also check that it of the form <hash>.<origin>?
+ * XXXMPA Should we also check that it of the form &lt;hash&gt;.&lt;origin&gt;?
  */
 static void
 nsec3clean(dns_name_t *name, dns_dbnode_t *node,
@@ -2806,18 +2817,18 @@ writeset(const char *prefix, dns_rdatatype_t type) {
 	result = dns_name_tofilenametext(gorigin, ISC_FALSE, &namebuf);
 	check_result(result, "dns_name_tofilenametext");
 	isc_buffer_putuint8(&namebuf, 0);
-	filenamelen = strlen(prefix) + strlen(namestr);
+	filenamelen = strlen(prefix) + strlen(namestr) + 1;
 	if (dsdir != NULL)
 		filenamelen += strlen(dsdir) + 1;
-	filename = isc_mem_get(mctx, filenamelen + 1);
+	filename = isc_mem_get(mctx, filenamelen);
 	if (filename == NULL)
 		fatal("out of memory");
 	if (dsdir != NULL)
-		sprintf(filename, "%s/", dsdir);
+		snprintf(filename, filenamelen, "%s/", dsdir);
 	else
 		filename[0] = 0;
-	strcat(filename, prefix);
-	strcat(filename, namestr);
+	strlcat(filename, prefix, filenamelen);
+	strlcat(filename, namestr, filenamelen);
 
 	dns_diff_init(mctx, &diff);
 
@@ -2916,7 +2927,7 @@ writeset(const char *prefix, dns_rdatatype_t type) {
 	result = dns_master_dump(mctx, db, dbversion, style, filename);
 	check_result(result, "dns_master_dump");
 
-	isc_mem_put(mctx, filename, filenamelen + 1);
+	isc_mem_put(mctx, filename, filenamelen);
 
 	dns_db_closeversion(db, &dbversion, ISC_FALSE);
 	dns_db_detach(&db);
@@ -3489,12 +3500,13 @@ main(int argc, char *argv[]) {
 		origin = file;
 
 	if (output == NULL) {
+		size_t size;
 		free_output = ISC_TRUE;
-		output = isc_mem_allocate(mctx,
-					  strlen(file) + strlen(".signed") + 1);
+		size = strlen(file) + strlen(".signed") + 1;
+		output = isc_mem_allocate(mctx, size);
 		if (output == NULL)
 			fatal("out of memory");
-		sprintf(output, "%s.signed", file);
+		snprintf(output, size, "%s.signed", file);
 	}
 
 	if (inputformatstr != NULL) {
@@ -3669,6 +3681,8 @@ main(int argc, char *argv[]) {
 		if (nsec3iter > max)
 			fatal("NSEC3 iterations too big for weakest DNSKEY "
 			      "strength. Maximum iterations allowed %u.", max);
+	} else {
+		hashlist_init(&hashlist, 0, 0);	/* silence clang */
 	}
 
 	gversion = NULL;
@@ -3829,6 +3843,8 @@ main(int argc, char *argv[]) {
 
 	dns_db_closeversion(gdb, &gversion, ISC_FALSE);
 	dns_db_detach(&gdb);
+
+	hashlist_free(&hashlist);
 
 	while (!ISC_LIST_EMPTY(keylist)) {
 		key = ISC_LIST_HEAD(keylist);

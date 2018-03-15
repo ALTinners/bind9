@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2018  Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,6 +39,7 @@
       <year>2015</year>
       <year>2016</year>
       <year>2017</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -572,7 +573,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><userinput>querylog</userinput> <optional>on|off</optional> </term>
+	<term><userinput>querylog</userinput> <optional> on | off </optional> </term>
 	<listitem>
 	  <para>
 	    Enable or disable query logging.  (For backward
@@ -933,7 +934,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><userinput>validation ( on | off | check ) <optional><replaceable>view ...</replaceable></optional> </userinput></term>
+	<term><userinput>validation ( on | off | status ) <optional><replaceable>view ...</replaceable></optional> </userinput></term>
 	<listitem>
 	  <para>
 	    Enable, disable, or check the current status of

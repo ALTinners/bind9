@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,12 @@
 #include <config.h>
 
 #include <isc/safe.h>
+#include <isc/string.h>
 #include <isc/util.h>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #ifdef _MSC_VER
 #pragma optimize("", off)
@@ -56,4 +61,18 @@ isc_safe_memcompare(const void *b1, const void *b2, size_t len) {
 	}
 
 	return (res);
+}
+
+void
+isc_safe_memwipe(void *ptr, size_t len) {
+	if (ISC_UNLIKELY(ptr == NULL || len == 0))
+		return;
+
+#ifdef WIN32
+	SecureZeroMemory(ptr, len);
+#elif HAVE_EXPLICIT_BZERO
+	explicit_bzero(ptr, len);
+#else
+	memset(ptr, 0, len);
+#endif
 }

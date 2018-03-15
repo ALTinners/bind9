@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -205,7 +205,9 @@ enum {
 	dns_nsstatscounter_cookienew = 54,
 	dns_nsstatscounter_badcookie = 55,
 
-	dns_nsstatscounter_max = 56
+	dns_nsstatscounter_keytagopt = 56,
+
+	dns_nsstatscounter_max = 57
 };
 
 /*%

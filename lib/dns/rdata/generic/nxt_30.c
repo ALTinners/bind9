@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2005, 2007, 2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2005, 2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,7 +109,8 @@ totext_nxt(ARGS_TOTEXT) {
 								      target));
 					} else {
 						char buf[sizeof("65535")];
-						sprintf(buf, "%u", t);
+						snprintf(buf, sizeof(buf),
+							 "%u", t);
 						RETERR(str_totext(buf,
 								  target));
 					}

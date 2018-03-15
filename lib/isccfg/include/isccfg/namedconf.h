@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002, 2004-2007, 2009, 2010, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2002, 2004-2007, 2009, 2010, 2014, 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,5 +47,8 @@ LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
 
 /*%< An EDNS client subnet address, used as an ACL element */
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_ecsprefix;
+
+/*%< Zone options */
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_zoneopts;
 
 #endif /* ISCCFG_NAMEDCONF_H */

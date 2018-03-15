@@ -53,17 +53,18 @@ options {\n\
 #endif
 #ifndef WIN32
 "	coresize default;\n\
-	datasize default;\n\
-	files unlimited;\n\
-	stacksize default;\n"
+	datasize default;\n"
 #endif
-"#	session-keyfile \"" NS_LOCALSTATEDIR "/run/named/session.key\";\n\
-	session-keyname local-ddns;\n\
-	session-keyalg hmac-sha256;\n\
+"\
 #	deallocate-on-exit <obsolete>;\n\
 #	directory <none>\n\
 	dump-file \"named_dump.db\";\n\
-#	fake-iquery <obsolete>;\n\
+	edns-udp-size 4096;\n\
+#	fake-iquery <obsolete>;\n"
+#ifndef WIN32
+"	files unlimited;\n"
+#endif
+"\
 #	has-old-clients <obsolete>;\n\
 	heartbeat-interval 60;\n\
 #	host-statistics <obsolete>;\n\
@@ -71,184 +72,179 @@ options {\n\
 #	keep-response-order {none;};\n\
 	listen-on {any;};\n\
 	listen-on-v6 {any;};\n\
+#	lock-file \"" NS_LOCALSTATEDIR "/run/named/named.lock\";\n\
 	match-mapped-addresses no;\n\
 	max-rsa-exponent-size 0; /* no limit */\n\
+	max-udp-size 4096;\n\
 	memstatistics-file \"named.memstats\";\n\
 #	multiple-cnames <obsolete>;\n\
 #	named-xfer <obsolete>;\n\
+	nocookie-udp-size 4096;\n\
+	notify-rate 20;\n\
 	nta-lifetime 3600;\n\
 	nta-recheck 300;\n\
-	notify-rate 20;\n\
 #	pid-file \"" NS_LOCALSTATEDIR "/run/named/named.pid\"; /* or /lwresd.pid */\n\
-#	lock-file \"" NS_LOCALSTATEDIR "/run/named/named.lock\";\n\
 	port 53;\n\
-	prefetch 2 9;\n\
-	recursing-file \"named.recursing\";\n\
-	secroots-file \"named.secroots\";\n\
-"
+	prefetch 2 9;\n"
 #ifdef PATH_RANDOMDEV
-"\
-	random-device \"" PATH_RANDOMDEV "\";\n\
-"
+"	random-device \"" PATH_RANDOMDEV "\";\n"
 #endif
-"\
+"	recursing-file \"named.recursing\";\n\
 	recursive-clients 1000;\n\
+	request-nsid false;\n\
+	reserved-sockets 512;\n\
 	resolver-query-timeout 10;\n\
 	rrset-order { order random; };\n\
+	secroots-file \"named.secroots\";\n\
+	send-cookie true;\n\
 #	serial-queries <obsolete>;\n\
 	serial-query-rate 20;\n\
 	server-id none;\n\
-	startup-notify-rate 20;\n\
+	session-keyalg hmac-sha256;\n\
+#	session-keyfile \"" NS_LOCALSTATEDIR "/run/named/session.key\";\n\
+	session-keyname local-ddns;\n"
+#ifndef WIN32
+"	stacksize default;\n"
+#endif
+"	startup-notify-rate 20;\n\
 	statistics-file \"named.stats\";\n\
 #	statistics-interval <obsolete>;\n\
 	tcp-clients 150;\n\
 	tcp-listen-queue 10;\n\
 #	tkey-dhkey <none>\n\
-#	tkey-gssapi-credential <none>\n\
 #	tkey-domain <none>\n\
+#	tkey-gssapi-credential <none>\n\
 	transfer-message-size 20480;\n\
-	transfers-per-ns 2;\n\
 	transfers-in 10;\n\
 	transfers-out 10;\n\
+	transfers-per-ns 2;\n\
 #	treat-cr-as-space <obsolete>;\n\
 	trust-anchor-telemetry yes;\n\
 #	use-id-pool <obsolete>;\n\
 #	use-ixfr <obsolete>;\n\
-	edns-udp-size 4096;\n\
-	max-udp-size 4096;\n\
-	nocookie-udp-size 4096;\n\
-	send-cookie true;\n\
-	request-nsid false;\n\
-	reserved-sockets 512;\n\
-\n\
-	/* DLV */\n\
-	dnssec-lookaside . trust-anchor dlv.isc.org;\n\
 \n\
 	/* view */\n\
+	acache-cleaning-interval 60;\n\
+	acache-enable no;\n\
+	additional-from-auth true;\n\
+	additional-from-cache true;\n\
+	allow-new-zones no;\n\
 	allow-notify {none;};\n\
-	allow-update-forwarding {none;};\n\
 	allow-query-cache { localnets; localhost; };\n\
 	allow-query-cache-on { any; };\n\
 	allow-recursion { localnets; localhost; };\n\
 	allow-recursion-on { any; };\n\
+	allow-update-forwarding {none;};\n\
 #	allow-v6-synthesis <obsolete>;\n\
-#	sortlist <none>\n\
-#	topology <none>\n\
 	auth-nxdomain false;\n\
-	minimal-any false;\n\
-	minimal-responses false;\n\
-	recursion true;\n\
-	provide-ixfr true;\n\
-	request-ixfr true;\n\
-	request-expire true;\n\
-#	fetch-glue <obsolete>;\n\
-#	rfc2308-type1 <obsolete>;\n\
-	additional-from-auth true;\n\
-	additional-from-cache true;\n\
-	query-source address *;\n\
-	query-source-v6 address *;\n\
-	notify-source *;\n\
-	notify-source-v6 *;\n\
-	cleaning-interval 0;  /* now meaningless */\n\
-#	min-roots <obsolete>;\n\
-	lame-ttl 600;\n\
-	servfail-ttl 1;\n\
-	max-ncache-ttl 10800; /* 3 hours */\n\
-	max-cache-ttl 604800; /* 1 week */\n\
-	transfer-format many-answers;\n\
-	max-cache-size 90%;\n\
-	check-names master fail;\n\
-	check-names slave warn;\n\
-	check-names response ignore;\n\
 	check-dup-records warn;\n\
 	check-mx warn;\n\
+	check-names master fail;\n\
+	check-names response ignore;\n\
+	check-names slave warn;\n\
 	check-spf warn;\n\
-	acache-enable no;\n\
-	acache-cleaning-interval 60;\n\
-	max-acache-size 16M;\n\
-	dnssec-enable yes;\n\
-	dnssec-validation yes; \n\
-	dnssec-accept-expired no;\n\
-	fetches-per-zone 0;\n\
-	fetch-quota-params 100 0.1 0.3 0.7;\n\
+	cleaning-interval 0;  /* now meaningless */\n\
 	clients-per-query 10;\n\
-	max-clients-per-query 100;\n\
-	max-recursion-depth 7;\n\
-	max-recursion-queries 75;\n\
-	zero-no-soa-ttl-cache no;\n\
-	nsec3-test-zone no;\n\
-	allow-new-zones no;\n\
-	lmdb-mapsize 32M;\n\
-	fetches-per-server 0;\n\
-	require-server-cookie no;\n\
-	v6-bias 50;\n\
-	message-compression yes;\n\
-"
+	dnssec-accept-expired no;\n\
+	dnssec-enable yes;\n\
+	dnssec-validation yes; \n"
 #ifdef HAVE_DNSTAP
-"\
-	dnstap-identity hostname;\n\
-"
+"	dnstap-identity hostname;\n"
 #endif
-#ifdef HAVE_GEOIP
 "\
-	geoip-use-ecs yes;\n\
-"
-#endif
+#	fetch-glue <obsolete>;\n\
+	fetch-quota-params 100 0.1 0.3 0.7;\n\
+	fetches-per-server 0;\n\
+	fetches-per-zone 0;\n"
 #ifdef ALLOW_FILTER_AAAA
 "	filter-aaaa-on-v4 no;\n\
 	filter-aaaa-on-v6 no;\n\
-	filter-aaaa { any; };\n\
-"
+	filter-aaaa { any; };\n"
 #endif
-
-"	/* zone */\n\
+#ifdef HAVE_GEOIP
+"	geoip-use-ecs yes;\n"
+#endif
+"	lame-ttl 600;\n"
+#ifdef HAVE_LMDB
+"	lmdb-mapsize 32M;\n"
+#endif
+"	max-acache-size 16M;\n\
+	max-cache-size 90%;\n\
+	max-cache-ttl 604800; /* 1 week */\n\
+	max-clients-per-query 100;\n\
+	max-ncache-ttl 10800; /* 3 hours */\n\
+	max-recursion-depth 7;\n\
+	max-recursion-queries 75;\n\
+	message-compression yes;\n\
+#	min-roots <obsolete>;\n\
+	minimal-any false;\n\
+	minimal-responses false;\n\
+	notify-source *;\n\
+	notify-source-v6 *;\n\
+	nsec3-test-zone no;\n\
+	provide-ixfr true;\n\
+	query-source address *;\n\
+	query-source-v6 address *;\n\
+	recursion true;\n\
+	request-expire true;\n\
+	request-ixfr true;\n\
+	require-server-cookie no;\n\
+#	rfc2308-type1 <obsolete>;\n\
+	servfail-ttl 1;\n\
+#	sortlist <none>\n\
+#	topology <none>\n\
+	transfer-format many-answers;\n\
+	v6-bias 50;\n\
+	zero-no-soa-ttl-cache no;\n\
+\n\
+	/* zone */\n\
 	allow-query {any;};\n\
 	allow-query-on {any;};\n\
 	allow-transfer {any;};\n\
-	notify yes;\n\
 #	also-notify <none>\n\
-	notify-delay 5;\n\
-	notify-to-soa no;\n\
-	dialup no;\n\
-#	forward <none>\n\
-#	forwarders <none>\n\
-#	maintain-ixfr-base <obsolete>;\n\
-#	max-ixfr-log-size <obsolete>\n\
-	transfer-source *;\n\
-	transfer-source-v6 *;\n\
 	alt-transfer-source *;\n\
 	alt-transfer-source-v6 *;\n\
-	max-transfer-time-in 120;\n\
-	max-transfer-time-out 120;\n\
+	check-integrity yes;\n\
+	check-mx-cname warn;\n\
+	check-sibling yes;\n\
+	check-srv-cname warn;\n\
+	check-wildcard yes;\n\
+	dialup no;\n\
+	dnssec-dnskey-kskonly no;\n\
+	dnssec-loadkeys-interval 60;\n\
+	dnssec-secure-to-insecure no;\n\
+	dnssec-update-mode maintain;\n\
+#	forward <none>\n\
+#	forwarders <none>\n\
+	inline-signing no;\n\
+	ixfr-from-differences false;\n\
+#	maintain-ixfr-base <obsolete>;\n\
+#	max-ixfr-log-size <obsolete>\n\
+	max-journal-size unlimited;\n\
+	max-records 0;\n\
+	max-refresh-time 2419200; /* 4 weeks */\n\
+	max-retry-time 1209600; /* 2 weeks */\n\
 	max-transfer-idle-in 60;\n\
 	max-transfer-idle-out 60;\n\
-	max-records 0;\n\
-	max-retry-time 1209600; /* 2 weeks */\n\
-	min-retry-time 500;\n\
-	max-refresh-time 2419200; /* 4 weeks */\n\
+	max-transfer-time-in 120;\n\
+	max-transfer-time-out 120;\n\
 	min-refresh-time 300;\n\
+	min-retry-time 500;\n\
 	multi-master no;\n\
-	dnssec-secure-to-insecure no;\n\
-	sig-validity-interval 30; /* days */\n\
+	notify yes;\n\
+	notify-delay 5;\n\
+	notify-to-soa no;\n\
+	serial-update-method increment;\n\
 	sig-signing-nodes 100;\n\
 	sig-signing-signatures 10;\n\
 	sig-signing-type 65534;\n\
-	inline-signing no;\n\
-	zone-statistics terse;\n\
-	max-journal-size unlimited;\n\
-	ixfr-from-differences false;\n\
-	check-wildcard yes;\n\
-	check-sibling yes;\n\
-	check-integrity yes;\n\
-	check-mx-cname warn;\n\
-	check-srv-cname warn;\n\
-	zero-no-soa-ttl yes;\n\
-	update-check-ksk yes;\n\
-	serial-update-method increment;\n\
-	dnssec-update-mode maintain;\n\
-	dnssec-dnskey-kskonly no;\n\
-	dnssec-loadkeys-interval 60;\n\
+	sig-validity-interval 30; /* days */\n\
+	transfer-source *;\n\
+	transfer-source-v6 *;\n\
 	try-tcp-refresh yes; /* BIND 8 compat */\n\
+	update-check-ksk yes;\n\
+	zero-no-soa-ttl yes;\n\
+	zone-statistics terse;\n\
 };\n\
 "
 
@@ -289,8 +285,8 @@ view \"_bind\" chaos {\n\
 };\n\
 "
 "#\n\
-#  Default trusted key(s) for builtin DLV support\n\
-#  (used if \"dnssec-lookaside auto;\" is set and\n\
+#  Default trusted key(s), used if \n\
+# \"dnssec-validation auto;\" is set and\n\
 #  sysconfdir/bind.keys doesn't exist).\n\
 #\n\
 # BEGIN MANAGED KEYS\n"
@@ -664,20 +660,20 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 
 			/* Grow lists? */
 			if (listcount == l) {
-				void * new;
+				void * tmp;
 				isc_uint32_t newlen = listcount + 16;
 				size_t newsize, oldsize;
 
 				newsize = newlen * sizeof(*lists);
 				oldsize = listcount * sizeof(*lists);
-				new = isc_mem_get(mctx, newsize);
-				if (new == NULL)
+				tmp = isc_mem_get(mctx, newsize);
+				if (tmp == NULL)
 					goto cleanup;
 				if (listcount != 0) {
-					memmove(new, lists, oldsize);
+					memmove(tmp, lists, oldsize);
 					isc_mem_put(mctx, lists, oldsize);
 				}
-				lists = new;
+				lists = tmp;
 				listcount = newlen;
 			}
 			/* Seen? */
@@ -699,20 +695,20 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			lists[l++].name = listname;
 			/* Grow stack? */
 			if (stackcount == pushed) {
-				void * new;
+				void * tmp;
 				isc_uint32_t newlen = stackcount + 16;
 				size_t newsize, oldsize;
 
 				newsize = newlen * sizeof(*stack);
 				oldsize = stackcount * sizeof(*stack);
-				new = isc_mem_get(mctx, newsize);
-				if (new == NULL)
+				tmp = isc_mem_get(mctx, newsize);
+				if (tmp == NULL)
 					goto cleanup;
 				if (stackcount != 0) {
-					memmove(new, stack, oldsize);
+					memmove(tmp, stack, oldsize);
 					isc_mem_put(mctx, stack, oldsize);
 				}
-				stack = new;
+				stack = tmp;
 				stackcount = newlen;
 			}
 			/*
@@ -727,44 +723,44 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 		}
 
 		if (i == addrcount) {
-			void * new;
+			void * tmp;
 			isc_uint32_t newlen = addrcount + 16;
 			size_t newsize, oldsize;
 
 			newsize = newlen * sizeof(isc_sockaddr_t);
 			oldsize = addrcount * sizeof(isc_sockaddr_t);
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			tmp = isc_mem_get(mctx, newsize);
+			if (tmp == NULL)
 				goto cleanup;
 			if (addrcount != 0) {
-				memmove(new, addrs, oldsize);
+				memmove(tmp, addrs, oldsize);
 				isc_mem_put(mctx, addrs, oldsize);
 			}
-			addrs = new;
+			addrs = tmp;
 			addrcount = newlen;
 
 			newsize = newlen * sizeof(isc_dscp_t);
 			oldsize = dscpcount * sizeof(isc_dscp_t);
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			tmp = isc_mem_get(mctx, newsize);
+			if (tmp == NULL)
 				goto cleanup;
 			if (dscpcount != 0) {
-				memmove(new, dscps, oldsize);
+				memmove(tmp, dscps, oldsize);
 				isc_mem_put(mctx, dscps, oldsize);
 			}
-			dscps = new;
+			dscps = tmp;
 			dscpcount = newlen;
 
 			newsize = newlen * sizeof(dns_name_t *);
 			oldsize = keycount * sizeof(dns_name_t *);
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			tmp = isc_mem_get(mctx, newsize);
+			if (tmp == NULL)
 				goto cleanup;
 			if (keycount != 0) {
-				memmove(new, keys, oldsize);
+				memmove(tmp, keys, oldsize);
 				isc_mem_put(mctx, keys, oldsize);
 			}
-			keys = new;
+			keys = tmp;
 			keycount = newlen;
 		}
 
@@ -804,46 +800,46 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 		goto resume;
 	}
 	if (i < addrcount) {
-		void * new;
+		void * tmp;
 		size_t newsize, oldsize;
 
 		newsize = i * sizeof(isc_sockaddr_t);
 		oldsize = addrcount * sizeof(isc_sockaddr_t);
 		if (i != 0) {
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			tmp = isc_mem_get(mctx, newsize);
+			if (tmp == NULL)
 				goto cleanup;
-			memmove(new, addrs, newsize);
+			memmove(tmp, addrs, newsize);
 		} else
-			new = NULL;
+			tmp = NULL;
 		isc_mem_put(mctx, addrs, oldsize);
-		addrs = new;
+		addrs = tmp;
 		addrcount = i;
 
 		newsize = i * sizeof(isc_dscp_t);
 		oldsize = dscpcount * sizeof(isc_dscp_t);
 		if (i != 0) {
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			tmp = isc_mem_get(mctx, newsize);
+			if (tmp == NULL)
 				goto cleanup;
-			memmove(new, dscps, newsize);
+			memmove(tmp, dscps, newsize);
 		} else
-			new = NULL;
+			tmp = NULL;
 		isc_mem_put(mctx, dscps, oldsize);
-		dscps = new;
+		dscps = tmp;
 		dscpcount = i;
 
 		newsize = i * sizeof(dns_name_t *);
 		oldsize = keycount * sizeof(dns_name_t *);
 		if (i != 0) {
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			tmp = isc_mem_get(mctx, newsize);
+			if (tmp == NULL)
 				goto cleanup;
-			memmove(new, keys,  newsize);
+			memmove(tmp, keys,  newsize);
 		} else
-			new = NULL;
+			tmp = NULL;
 		isc_mem_put(mctx, keys, oldsize);
-		keys = new;
+		keys = tmp;
 		keycount = i;
 	}
 

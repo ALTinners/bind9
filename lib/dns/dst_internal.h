@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2000-2002, 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2000-2002, 2004-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -256,8 +256,14 @@ isc_result_t dst__gssapi_init(struct dst_func **funcp);
 #ifdef HAVE_OPENSSL_ECDSA
 isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
 #endif
+#if defined(HAVE_OPENSSL_ED25519) || defined(HAVE_OPENSSL_ED448)
+isc_result_t dst__openssleddsa_init(struct dst_func **funcp);
+#endif
 #ifdef HAVE_PKCS11_ECDSA
 isc_result_t dst__pkcs11ecdsa_init(struct dst_func **funcp);
+#endif
+#if defined(HAVE_PKCS11_ED25519) || defined(HAVE_PKCS11_ED448)
+isc_result_t dst__pkcs11eddsa_init(struct dst_func **funcp);
 #endif
 #ifdef HAVE_OPENSSL_GOST
 isc_result_t dst__opensslgost_init(struct dst_func **funcp);

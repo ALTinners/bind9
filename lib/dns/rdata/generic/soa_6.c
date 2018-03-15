@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002, 2004, 2007, 2009, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002, 2004, 2007, 2009, 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,7 +128,7 @@ totext_soa(ARGS_TOTEXT) {
 		unsigned long num;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
-		sprintf(buf, comm ? "%-10lu ; " : "%lu", num);
+		snprintf(buf, sizeof(buf), comm ? "%-10lu ; " : "%lu", num);
 		RETERR(str_totext(buf, target));
 		if (comm) {
 			RETERR(str_totext(soa_fieldnames[i], target));

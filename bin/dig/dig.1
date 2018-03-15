@@ -1,4 +1,4 @@
-.\" Copyright (C) 2000-2011, 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,7 @@
 dig \- DNS lookup utility
 .SH "SYNOPSIS"
 .HP \w'\fBdig\fR\ 'u
-\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [\fB\-4\fR] [\fB\-6\fR] [name] [type] [class] [queryopt...]
+\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [[\fB\-4\fR] | [\fB\-6\fR]] [name] [type] [class] [queryopt...]
 .HP \w'\fBdig\fR\ 'u
 \fBdig\fR [\fB\-h\fR]
 .HP \w'\fBdig\fR\ 'u
@@ -47,7 +47,7 @@ dig \- DNS lookup utility
 .SH "DESCRIPTION"
 .PP
 \fBdig\fR
-(domain information groper) is a flexible tool for interrogating DNS name servers\&. It performs DNS lookups and displays the answers that are returned from the name server(s) that were queried\&. Most DNS administrators use
+is a flexible tool for interrogating DNS name servers\&. It performs DNS lookups and displays the answers that are returned from the name server(s) that were queried\&. Most DNS administrators use
 \fBdig\fR
 to troubleshoot DNS problems because of its flexibility, ease of use and clarity of output\&. Other lookup tools tend to have less functionality than
 \fBdig\fR\&.
@@ -217,6 +217,11 @@ option is supplied to indicate a reverse lookup\&. A zone transfer can be reques
 to
 ixfr=N\&. The incremental zone transfer will contain the changes made to the zone since the serial number in the zone\*(Aqs SOA record was
 \fIN\fR\&.
+.RE
+.PP
+\-u
+.RS 4
+Print query times in microseconds instead of milliseconds\&.
 .RE
 .PP
 \-v
@@ -788,5 +793,5 @@ There are probably too many query options\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2000-2011, 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .br

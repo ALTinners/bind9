@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2007, 2009, 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2011, 2012, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,6 +51,7 @@
 
 #include <isc/assertions.h>
 #include <isc/platform.h>
+#include <isc/safe.h>
 #include <isc/sha2.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -60,7 +61,7 @@
 #include <pk11/pk11.h>
 #endif
 
-#ifdef ISC_PLATFORM_OPENSSLHASH
+#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define EVP_MD_CTX_new() &(context->_ctx)
 #define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
@@ -74,7 +75,9 @@ isc_sha224_init(isc_sha224_t *context) {
 	}
 	context->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(context->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha224()) == 1);
+	if (EVP_DigestInit(context->ctx, EVP_sha224()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize SHA224.");
+	}
 }
 
 void
@@ -120,7 +123,9 @@ isc_sha256_init(isc_sha256_t *context) {
 	}
 	context->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(context->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha256()) == 1);
+	if (EVP_DigestInit(context->ctx, EVP_sha256()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize SHA256.");
+	}
 }
 
 void
@@ -166,7 +171,9 @@ isc_sha512_init(isc_sha512_t *context) {
 	}
 	context->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(context->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha512()) == 1);
+	if (EVP_DigestInit(context->ctx, EVP_sha512()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize SHA512.");
+	}
 }
 
 void
@@ -210,7 +217,9 @@ isc_sha384_init(isc_sha384_t *context) {
 	}
 	context->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(context->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha384()) == 1);
+	if (EVP_DigestInit(context->ctx, EVP_sha384()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize SHA384.");
+	}
 }
 
 void
@@ -272,7 +281,7 @@ isc_sha224_invalidate(isc_sha224_t *context) {
 	if (context->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(context);
 }
 
@@ -312,7 +321,7 @@ isc_sha224_final(isc_uint8_t digest[], isc_sha224_t *context) {
 		CK_BYTE garbage[ISC_SHA224_DIGESTLENGTH];
 
 		(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-		memset(garbage, 0, sizeof(garbage));
+		isc_safe_memwipe(garbage, sizeof(garbage));
 	}
 	pk11_return_session(context);
 }
@@ -338,7 +347,7 @@ isc_sha256_invalidate(isc_sha256_t *context) {
 	if (context->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(context);
 }
 
@@ -378,7 +387,7 @@ isc_sha256_final(isc_uint8_t digest[], isc_sha256_t *context) {
 		CK_BYTE garbage[ISC_SHA256_DIGESTLENGTH];
 
 		(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-		memset(garbage, 0, sizeof(garbage));
+		isc_safe_memwipe(garbage, sizeof(garbage));
 	}
 	pk11_return_session(context);
 }
@@ -404,7 +413,7 @@ isc_sha512_invalidate(isc_sha512_t *context) {
 	if (context->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(context);
 }
 
@@ -444,7 +453,7 @@ isc_sha512_final(isc_uint8_t digest[], isc_sha512_t *context) {
 		CK_BYTE garbage[ISC_SHA512_DIGESTLENGTH];
 
 		(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-		memset(garbage, 0, sizeof(garbage));
+		isc_safe_memwipe(garbage, sizeof(garbage));
 	}
 	pk11_return_session(context);
 }
@@ -470,7 +479,7 @@ isc_sha384_invalidate(isc_sha384_t *context) {
 	if (context->handle == NULL)
 		return;
 	(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	pk11_return_session(context);
 }
 
@@ -510,7 +519,7 @@ isc_sha384_final(isc_uint8_t digest[], isc_sha384_t *context) {
 		CK_BYTE garbage[ISC_SHA384_DIGESTLENGTH];
 
 		(void) pkcs_C_DigestFinal(context->session, garbage, &len);
-		memset(garbage, 0, sizeof(garbage));
+		isc_safe_memwipe(garbage, sizeof(garbage));
 	}
 	pk11_return_session(context);
 }
@@ -864,7 +873,7 @@ isc_sha224_init(isc_sha224_t *context) {
 
 void
 isc_sha224_invalidate(isc_sha224_t *context) {
-	memset(context, 0, sizeof(isc_sha224_t));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 
 void
@@ -877,7 +886,7 @@ isc_sha224_final(isc_uint8_t digest[], isc_sha224_t *context) {
 	isc_uint8_t sha256_digest[ISC_SHA256_DIGESTLENGTH];
 	isc_sha256_final(sha256_digest, (isc_sha256_t *)context);
 	memmove(digest, sha256_digest, ISC_SHA224_DIGESTLENGTH);
-	memset(sha256_digest, 0, ISC_SHA256_DIGESTLENGTH);
+	isc_safe_memwipe(sha256_digest, sizeof(sha256_digest));
 }
 
 /*** SHA-256: *********************************************************/
@@ -894,7 +903,7 @@ isc_sha256_init(isc_sha256_t *context) {
 
 void
 isc_sha256_invalidate(isc_sha256_t *context) {
-	memset(context, 0, sizeof(isc_sha256_t));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 
 #ifdef ISC_SHA2_UNROLL_TRANSFORM
@@ -1201,7 +1210,7 @@ isc_sha256_final(isc_uint8_t digest[], isc_sha256_t *context) {
 	}
 
 	/* Clean up state data: */
-	memset(context, 0, sizeof(*context));
+	isc_safe_memwipe(context, sizeof(*context));
 	usedspace = 0;
 	POST(usedspace);
 }
@@ -1220,7 +1229,7 @@ isc_sha512_init(isc_sha512_t *context) {
 
 void
 isc_sha512_invalidate(isc_sha512_t *context) {
-	memset(context, 0, sizeof(isc_sha512_t));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 
 #ifdef ISC_SHA2_UNROLL_TRANSFORM
@@ -1525,7 +1534,7 @@ void isc_sha512_final(isc_uint8_t digest[], isc_sha512_t *context) {
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(*context));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 
 
@@ -1543,7 +1552,7 @@ isc_sha384_init(isc_sha384_t *context) {
 
 void
 isc_sha384_invalidate(isc_sha384_t *context) {
-	memset(context, 0, sizeof(isc_sha384_t));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 
 void
@@ -1578,7 +1587,7 @@ isc_sha384_final(isc_uint8_t digest[], isc_sha384_t *context) {
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(*context));
+	isc_safe_memwipe(context, sizeof(*context));
 }
 #endif /* !ISC_PLATFORM_OPENSSLHASH */
 
@@ -1606,15 +1615,15 @@ isc_sha224_end(isc_sha224_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#ifdef ISC_PLATFORM_OPENSSLHASH
+#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
 		EVP_MD_CTX_reset(context->ctx);
 #elif PKCS11CRYPTO
 		pk11_return_session(context);
 #else
-		memset(context, 0, sizeof(*context));
+		isc_safe_memwipe(context, sizeof(*context));
 #endif
 	}
-	memset(digest, 0, ISC_SHA224_DIGESTLENGTH);
+	isc_safe_memwipe(digest, sizeof(digest));
 	return buffer;
 }
 
@@ -1647,15 +1656,15 @@ isc_sha256_end(isc_sha256_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#ifdef ISC_PLATFORM_OPENSSLHASH
+#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
 		EVP_MD_CTX_reset(context->ctx);
 #elif PKCS11CRYPTO
 		pk11_return_session(context);
 #else
-		memset(context, 0, sizeof(*context));
+		isc_safe_memwipe(context, sizeof(*context));
 #endif
 	}
-	memset(digest, 0, ISC_SHA256_DIGESTLENGTH);
+	isc_safe_memwipe(digest, sizeof(digest));
 	return buffer;
 }
 
@@ -1688,15 +1697,15 @@ isc_sha512_end(isc_sha512_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#ifdef ISC_PLATFORM_OPENSSLHASH
+#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
 		EVP_MD_CTX_reset(context->ctx);
 #elif PKCS11CRYPTO
 		pk11_return_session(context);
 #else
-		memset(context, 0, sizeof(*context));
+		isc_safe_memwipe(context, sizeof(*context));
 #endif
 	}
-	memset(digest, 0, ISC_SHA512_DIGESTLENGTH);
+	isc_safe_memwipe(digest, sizeof(digest));
 	return buffer;
 }
 
@@ -1729,15 +1738,15 @@ isc_sha384_end(isc_sha384_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#ifdef ISC_PLATFORM_OPENSSLHASH
+#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
 		EVP_MD_CTX_reset(context->ctx);
 #elif PKCS11CRYPTO
 		pk11_return_session(context);
 #else
-		memset(context, 0, sizeof(*context));
+		isc_safe_memwipe(context, sizeof(*context));
 #endif
 	}
-	memset(digest, 0, ISC_SHA384_DIGESTLENGTH);
+	isc_safe_memwipe(digest, sizeof(digest));
 	return buffer;
 }
 

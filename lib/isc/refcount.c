@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2007, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,13 +15,14 @@
 #include <isc/mutex.h>
 #include <isc/refcount.h>
 #include <isc/result.h>
+#include <isc/util.h>
 
 isc_result_t
 isc_refcount_init(isc_refcount_t *ref, unsigned int n) {
 	REQUIRE(ref != NULL);
 
 	ref->refs = n;
-#if defined(ISC_PLATFORM_USETHREADS) && !defined(ISC_PLATFORM_HAVEXADD)
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(ISC_REFCOUNT_HAVEATOMIC)
 	return (isc_mutex_init(&ref->lock));
 #else
 	return (ISC_R_SUCCESS);

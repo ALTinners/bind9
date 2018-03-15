@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002, 2004-2008, 2010, 2012, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002, 2004-2008, 2010, 2012, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,15 +96,19 @@
  *** Imports
  ***/
 
+#include <isc/assertions.h>
+#include <isc/formatcheck.h>
 #include <isc/lang.h>
+#include <isc/likely.h>
 #include <isc/magic.h>
 #include <isc/types.h>
 
 /*!
  * To make many functions be inline macros (via \#define) define this.
  * If it is undefined, a function will be used.
- */
+  */
 /* #define ISC_BUFFER_USEINLINE */
+
 
 ISC_LANG_BEGINDECLS
 
@@ -877,11 +881,11 @@ ISC_LANG_ENDDECLS
 #define ISC__BUFFER_PUTMEM(_b, _base, _length) \
 	do { \
 		if (ISC_UNLIKELY((_b)->autore)) { \
-			isc_buffer_t *tmpbuf = _b; \
-			REQUIRE(isc_buffer_reserve(&tmpbuf, _length) \
+			isc_buffer_t *_tmp = _b; \
+			ISC_REQUIRE(isc_buffer_reserve(&_tmp, _length) \
 				== ISC_R_SUCCESS); \
 		} \
-		REQUIRE(isc_buffer_availablelength(_b) >= (unsigned int) _length); \
+		ISC_REQUIRE(isc_buffer_availablelength(_b) >= (unsigned int) _length); \
 		memmove(isc_buffer_used(_b), (_base), (_length)); \
 		(_b)->used += (_length); \
 	} while (0)
@@ -890,13 +894,13 @@ ISC_LANG_ENDDECLS
 	do { \
 		unsigned int _length; \
 		unsigned char *_cp; \
-		_length = strlen(_source); \
+		_length = (unsigned int)strlen(_source); \
 		if (ISC_UNLIKELY((_b)->autore)) { \
-			isc_buffer_t *tmpbuf = _b; \
-			REQUIRE(isc_buffer_reserve(&tmpbuf, _length) \
+			isc_buffer_t *_tmp = _b; \
+			ISC_REQUIRE(isc_buffer_reserve(&_tmp, _length) \
 				== ISC_R_SUCCESS); \
 		} \
-		REQUIRE(isc_buffer_availablelength(_b) >= (unsigned int) _length); \
+		ISC_REQUIRE(isc_buffer_availablelength(_b) >= _length); \
 		_cp = isc_buffer_used(_b); \
 		memmove(_cp, (_source), _length); \
 		(_b)->used += (_length); \
@@ -905,67 +909,71 @@ ISC_LANG_ENDDECLS
 #define ISC__BUFFER_PUTUINT8(_b, _val) \
 	do { \
 		unsigned char *_cp; \
+		/* evaluate (_val) only once */ \
 		isc_uint8_t _val2 = (_val); \
 		if (ISC_UNLIKELY((_b)->autore)) { \
-			isc_buffer_t *tmpbuf = _b; \
-			REQUIRE(isc_buffer_reserve(&tmpbuf, 1) \
+			isc_buffer_t *_tmp = _b; \
+			ISC_REQUIRE(isc_buffer_reserve(&_tmp, 1) \
 				== ISC_R_SUCCESS); \
 		} \
-		REQUIRE(isc_buffer_availablelength(_b) >= 1U); \
+		ISC_REQUIRE(isc_buffer_availablelength(_b) >= 1U); \
 		_cp = isc_buffer_used(_b); \
 		(_b)->used++; \
-		_cp[0] = _val2 & 0x00ff; \
+		_cp[0] = _val2; \
 	} while (0)
 
 #define ISC__BUFFER_PUTUINT16(_b, _val) \
 	do { \
 		unsigned char *_cp; \
+		/* evaluate (_val) only once */ \
 		isc_uint16_t _val2 = (_val); \
 		if (ISC_UNLIKELY((_b)->autore)) { \
-			isc_buffer_t *tmpbuf = _b; \
-			REQUIRE(isc_buffer_reserve(&tmpbuf, 2) \
+			isc_buffer_t *_tmp = _b; \
+			ISC_REQUIRE(isc_buffer_reserve(&_tmp, 2) \
 				== ISC_R_SUCCESS); \
 		} \
-		REQUIRE(isc_buffer_availablelength(_b) >= 2U); \
+		ISC_REQUIRE(isc_buffer_availablelength(_b) >= 2U); \
 		_cp = isc_buffer_used(_b); \
 		(_b)->used += 2; \
-		_cp[0] = (unsigned char)((_val2 & 0xff00U) >> 8); \
-		_cp[1] = (unsigned char)(_val2 & 0x00ffU); \
+		_cp[0] = _val2 >> 8; \
+		_cp[1] = _val2; \
 	} while (0)
 
 #define ISC__BUFFER_PUTUINT24(_b, _val) \
 	do { \
 		unsigned char *_cp; \
+		/* evaluate (_val) only once */ \
 		isc_uint32_t _val2 = (_val); \
 		if (ISC_UNLIKELY((_b)->autore)) { \
-			isc_buffer_t *tmpbuf = _b; \
-			REQUIRE(isc_buffer_reserve(&tmpbuf, 3) \
+			isc_buffer_t *_tmp = _b; \
+			ISC_REQUIRE(isc_buffer_reserve(&_tmp, 3) \
 				== ISC_R_SUCCESS); \
 		} \
-		REQUIRE(isc_buffer_availablelength(_b) >= 3U); \
+		ISC_REQUIRE(isc_buffer_availablelength(_b) >= 3U); \
 		_cp = isc_buffer_used(_b); \
 		(_b)->used += 3; \
-		_cp[0] = (unsigned char)((_val2 & 0xff0000U) >> 16); \
-		_cp[1] = (unsigned char)((_val2 & 0xff00U) >> 8); \
-		_cp[2] = (unsigned char)(_val2 & 0x00ffU); \
+		_cp[0] = _val2 >> 16; \
+		_cp[1] = _val2 >> 8; \
+		_cp[2] = _val2; \
 	} while (0)
 
 #define ISC__BUFFER_PUTUINT32(_b, _val) \
 	do { \
 		unsigned char *_cp; \
+		/* evaluate (_val) only once */ \
 		isc_uint32_t _val2 = (_val); \
 		if (ISC_UNLIKELY((_b)->autore)) { \
-			isc_buffer_t *tmpbuf = _b; \
-			REQUIRE(isc_buffer_reserve(&tmpbuf, 4) \
+			isc_buffer_t *_tmp = _b; \
+			ISC_REQUIRE(isc_buffer_reserve(&_tmp, 4) \
 				== ISC_R_SUCCESS); \
 		} \
-		REQUIRE(isc_buffer_availablelength(_b) >= 4U); \
+		ISC_REQUIRE(isc_buffer_availablelength(_b) >= 4U); \
 		_cp = isc_buffer_used(_b); \
 		(_b)->used += 4; \
-		_cp[0] = (unsigned char)((_val2 & 0xff000000) >> 24); \
-		_cp[1] = (unsigned char)((_val2 & 0x00ff0000) >> 16); \
-		_cp[2] = (unsigned char)((_val2 & 0x0000ff00) >> 8); \
-		_cp[3] = (unsigned char)((_val2 & 0x000000ff)); \
+		_cp[0] = _val2 >> 24; \
+		_cp[1] = _val2 >> 16; \
+		_cp[2] = _val2 >> 8; \
+		_cp[3] = _val2; \
 	} while (0)
 
 #if defined(ISC_BUFFER_USEINLINE)

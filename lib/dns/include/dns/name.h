@@ -143,6 +143,26 @@ struct dns_name {
 LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_rootname;
 LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_wildcardname;
 
+/*%<
+ * DNS_NAME_INITNONABSOLUTE and DNS_NAME_INITABSOLUTE are macros for
+ * initializing dns_name_t structures.
+ *
+ * Note[1]: 'length' is set to (sizeof(A) - 1) in DNS_NAME_INITNONABSOLUTE
+ * and sizeof(A) in DNS_NAME_INITABSOLUTE to allow C strings to be used
+ * to initialize 'ndata'.
+ *
+ * Note[2]: The final value of offsets for DNS_NAME_INITABSOLUTE should
+ * match (sizeof(A) - 1) which is the offset of the root label.
+ *
+ * Typical usage:
+ *	unsigned char data[] = "\005value";
+ *	unsigned char offsets[] = { 0 };
+ *	dns_name_t value = DNS_NAME_INITNONABSOLUTE(data, offsets);
+ *
+ *	unsigned char data[] = "\005value";
+ *	unsigned char offsets[] = { 0, 6 };
+ *	dns_name_t value = DNS_NAME_INITABSOLUTE(data, offsets);
+ */
 #define DNS_NAME_INITNONABSOLUTE(A,B) { \
 	DNS_NAME_MAGIC, \
 	A, (sizeof(A) - 1), sizeof(B), \
@@ -353,7 +373,11 @@ unsigned int
 dns_name_hashbylabel(dns_name_t *name, isc_boolean_t case_sensitive);
 /*%<
  * Provide a hash value for 'name', where the hash value is the sum
- * of the hash values of each label.
+ * of the hash values of each label.  This function should only be used
+ * when incremental hashing is necessary, for example, during RBT
+ * traversal. It is not currently used in BIND. Generally,
+ * dns_name_fullhash() is the correct function to use for name
+ * hashing.
  *
  * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
  * case will have the same hash value.
@@ -807,8 +831,6 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *\li	#DNS_R_EMPTYLABEL
  *\li	#DNS_R_LABELTOOLONG
  *\li	#DNS_R_BADESCAPE
- *\li	(#DNS_R_BADBITSTRING: should not be returned)
- *\li	(#DNS_R_BITSTRINGTOOLONG: should not be returned)
  *\li	#DNS_R_BADDOTTEDQUAD
  *\li	#ISC_R_NOSPACE
  *\li	#ISC_R_UNEXPECTEDEND
@@ -1309,6 +1331,12 @@ isc_boolean_t
 dns_name_isula(const dns_name_t *owner);
 /*%<
  * Determine if the 'name' is in the ULA reverse namespace.
+ */
+
+isc_boolean_t
+dns_name_istat(const dns_name_t *name);
+/*
+ * Determine if 'name' is a potential 'trust-anchor-telementry' name.
  */
 
 ISC_LANG_ENDDECLS

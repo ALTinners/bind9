@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2005, 2007, 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2005, 2007, 2009-2012, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 isc_result_t
 dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
 	struct tm tm;
-	char buf[sizeof("YYYYMMDDHHMMSS")];
+	char buf[sizeof("!!!!!!YYYY!!!!!!!!MM!!!!!!!!DD!!!!!!!!HH!!!!!!!!MM!!!!!!!!SS")];
 	int secs;
 	unsigned int l;
 	isc_region_t region;

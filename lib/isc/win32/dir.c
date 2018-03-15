@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2004, 2007-2009, 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2004, 2007-2009, 2011-2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,9 +19,11 @@
 
 #include <sys/stat.h>
 
+#include <isc/assertions.h>
 #include <isc/dir.h>
 #include <isc/magic.h>
-#include <isc/assertions.h>
+#include <isc/print.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include "errno2result.h"
@@ -67,7 +69,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	if (strlen(dirname) + 3 > sizeof(dir->dirname))
 		/* XXXDCL ? */
 		return (ISC_R_NOSPACE);
-	strcpy(dir->dirname, dirname);
+	strlcpy(dir->dirname, dirname, sizeof(dir->dirname));
 
 	/*
 	 * Append path separator, if needed, and "*".
@@ -121,7 +123,8 @@ isc_dir_read(isc_dir_t *dir) {
 	/*
 	 * Make sure that the space for the name is long enough.
 	 */
-	strcpy(dir->entry.name, dir->entry.find_data.cFileName);
+	strlcpy(dir->entry.name, dir->entry.find_data.cFileName,
+		sizeof(dir->entry.name));
 	dir->entry.length = strlen(dir->entry.name);
 
 	return (ISC_R_SUCCESS);
@@ -204,7 +207,8 @@ start_directory(isc_dir_t *dir)
 	/*
 	 * Fill in the data for the first entry of the directory.
 	 */
-	strcpy(dir->entry.name, dir->entry.find_data.cFileName);
+	strlcpy(dir->entry.name, dir->entry.find_data.cFileName,
+		sizeof(dir->entry.name));
 	dir->entry.length = strlen(dir->entry.name);
 
 	dir->entry_filled = ISC_TRUE;

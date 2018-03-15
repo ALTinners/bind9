@@ -67,13 +67,16 @@ MAKEJOURNAL=$TOP/bin/tests/makejournal
 PIPEQUERIES=$TOP/bin/tests/system/pipelined/pipequeries
 SAMPLEUPDATE=$TOP/lib/samples/sample-update
 
+# we don't want a KRB5_CONFIG setting breaking the tests
+KRB5_CONFIG=/dev/null
+
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
 SUBDIRS="acl additional addzone allow_query autosign builtin
 	 cacheclean case catz chain checkconf @CHECKDS@ checknames checkzone
-	 cookie @COVERAGE@ database digdelv dlv dlvauto dlz dlzexternal
-	 dns64 dnssec @DNSTAP@ dscp dsdigest dyndb ecdsa
+	 cookie @COVERAGE@ database digdelv dlv dlz dlzexternal
+	 dns64 dnssec @DNSTAP@ dscp dsdigest dyndb ecdsa eddsa
 	 ednscompliance emptyzones fetchlimit filter-aaaa formerr
 	 forward geoip glue gost inline integrity ixfr @KEYMGR@
 	 legacy limits logfileconfig lwresd masterfile masterformat
@@ -135,6 +138,69 @@ NZD=@NZD_TOOLS@
 
 . ${TOP}/version
 
+#
+# Set up color-coded test output
+#
+if test -t 1 && type tput > /dev/null 2>&1 ; then
+    COLOR_FAIL=`tput setaf 1`   # red
+    COLOR_WARN=`tput setaf 3`   # yellow
+    COLOR_PASS=`tput setaf 2`   # green
+    COLOR_INFO=`tput bold`      # bold
+    COLOR_NONE=`tput sgr0`
+else
+    # set to empty strings so printf succeeds
+    COLOR_FAIL=''
+    COLOR_WARN=''
+    COLOR_PASS=''
+    COLOR_INFO=''
+    COLOR_NONE=''
+fi
+
+if type printf > /dev/null 2>&1
+then
+	echofail () {
+		printf "${COLOR_FAIL}%s${COLOR_NONE}\n" "$*"
+	}
+	echowarn () {
+		printf "${COLOR_WARN}%s${COLOR_NONE}\n" "$*"
+	}
+	echopass () {
+		printf "${COLOR_PASS}%s${COLOR_NONE}\n" "$*"
+	}
+	echoinfo () {
+		printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
+	}
+else
+	echofail () {
+		echo "$*"
+	}
+	echowarn () {
+		echo "$*"
+	}
+	echopass () {
+		echo "$*"
+	}
+	echoinfo () {
+		echo "$*"
+	}
+fi
+
+#
+# Useful functions in test scripts
+#
+
+# nextpart: read everything that's been appended to a file since the
+# last time 'nextpart' was called.
+nextpart () {
+    [ -f $1.prev ] || echo "0" > $1.prev
+    prev=`cat $1.prev`
+    awk "NR > $prev "'{ print }
+         END          { print NR > "/dev/stderr" }' $1 2> $1.prev
+}
+
+#
+# Export command paths
+#
 export ARPANAME
 export BIGKEY
 export CHECKZONE
@@ -150,6 +216,7 @@ export KEYFRLAB
 export KEYGEN
 export KEYSETTOOL
 export KEYSIGNER
+export KRB5_CONFIG
 export LWRESD
 export LWTEST
 export MAKEJOURNAL
