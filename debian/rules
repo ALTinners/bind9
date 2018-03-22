@@ -151,7 +151,7 @@ override_dh_makeshlibs:
 	dh_makeshlibs -plibirs-export160 --add-udeb=libirs-export160-udeb
 	dh_makeshlibs -plibisccc-export160 --add-udeb=libisccc-export160-udeb
 	dh_makeshlibs -plibisccfg-export160 --add-udeb=libisccfg-export160-udeb
-	dh_makeshlibs -plibisc-export166 --add-udeb=libisc-export166-udeb
+	dh_makeshlibs -plibisc-export169 --add-udeb=libisc-export169-udeb
 	dh_makeshlibs --remaining-packages
 
 .PHONY: prepare_native_pkcs11 clean_native_pkcs11

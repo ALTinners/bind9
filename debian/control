@@ -37,7 +37,7 @@ Depends: adduser,
          debconf | debconf-2.0,
          libbind9-160 (= ${binary:Version}),
          libdns1100 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -80,7 +80,7 @@ Priority: standard
 Architecture: any
 Depends: libbind9-160 (= ${binary:Version}),
          libdns1100 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
          ${misc:Depends},
@@ -97,7 +97,7 @@ Replaces: bind9 (<< 1:9.10.3.dfsg.P2-4)
 Depends: libbind9-160 (= ${binary:Version}),
          libdns1100 (= ${binary:Version}),
          libirs160 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -113,7 +113,7 @@ Section: libs
 Architecture: any
 Multi-Arch: same
 Depends: libdns1100 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
@@ -129,7 +129,7 @@ Package: libdns1100
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libisc166 (= ${binary:Version}),
+Depends: libisc169 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Description: DNS Shared Library used by BIND
@@ -144,7 +144,7 @@ Package: libirs160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libisc166 (= ${binary:Version}),
+Depends: libisc169 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Description: DNS Shared Library used by BIND
@@ -155,7 +155,7 @@ Description: DNS Shared Library used by BIND
  This package delivers the libirs shared library used by BIND's daemons and
  clients.
 
-Package: libisc166
+Package: libisc169
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -187,7 +187,7 @@ Package: libisccc160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libisc166 (= ${binary:Version}),
+Depends: libisc169 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Description: Command Channel Library used by BIND
@@ -203,7 +203,7 @@ Section: libs
 Architecture: any
 Multi-Arch: same
 Depends: libdns1100 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
@@ -222,7 +222,7 @@ Architecture: any
 Depends: bind9-host | host,
          libbind9-160 (= ${binary:Version}),
          libdns1100 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
          ${misc:Depends},
@@ -248,7 +248,7 @@ Architecture: any
 Conflicts: libbind-dev
 Depends: libdns-export1100 (= ${binary:Version}),
          libirs-export160 (= ${binary:Version}),
-         libisc-export166 (= ${binary:Version}),
+         libisc-export169 (= ${binary:Version}),
          libisccc-export160 (= ${binary:Version}),
          libisccfg-export160 (= ${binary:Version}),
          ${misc:Depends}
@@ -303,7 +303,7 @@ Depends: ${misc:Depends},
 Package-Type: udeb
 Description: Exported IRS library for debian-installer
 
-Package: libisc-export166
+Package: libisc-export169
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -317,7 +317,7 @@ Description: Exported ISC Shared Library
  .
  This package delivers the exported libisc shared library.
 
-Package: libisc-export166-udeb
+Package: libisc-export169-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same
@@ -330,7 +330,7 @@ Package: libisccc-export160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libisc-export166,
+Depends: libisc-export169,
          ${misc:Depends},
          ${shlibs:Depends}
 Description: Command Channel Library used by BIND
@@ -345,7 +345,7 @@ Package: libisccc-export160-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same
-Depends: libisc-export166-udeb,
+Depends: libisc-export169-udeb,
          ${misc:Depends},
          ${shlibs:Depends}
 Package-Type: udeb
