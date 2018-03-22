@@ -4,7 +4,7 @@ Subject: _library_paths
 
     Makefile.in: be explicit about library paths
 
-    Debian policy requires that all dependant libs be in the .so, not just the
+    Debian policy requires that all dependent libs be in the .so, not just the
     immediately depended ones.
 
     Signed-off-by: LaMont Jones <lamont@debian.org>
