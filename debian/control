@@ -87,9 +87,12 @@ Depends: libbind9-160 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Provides: host
-Description: Version of 'host' bundled with BIND 9.X
- This package provides the 'host' program in the form that is bundled with
- the BIND 9.X sources.
+Description: DNS lookup utility (deprecated)
+ This package provides /usr/bin/host, a simple utility (bundled with the
+ BIND 9.X sources) which can be used for converting domain names to IP
+ addresses and the reverse.
+ .
+ This utility is deprecated, use dig or delv from the dnsutils package.
 
 Package: libbind-dev
 Section: libdevel
