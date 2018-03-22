@@ -5,7 +5,8 @@ Maintainer: Debian DNS Packaging <pkg-dns-devel@lists.alioth.debian.org>
 Uploaders: LaMont Jones <lamont@debian.org>,
            Michael Gilbert <mgilbert@debian.org>,
            Robie Basak <robie.basak@canonical.com>,
-           Ondřej Surý <ondrej@debian.org>
+           Ondřej Surý <ondrej@debian.org>,
+           Bernhard Schmidt <berni@debian.org>,
 Build-Depends: bison,
                debhelper (>= 10),
                dh-apparmor,

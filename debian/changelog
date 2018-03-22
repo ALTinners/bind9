@@ -12,6 +12,7 @@ bind9 (1:9.11.3+dfsg-1) unstable; urgency=medium
   * Drop Priority: standard for library packages
   * Fix apparmor profile name (Closes: #893005)
     Thanks to Andreas Hasenack
+  * Add myself to Uploaders
 
   [ Ondřej Surý ]
   * Update Vcs-* links to salsa.d.o
