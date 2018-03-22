@@ -13,6 +13,8 @@ bind9 (1:9.11.3+dfsg-1) unstable; urgency=medium
   * Fix apparmor profile name (Closes: #893005)
     Thanks to Andreas Hasenack
   * Update bind9-host description (Closes: #729561)
+  * Add flags=(attach_disconnected) to AppArmor profile to prepare
+    to use more systemd hardening options, see #863841
   * Add myself to Uploaders
 
   [ Ondřej Surý ]

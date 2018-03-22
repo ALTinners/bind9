@@ -2,7 +2,7 @@
 # Last Modified: Fri Jun  1 16:43:22 2007
 #include <tunables/global>
 
-/usr/sbin/named {
+/usr/sbin/named flags=(attach_disconnected) {
   #include <abstractions/base>
   #include <abstractions/nameservice>
 
