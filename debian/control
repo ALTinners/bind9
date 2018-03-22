@@ -23,7 +23,8 @@ Build-Depends: bison,
                libtool,
                libxml2-dev,
                python3,
-               python3-ply
+               python3-distutils,
+               python3-ply,
 Standards-Version: 4.1.2
 Vcs-Browser: https://salsa.debian.org/dns-team/bind9
 Vcs-Git: https://salsa.debian.org/dns-team/bind9.git
