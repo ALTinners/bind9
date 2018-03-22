@@ -36,7 +36,7 @@ Depends: adduser,
          bind9utils (= ${binary:Version}),
          debconf | debconf-2.0,
          libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
          libisc166 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
@@ -79,7 +79,7 @@ Package: bind9-host
 Priority: standard
 Architecture: any
 Depends: libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
          libisc166 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -95,7 +95,7 @@ Section: libdevel
 Architecture: any
 Replaces: bind9 (<< 1:9.10.3.dfsg.P2-4)
 Depends: libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
          libirs160 (= ${binary:Version}),
          libisc166 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
@@ -112,7 +112,7 @@ Package: libbind9-160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libdns169 (= ${binary:Version}),
+Depends: libdns1100 (= ${binary:Version}),
          libisc166 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          ${misc:Depends},
@@ -125,7 +125,7 @@ Description: BIND9 Shared Library used by BIND
  This package delivers the libbind9 shared library used by BIND's daemons and
  clients.
 
-Package: libdns169
+Package: libdns1100
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -202,7 +202,7 @@ Package: libisccfg160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libdns169 (= ${binary:Version}),
+Depends: libdns1100 (= ${binary:Version}),
          libisc166 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          ${misc:Depends},
@@ -221,7 +221,7 @@ Priority: standard
 Architecture: any
 Depends: bind9-host | host,
          libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
          libisc166 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -246,7 +246,7 @@ Package: libbind-export-dev
 Section: libdevel
 Architecture: any
 Conflicts: libbind-dev
-Depends: libdns-export169 (= ${binary:Version}),
+Depends: libdns-export1100 (= ${binary:Version}),
          libirs-export160 (= ${binary:Version}),
          libisc-export166 (= ${binary:Version}),
          libisccc-export160 (= ${binary:Version}),
@@ -259,7 +259,7 @@ Description: Development files for the exported BIND libraries
  .
  This package delivers development files for the exported BIND libraries.
 
-Package: libdns-export169
+Package: libdns-export1100
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -272,7 +272,7 @@ Description: Exported DNS Shared Library
  .
  This package delivers the exported libdns shared library.
 
-Package: libdns-export169-udeb
+Package: libdns-export1100-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same
