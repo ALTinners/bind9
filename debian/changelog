@@ -1,6 +1,8 @@
 bind9 (1:9.11.3+dfsg-1~bpo9+1) stretch-backports; urgency=medium
 
   * Rebuild for stretch-backports.
+  * Revert "Add python3-distutils Build-Dependency", this is not a
+    seperate package in Stretch.
 
  -- Bernhard Schmidt <berni@debian.org>  Thu, 29 Mar 2018 08:52:44 +0200
 
