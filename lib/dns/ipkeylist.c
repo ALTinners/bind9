@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -187,34 +187,42 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n) {
 	if (labels == NULL)
 		goto nomemory;
 
-	memmove(addrs, ipkl->addrs, ipkl->allocated * sizeof(isc_sockaddr_t));
-	if (ipkl->addrs != NULL)
+	if (ipkl->addrs != NULL) {
+		memmove(addrs, ipkl->addrs,
+			ipkl->allocated * sizeof(isc_sockaddr_t));
 		isc_mem_put(mctx, ipkl->addrs,
 			    ipkl->allocated * sizeof(isc_sockaddr_t));
+	}
 	ipkl->addrs = addrs;
 	memset(&ipkl->addrs[ipkl->allocated], 0,
 	       (n - ipkl->allocated) * sizeof(isc_sockaddr_t));
 
-	memmove(dscps, ipkl->dscps, ipkl->allocated * sizeof(isc_dscp_t));
-	if (ipkl->dscps != NULL)
+	if (ipkl->dscps != NULL) {
+		memmove(dscps, ipkl->dscps,
+			ipkl->allocated * sizeof(isc_dscp_t));
 		isc_mem_put(mctx, ipkl->dscps,
 			    ipkl->allocated * sizeof(isc_dscp_t));
+	}
 	ipkl->dscps = dscps;
 	memset(&ipkl->dscps[ipkl->allocated], 0,
 	       (n - ipkl->allocated) * sizeof(isc_dscp_t));
 
-	memmove(keys, ipkl->keys, ipkl->allocated * sizeof(dns_name_t *));
-	if (ipkl->keys)
+	if (ipkl->keys) {
+		memmove(keys, ipkl->keys,
+			ipkl->allocated * sizeof(dns_name_t *));
 		isc_mem_put(mctx, ipkl->keys,
 			    ipkl->allocated * sizeof(dns_name_t *));
+	}
 	ipkl->keys = keys;
 	memset(&ipkl->keys[ipkl->allocated], 0,
 	       (n - ipkl->allocated) * sizeof(dns_name_t *));
 
-	memmove(labels, ipkl->labels, ipkl->allocated * sizeof(dns_name_t *));
-	if (ipkl->labels)
+	if (ipkl->labels != NULL) {
+		memmove(labels, ipkl->labels,
+			ipkl->allocated * sizeof(dns_name_t *));
 		isc_mem_put(mctx, ipkl->labels,
 			    ipkl->allocated * sizeof(dns_name_t *));
+	}
 	ipkl->labels = labels;
 	memset(&ipkl->labels[ipkl->allocated], 0,
 	       (n - ipkl->allocated) * sizeof(dns_name_t *));

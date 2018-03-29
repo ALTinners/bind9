@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2001, 2002, 2004, 2005, 2007, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001, 2002, 2004, 2005, 2007, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
-/* $Id: getaddresses.c,v 1.22 2007/06/19 23:47:16 tbox Exp $ */
 
 /*! \file */
 
@@ -19,6 +17,7 @@
 #include <isc/netscope.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <bind9/getaddresses.h>
@@ -81,7 +80,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 		char tmpbuf[128], *d;
 		isc_uint32_t zone = 0;
 
-		strcpy(tmpbuf, hostname);
+		strlcpy(tmpbuf, hostname, sizeof(tmpbuf));
 		d = strchr(tmpbuf, '%');
 		if (d != NULL)
 			*d = '\0';
@@ -154,6 +153,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 			goto again;
 		}
 #endif
+		/* FALLTHROUGH */
 	default:
 		return (ISC_R_FAILURE);
 	}

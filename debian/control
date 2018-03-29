@@ -5,7 +5,8 @@ Maintainer: Debian DNS Packaging <pkg-dns-devel@lists.alioth.debian.org>
 Uploaders: LaMont Jones <lamont@debian.org>,
            Michael Gilbert <mgilbert@debian.org>,
            Robie Basak <robie.basak@canonical.com>,
-           Ondřej Surý <ondrej@debian.org>
+           Ondřej Surý <ondrej@debian.org>,
+           Bernhard Schmidt <berni@debian.org>,
 Build-Depends: bison,
                debhelper (>= 10),
                dh-apparmor,
@@ -23,10 +24,12 @@ Build-Depends: bison,
                libtool,
                libxml2-dev,
                python3,
-               python3-ply
+               python3-distutils,
+               python3-ply,
 Standards-Version: 4.1.2
-Vcs-Browser: https://anonscm.debian.org/git/pkg-dns/bind9.git
-Vcs-Git: git://anonscm.debian.org/git/pkg-dns/bind9.git
+Vcs-Browser: https://salsa.debian.org/dns-team/bind9
+Vcs-Git: https://salsa.debian.org/dns-team/bind9.git
+Homepage: https://www.isc.org/downloads/bind/
 
 Package: bind9
 Architecture: any
@@ -34,8 +37,8 @@ Depends: adduser,
          bind9utils (= ${binary:Version}),
          debconf | debconf-2.0,
          libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -77,25 +80,28 @@ Package: bind9-host
 Priority: standard
 Architecture: any
 Depends: libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Provides: host
-Description: Version of 'host' bundled with BIND 9.X
- This package provides the 'host' program in the form that is bundled with
- the BIND 9.X sources.
+Description: DNS lookup utility (deprecated)
+ This package provides /usr/bin/host, a simple utility (bundled with the
+ BIND 9.X sources) which can be used for converting domain names to IP
+ addresses and the reverse.
+ .
+ This utility is deprecated, use dig or delv from the dnsutils package.
 
 Package: libbind-dev
 Section: libdevel
 Architecture: any
 Replaces: bind9 (<< 1:9.10.3.dfsg.P2-4)
 Depends: libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
          libirs160 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -108,11 +114,10 @@ Description: Static Libraries and Headers used by BIND
 
 Package: libbind9-160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
-Depends: libdns169 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+Depends: libdns1100 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
@@ -124,12 +129,11 @@ Description: BIND9 Shared Library used by BIND
  This package delivers the libbind9 shared library used by BIND's daemons and
  clients.
 
-Package: libdns169
+Package: libdns1100
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
-Depends: libisc166 (= ${binary:Version}),
+Depends: libisc169 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Description: DNS Shared Library used by BIND
@@ -142,10 +146,9 @@ Description: DNS Shared Library used by BIND
 
 Package: libirs160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
-Depends: libisc166 (= ${binary:Version}),
+Depends: libisc169 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Description: DNS Shared Library used by BIND
@@ -156,9 +159,8 @@ Description: DNS Shared Library used by BIND
  This package delivers the libirs shared library used by BIND's daemons and
  clients.
 
-Package: libisc166
+Package: libisc169
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends},
@@ -173,7 +175,6 @@ Description: ISC Shared Library used by BIND
 
 Package: liblwres160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends},
@@ -190,7 +191,7 @@ Package: libisccc160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libisc166 (= ${binary:Version}),
+Depends: libisc169 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Description: Command Channel Library used by BIND
@@ -203,11 +204,10 @@ Description: Command Channel Library used by BIND
 
 Package: libisccfg160
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
-Depends: libdns169 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+Depends: libdns1100 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
@@ -225,8 +225,8 @@ Priority: standard
 Architecture: any
 Depends: bind9-host | host,
          libbind9-160 (= ${binary:Version}),
-         libdns169 (= ${binary:Version}),
-         libisc166 (= ${binary:Version}),
+         libdns1100 (= ${binary:Version}),
+         libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
          ${misc:Depends},
@@ -250,9 +250,9 @@ Package: libbind-export-dev
 Section: libdevel
 Architecture: any
 Conflicts: libbind-dev
-Depends: libdns-export169 (= ${binary:Version}),
+Depends: libdns-export1100 (= ${binary:Version}),
          libirs-export160 (= ${binary:Version}),
-         libisc-export166 (= ${binary:Version}),
+         libisc-export169 (= ${binary:Version}),
          libisccc-export160 (= ${binary:Version}),
          libisccfg-export160 (= ${binary:Version}),
          ${misc:Depends}
@@ -263,7 +263,7 @@ Description: Development files for the exported BIND libraries
  .
  This package delivers development files for the exported BIND libraries.
 
-Package: libdns-export169
+Package: libdns-export1100
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -276,7 +276,7 @@ Description: Exported DNS Shared Library
  .
  This package delivers the exported libdns shared library.
 
-Package: libdns-export169-udeb
+Package: libdns-export1100-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same
@@ -307,7 +307,7 @@ Depends: ${misc:Depends},
 Package-Type: udeb
 Description: Exported IRS library for debian-installer
 
-Package: libisc-export166
+Package: libisc-export169
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -321,7 +321,7 @@ Description: Exported ISC Shared Library
  .
  This package delivers the exported libisc shared library.
 
-Package: libisc-export166-udeb
+Package: libisc-export169-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same
@@ -334,7 +334,7 @@ Package: libisccc-export160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libisc-export166,
+Depends: libisc-export169,
          ${misc:Depends},
          ${shlibs:Depends}
 Description: Command Channel Library used by BIND
@@ -349,7 +349,7 @@ Package: libisccc-export160-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same
-Depends: libisc-export166-udeb,
+Depends: libisc-export169-udeb,
          ${misc:Depends},
          ${shlibs:Depends}
 Package-Type: udeb

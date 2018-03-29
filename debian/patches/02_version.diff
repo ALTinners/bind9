@@ -7,13 +7,11 @@ Subject: _version
  version | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/version b/version
-index 64517d5..5375630 100644
 --- a/version
 +++ b/version
-@@ -8,4 +8,4 @@ MINORVER=11
- PATCHVER=2
- RELEASETYPE=-P
- RELEASEVER=1
+@@ -8,4 +8,4 @@
+ PATCHVER=3
+ RELEASETYPE=
+ RELEASEVER=
 -EXTENSIONS=
 +EXTENSIONS="$(dpkg-parsechangelog --file=../debian/changelog | sed -n '/^Version/s/[^-]*//p')-$(dpkg-vendor --query Vendor)"

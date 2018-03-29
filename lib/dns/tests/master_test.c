@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include <isc/print.h>
+#include <isc/string.h>
 #include <isc/xml.h>
 
 #include <dns/cache.h>
@@ -85,7 +86,7 @@ setup_master(void (*warn)(struct dns_rdatacallbacks *, const char *, ...),
 	isc_buffer_t		source;
 	isc_buffer_t		target;
 
-	strcpy(origin, TEST_ORIGIN);
+	strlcpy(origin, TEST_ORIGIN, sizeof(origin));
 	len = strlen(origin);
 	isc_buffer_init(&source, origin, len);
 	isc_buffer_add(&source, len);
@@ -555,7 +556,7 @@ ATF_TC_BODY(dumpraw, tc) {
 
 	UNUSED(tc);
 
-	strcpy(myorigin, TEST_ORIGIN);
+	strlcpy(myorigin, TEST_ORIGIN, sizeof(myorigin));
 	len = strlen(myorigin);
 	isc_buffer_init(&source, myorigin, len);
 	isc_buffer_add(&source, len);

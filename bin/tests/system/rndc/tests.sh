@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2018  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -450,13 +450,13 @@ ret=0
 $RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf querylog on >/dev/null 2>&1 || ret=1
 grep "query logging is now on" ns4/named.run > /dev/null || ret=1
 # query for builtin and check if query was logged
-$DIG @10.53.0.4 -p 5300 -c ch -t txt foo12345.bind > /dev/null || ret 1
+$DIG @10.53.0.4 -p 5300 -c ch -t txt foo12345.bind > /dev/null || ret=1
 grep "query: foo12345.bind CH TXT" ns4/named.run > /dev/null || ret=1
 # toggle query logging and check again
 $RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf querylog > /dev/null 2>&1 || ret=1
 grep "query logging is now off" ns4/named.run > /dev/null || ret=1
 # query for another builtin zone and check if query was logged
-$DIG @10.53.0.4 -p 5300 -c ch -t txt foo9876.bind > /dev/null || ret 1
+$DIG @10.53.0.4 -p 5300 -c ch -t txt foo9876.bind > /dev/null || ret=1
 grep "query: foo9876.bind CH TXT" ns4/named.run > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -529,9 +529,9 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test read-only control channel access ($n)"
 ret=0
-$RNDC -s 10.53.0.5 -p 9953 -c ../common/rndc.conf status > /dev/null 2>&1 || ret=1
-$RNDC -s 10.53.0.5 -p 9953 -c ../common/rndc.conf nta -dump > /dev/null 2>&1 || ret=1
-$RNDC -s 10.53.0.5 -p 9953 -c ../common/rndc.conf reconfig > /dev/null 2>&1 && ret=1
+$RNDC -s 10.53.0.5 -p 9953 -c ../common/rndc.conf status > rndc.out.1.test$n 2>&1 || ret=1
+$RNDC -s 10.53.0.5 -p 9953 -c ../common/rndc.conf nta -dump > rndc.out.2.test$n 2>&1 || ret=1
+$RNDC -s 10.53.0.5 -p 9953 -c ../common/rndc.conf reconfig > rndc.out.3.test$n 2>&1 && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -571,7 +571,7 @@ n=`expr $n + 1`
 echo " I:wait for the zones to be loaded ($n)"
 ret=1
 try=0
-while test $try -lt 45
+while test $try -lt 100
 do
     sleep 1
     sed -n "$cur,"'$p' < ns6/named.run | grep "any newly configured zones are now loaded" > /dev/null && {

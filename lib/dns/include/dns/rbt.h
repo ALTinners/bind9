@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002, 2004-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004-2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 
 /*! \file dns/rbt.h */
 
+#include <isc/assertions.h>
 #include <isc/crc64.h>
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -193,6 +194,13 @@ typedef void (*dns_rbtdeleter_t)(void *, void *);
  * the path back to the root from any given node.  Now that nodes have parent
  * pointers, chains might be going away in a future release, though the
  * movement functionality would remain.
+ *
+ * Chains may be used to iterate over a tree of trees.  After setting up the
+ * chain's structure using dns_rbtnodechain_init(), it needs to be initialized
+ * to point to the lexically first or lexically last node in the tree of trees
+ * using dns_rbtnodechain_first() or dns_rbtnodechain_last(), respectively.
+ * Calling dns_rbtnodechain_next() or dns_rbtnodechain_prev() then moves the
+ * chain over to the next or previous node, respectively.
  *
  * In any event, parent information, whether via parent pointers or chains, is
  * necessary information for iterating through the tree or for basic internal
@@ -1069,7 +1077,7 @@ dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
 	} while (0)
 #else  /* DNS_RBT_USEISCREFCOUNT */
 #define dns_rbtnode_refinit(node, n)    ((node)->references = (n))
-#define dns_rbtnode_refdestroy(node)    REQUIRE((node)->references == 0)
+#define dns_rbtnode_refdestroy(node)    ISC_REQUIRE((node)->references == 0)
 #define dns_rbtnode_refcurrent(node)    ((node)->references)
 
 #if (__STDC_VERSION__ + 0) >= 199901L || defined __GNUC__
@@ -1082,7 +1090,7 @@ dns_rbtnode_refincrement0(dns_rbtnode_t *node, unsigned int *refs) {
 
 static inline void
 dns_rbtnode_refincrement(dns_rbtnode_t *node, unsigned int *refs) {
-	REQUIRE(node->references > 0);
+	ISC_REQUIRE(node->references > 0);
 	node->references++;
 	if (refs != NULL)
 		*refs = node->references;
@@ -1090,7 +1098,7 @@ dns_rbtnode_refincrement(dns_rbtnode_t *node, unsigned int *refs) {
 
 static inline void
 dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
-	REQUIRE(node->references > 0);
+	ISC_REQUIRE(node->references > 0);
 	node->references--;
 	if (refs != NULL)
 		*refs = node->references;
@@ -1105,14 +1113,14 @@ dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
 	} while (0)
 #define dns_rbtnode_refincrement(node, refs)                    \
 	do {                                                    \
-		REQUIRE((node)->references > 0);                \
+		ISC_REQUIRE((node)->references > 0);                \
 		(node)->references++;                           \
 		if ((refs) != NULL)                             \
 			(*refs) = (node)->references;           \
 	} while (0)
 #define dns_rbtnode_refdecrement(node, refs)                    \
 	do {                                                    \
-		REQUIRE((node)->references > 0);                \
+		ISC_REQUIRE((node)->references > 0);                \
 		(node)->references--;                           \
 		if ((refs) != NULL)                             \
 			(*refs) = (node)->references;           \

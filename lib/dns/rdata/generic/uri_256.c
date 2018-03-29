@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,7 +72,7 @@ totext_uri(ARGS_TOTEXT) {
 	 */
 	priority = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u ", priority);
+	snprintf(buf, sizeof(buf), "%u ", priority);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -80,7 +80,7 @@ totext_uri(ARGS_TOTEXT) {
 	 */
 	weight = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u ", weight);
+	snprintf(buf, sizeof(buf), "%u ", weight);
 	RETERR(str_totext(buf, target));
 
 	/*

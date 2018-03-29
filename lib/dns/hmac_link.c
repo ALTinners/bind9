@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1999-2002, 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1999-2002, 2004-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,6 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.19 2011/01/11 23:47:13 tbox Exp $
  */
 
 #include <config.h>
@@ -42,6 +41,9 @@
 #include <dst/result.h>
 
 #include "dst_internal.h"
+#ifdef HAVE_FIPS_MODE
+#include "dst_openssl.h"	/* FIPS_mode() prototype */
+#endif
 #include "dst_parse.h"
 
 #ifndef PK11_MD5_DISABLE
@@ -165,7 +167,7 @@ hmacmd5_generate(dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacmd5_fromdns(key, &b);
-	memset(data, 0, ISC_MD5_BLOCK_LENGTH);
+	isc_safe_memwipe(data, sizeof(data));
 
 	return (ret);
 }
@@ -180,8 +182,8 @@ static void
 hmacmd5_destroy(dst_key_t *key) {
 	dst_hmacmd5_key_t *hkey = key->keydata.hmacmd5;
 
-	memset(hkey, 0, sizeof(dst_hmacmd5_key_t));
-	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacmd5_key_t));
+	isc_safe_memwipe(hkey, sizeof(*hkey));
+	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
 	key->keydata.hmacmd5 = NULL;
 }
 
@@ -307,7 +309,7 @@ hmacmd5_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
 
@@ -337,6 +339,28 @@ static dst_func_t hmacmd5_functions = {
 
 isc_result_t
 dst__hmacmd5_init(dst_func_t **funcp) {
+#ifdef HAVE_FIPS_MODE
+	/*
+	 * Problems from OpenSSL are likely from FIPS mode
+	 */
+	int fips_mode = FIPS_mode();
+
+	if (fips_mode != 0) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "FIPS mode is %d: MD5 is only supported "
+				 "if the value is 0.\n"
+				 "Please disable either FIPS mode or MD5.",
+				 fips_mode);
+	}
+#endif
+
+	/*
+	 * Prevent use of incorrect crypto
+	 */
+
+	RUNTIME_CHECK(isc_md5_check(ISC_FALSE));
+	RUNTIME_CHECK(isc_hmacmd5_check(0));
+
 	REQUIRE(funcp != NULL);
 	if (*funcp == NULL)
 		*funcp = &hmacmd5_functions;
@@ -451,7 +475,7 @@ hmacsha1_generate(dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacsha1_fromdns(key, &b);
-	memset(data, 0, ISC_SHA1_BLOCK_LENGTH);
+	isc_safe_memwipe(data, sizeof(data));
 
 	return (ret);
 }
@@ -466,8 +490,8 @@ static void
 hmacsha1_destroy(dst_key_t *key) {
 	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
 
-	memset(hkey, 0, sizeof(dst_hmacsha1_key_t));
-	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha1_key_t));
+	isc_safe_memwipe(hkey, sizeof(*hkey));
+	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
 	key->keydata.hmacsha1 = NULL;
 }
 
@@ -593,7 +617,7 @@ hmacsha1_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
 
@@ -623,6 +647,12 @@ static dst_func_t hmacsha1_functions = {
 
 isc_result_t
 dst__hmacsha1_init(dst_func_t **funcp) {
+	/*
+	 * Prevent use of incorrect crypto
+	 */
+	RUNTIME_CHECK(isc_sha1_check(ISC_FALSE));
+	RUNTIME_CHECK(isc_hmacsha1_check(0));
+
 	REQUIRE(funcp != NULL);
 	if (*funcp == NULL)
 		*funcp = &hmacsha1_functions;
@@ -738,7 +768,7 @@ hmacsha224_generate(dst_key_t *key, int pseudorandom_ok,
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacsha224_fromdns(key, &b);
-	memset(data, 0, ISC_SHA224_BLOCK_LENGTH);
+	isc_safe_memwipe(data, sizeof(data));
 
 	return (ret);
 }
@@ -753,8 +783,8 @@ static void
 hmacsha224_destroy(dst_key_t *key) {
 	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
 
-	memset(hkey, 0, sizeof(dst_hmacsha224_key_t));
-	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha224_key_t));
+	isc_safe_memwipe(hkey, sizeof(*hkey));
+	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
 	key->keydata.hmacsha224 = NULL;
 }
 
@@ -880,7 +910,7 @@ hmacsha224_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
 
@@ -1025,7 +1055,7 @@ hmacsha256_generate(dst_key_t *key, int pseudorandom_ok,
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacsha256_fromdns(key, &b);
-	memset(data, 0, ISC_SHA256_BLOCK_LENGTH);
+	isc_safe_memwipe(data, sizeof(data));
 
 	return (ret);
 }
@@ -1040,8 +1070,8 @@ static void
 hmacsha256_destroy(dst_key_t *key) {
 	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
 
-	memset(hkey, 0, sizeof(dst_hmacsha256_key_t));
-	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha256_key_t));
+	isc_safe_memwipe(hkey, sizeof(*hkey));
+	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
 	key->keydata.hmacsha256 = NULL;
 }
 
@@ -1167,7 +1197,7 @@ hmacsha256_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
 
@@ -1312,7 +1342,7 @@ hmacsha384_generate(dst_key_t *key, int pseudorandom_ok,
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacsha384_fromdns(key, &b);
-	memset(data, 0, ISC_SHA384_BLOCK_LENGTH);
+	isc_safe_memwipe(data, sizeof(data));
 
 	return (ret);
 }
@@ -1327,8 +1357,8 @@ static void
 hmacsha384_destroy(dst_key_t *key) {
 	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
 
-	memset(hkey, 0, sizeof(dst_hmacsha384_key_t));
-	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha384_key_t));
+	isc_safe_memwipe(hkey, sizeof(*hkey));
+	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
 	key->keydata.hmacsha384 = NULL;
 }
 
@@ -1454,7 +1484,7 @@ hmacsha384_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
 
@@ -1599,7 +1629,7 @@ hmacsha512_generate(dst_key_t *key, int pseudorandom_ok,
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacsha512_fromdns(key, &b);
-	memset(data, 0, ISC_SHA512_BLOCK_LENGTH);
+	isc_safe_memwipe(data, sizeof(data));
 
 	return (ret);
 }
@@ -1614,8 +1644,8 @@ static void
 hmacsha512_destroy(dst_key_t *key) {
 	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
 
-	memset(hkey, 0, sizeof(dst_hmacsha512_key_t));
-	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha512_key_t));
+	isc_safe_memwipe(hkey, sizeof(*hkey));
+	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
 	key->keydata.hmacsha512 = NULL;
 }
 
@@ -1741,7 +1771,7 @@ hmacsha512_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -530,7 +530,7 @@ main(int argc, char **argv) {
 	for (i = 0; i < TYPENAMES; i++)
 		memset(&typenames[i], 0, sizeof(typenames[i]));
 
-	strcpy(srcdir, "");
+	srcdir[0] = '\0';
 	while ((c = isc_commandline_parse(argc, argv, "cdits:F:P:S:")) != -1)
 		switch (c) {
 		case 'c':
@@ -620,12 +620,15 @@ main(int argc, char **argv) {
 			n = snprintf(year, sizeof(year), "-%d",
 				     tm->tm_year + 1900);
 			INSIST(n > 0 && (unsigned)n < sizeof(year));
-		} else
-			strcpy(year, "-2016");
-	} else
-		strcpy(year, "-2016");
+		} else {
+			snprintf(year, sizeof(year), "-2016");
+		}
+	} else {
+		snprintf(year, sizeof(year), "-2016");
+	}
 
-	if (!depend) fprintf(stdout, copyright, year);
+	if (!depend)
+		fprintf(stdout, copyright, year);
 
 	if (code) {
 		fputs("#ifndef DNS_CODE_H\n", stdout);

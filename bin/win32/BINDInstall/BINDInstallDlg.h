@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2001, 2004, 2007, 2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2001, 2004, 2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,6 +86,8 @@ protected:
 	BOOL CheckBINDService();
 	void SetCurrent(int id, ...);
 	void ProgramGroup(BOOL create = TRUE);
+	void ProgramGroupCreate(TCHAR *commonPath);
+	void ProgramGroupRemove(TCHAR *commonPath);
 
 	HICON m_hIcon;
 	CString m_defaultDir;

@@ -1,4 +1,4 @@
-# Copyright (C) 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@ n=`expr $n + 1`
 echo "I:check lookups against TTL=0 records ($n)"
 i=0
 passes=10
-$DIG -p 5300 @10.53.0.2 axfr example | 
+$DIG -p 5300 @10.53.0.2 axfr example | grep -v "^ds0" |
 awk '$2 == "0" { print "-q", $1, $4; print "-q", "zzz"$1, $4;}' > query.list
 while [ $i -lt $passes ]
 do

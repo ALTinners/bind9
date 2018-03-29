@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2009, 2010, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-/* $Id: tsec.c,v 1.7 2010/12/09 00:54:34 marka Exp $ */
-
 #include <config.h>
 
 #include <isc/mem.h>
+#include <isc/util.h>
 
 #include <pk11/site.h>
 

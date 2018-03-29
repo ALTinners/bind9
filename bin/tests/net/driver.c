@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001, 2004, 2007, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2004, 2007, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -27,19 +28,22 @@
 const char *gettime(void);
 const char *test_result_totext(test_result_t);
 
-/*
- * Not thread safe.
- */
 const char *
 gettime(void) {
 	static char now[512];
 	time_t t;
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
+	struct tm tm;
+#endif
 
 	(void)time(&t);
 
-	strftime(now, sizeof(now) - 1,
-		 "%A %d %B %H:%M:%S %Y",
-		 localtime(&t));
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
+	strftime(now, sizeof(now) - 1, "%A %d %B %H:%M:%S %Y",
+		 localtime_r(&t, &tm));
+#else
+	strftime(now, sizeof(now) - 1, "%A %d %B %H:%M:%S %Y", localtime(&t));
+#endif
 
 	return (now);
 }

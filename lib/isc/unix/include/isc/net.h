@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2005, 2007, 2008, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2005, 2007, 2008, 2012-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -173,6 +173,11 @@
 #ifndef PF_INET6
 /*% IPv6 */
 #define PF_INET6 AF_INET6
+#endif
+
+#ifndef INADDR_ANY
+/*% inaddr any */
+#define INADDR_ANY 0x00000000UL
 #endif
 
 #ifndef INADDR_LOOPBACK
@@ -387,6 +392,7 @@ isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);
 #ifdef ISC_PLATFORM_NEEDNTOP
 const char *
 isc_net_ntop(int af, const void *src, char *dst, size_t size);
+#undef inet_ntop
 #define inet_ntop isc_net_ntop
 #endif
 

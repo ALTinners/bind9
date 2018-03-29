@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2003-2010, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003-2010, 2012, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,6 +64,8 @@
 #define DNS_KEYALG_ECCGOST	12
 #define DNS_KEYALG_ECDSA256	13
 #define DNS_KEYALG_ECDSA384	14
+#define DNS_KEYALG_ED25519	15
+#define DNS_KEYALG_ED448	16
 #define DNS_KEYALG_INDIRECT	252
 #define DNS_KEYALG_PRIVATEDNS	253
 #define DNS_KEYALG_PRIVATEOID	254     /*%< Key begins with OID giving alg */
@@ -99,5 +101,11 @@
 
 #define DNS_KEY_ECDSA256SIZE	64
 #define DNS_KEY_ECDSA384SIZE	96
+
+#define DNS_SIG_ED25519SIZE	64
+#define DNS_SIG_ED448SIZE	114
+
+#define DNS_KEY_ED25519SIZE	32
+#define DNS_KEY_ED448SIZE	57
 
 #endif /* DNS_KEYVALUES_H */

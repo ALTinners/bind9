@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2001, 2004-2009, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1997-2001, 2004-2009, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #define ISC_ASSERTIONS_H 1
 
 #include <isc/lang.h>
+#include <isc/likely.h>
 #include <isc/platform.h>
 
 ISC_LANG_BEGINDECLS

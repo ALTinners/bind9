@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2007, 2010-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2007, 2010-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -493,7 +493,8 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	sockaddr->type.sunix.sun_len =
 			(unsigned char)sizeof(sockaddr->type.sunix);
 #endif
-	strcpy(sockaddr->type.sunix.sun_path, path);
+	strlcpy(sockaddr->type.sunix.sun_path, path,
+		sizeof(sockaddr->type.sunix.sun_path));
 	return (ISC_R_SUCCESS);
 #else
 	UNUSED(sockaddr);

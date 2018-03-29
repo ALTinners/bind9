@@ -1,8 +1,26 @@
-bind9 (1:9.11.2.P1-1~bpo9+1) stretch-backports; urgency=medium
+bind9 (1:9.11.3+dfsg-1) unstable; urgency=medium
 
-  * Rebuild for stretch-backports.
+  [ Bernhard Schmidt ]
+  * New upstream version 9.11.3+dfsg
+    (Closes: #867570, #888463)
+    - Refresh patches
+    - Drop stdatomic.h patches applied upstream
+  * Follow SONAME bump of libdns
+  * Follow SONAME bump of libisc
+  * Add missing symbols for libisccfg160
+  * Add python3-distutils Build-Dependency
+  * Drop Priority: standard for library packages
+  * Fix apparmor profile name (Closes: #893005)
+    Thanks to Andreas Hasenack
+  * Update bind9-host description (Closes: #729561)
+  * Add flags=(attach_disconnected) to AppArmor profile to prepare
+    to use more systemd hardening options, see #863841
+  * Add myself to Uploaders
 
- -- Bernhard Schmidt <berni@debian.org>  Wed, 24 Jan 2018 23:16:03 +0100
+  [ Ondřej Surý ]
+  * Update Vcs-* links to salsa.d.o
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 23 Mar 2018 00:09:58 +0100
 
 bind9 (1:9.11.2.P1-1) unstable; urgency=medium
 

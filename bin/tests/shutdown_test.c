@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001, 2004, 2007, 2011, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2004, 2007, 2011, 2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <isc/app.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>
@@ -136,9 +137,10 @@ new_task(isc_mem_t *mctx, const char *name) {
 	ti->ticks = 0;
 	if (name != NULL) {
 		INSIST(strlen(name) < sizeof(ti->name));
-		strcpy(ti->name, name);
-	} else
-		sprintf(ti->name, "%d", task_count);
+		strlcpy(ti->name, name, sizeof(ti->name));
+	} else {
+		snprintf(ti->name, sizeof(ti->name), "%d", task_count);
+	}
 	RUNTIME_CHECK(isc_task_create(task_manager, 0, &ti->task) ==
 		      ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_onshutdown(ti->task, shutdown_action, ti) ==

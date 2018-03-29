@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001, 2004, 2005, 2007, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2004, 2005, 2007, 2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,7 +109,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_rwlock_init(&lock, 5, 10) == ISC_R_SUCCESS);
 
 	for (i = 0; i < nworkers; i++) {
-		sprintf(name, "%02u", i);
+		snprintf(name, sizeof(name), "%02u", i);
 		dupname = strdup(name);
 		RUNTIME_CHECK(dupname != NULL);
 		if (i != 0 && i % 3 == 0)

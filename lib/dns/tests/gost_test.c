@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,11 +48,9 @@
 unsigned char digest[ISC_GOST_DIGESTLENGTH];
 unsigned char buffer[1024];
 const char *s;
-char str[2 * ISC_GOST_DIGESTLENGTH + 1];
+char str[2 * ISC_GOST_DIGESTLENGTH + 3];
 int i = 0;
 
-isc_result_t
-tohexstr(unsigned char *d, unsigned int len, char *out);
 /*
  * Precondition: a hexadecimal number in *d, the length of that number in len,
  *   and a pointer to a character array to put the output (*out).
@@ -63,19 +61,17 @@ tohexstr(unsigned char *d, unsigned int len, char *out);
  *
  * Return values: ISC_R_SUCCESS if the operation is sucessful
  */
-
-isc_result_t
-tohexstr(unsigned char *d, unsigned int len, char *out) {
-
-	out[0]='\0';
+static isc_result_t
+tohexstr(unsigned char *d, unsigned int len, char *out, size_t out_size) {
 	char c_ret[] = "AA";
 	unsigned int j;
-	strcat(out, "0x");
+
+	out[0] = '\0';
+	strlcat(out, "0x", out_size);
 	for (j = 0; j < len; j++) {
-		sprintf(c_ret, "%02X", d[j]);
-		strcat(out, c_ret);
+		snprintf(c_ret, sizeof(c_ret), "%02X", d[j]);
+		strlcat(out, c_ret, out_size);
 	}
-	strcat(out, "\0");
 	return (ISC_R_SUCCESS);
 }
 
@@ -208,7 +204,7 @@ ATF_TC_BODY(isc_gost_md, tc) {
 		}
 		result = isc_gost_final(&gost, digest);
 		ATF_REQUIRE(result == ISC_R_SUCCESS);
-		tohexstr(digest, ISC_GOST_DIGESTLENGTH, str);
+		tohexstr(digest, ISC_GOST_DIGESTLENGTH, str, sizeof(str));
 		ATF_CHECK_STREQ(str, testcase->result);
 
 		testcase++;

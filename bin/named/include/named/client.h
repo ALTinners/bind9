@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2009, 2011-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -134,6 +134,7 @@ struct ns_client {
 	isc_sockaddr_t		peeraddr;
 	isc_boolean_t		peeraddr_valid;
 	isc_netaddr_t		destaddr;
+	isc_sockaddr_t		destsockaddr;
 
 	isc_netaddr_t		ecs_addr;	/*%< EDNS client subnet */
 	isc_uint8_t		ecs_addrlen;
@@ -162,6 +163,8 @@ struct ns_client {
 	ISC_QLINK(ns_client_t)	ilink;
 	unsigned char		cookie[8];
 	isc_uint32_t		expire;
+	unsigned char		*keytag;
+	isc_uint16_t		keytag_len;
 };
 
 typedef ISC_QUEUE(ns_client_t) client_queue_t;
@@ -300,6 +303,13 @@ isc_sockaddr_t *
 ns_client_getsockaddr(ns_client_t *client);
 /*%
  * Get the socket address of the client whose request is
+ * currently being processed.
+ */
+
+isc_sockaddr_t *
+ns_client_getdestaddr(ns_client_t *client);
+/*%<
+ * Get the destination address (server) for the request that is
  * currently being processed.
  */
 

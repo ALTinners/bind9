@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001, 2004-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2004-2007, 2009, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,7 @@
 
 typedef struct {
 	HMAC_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	HMAC_CTX _ctx;
 #endif
 } isc_hmacmd5_t;
@@ -72,6 +72,9 @@ isc_hmacmd5_verify(isc_hmacmd5_t *ctx, unsigned char *digest);
 
 isc_boolean_t
 isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len);
+
+isc_boolean_t
+isc_hmacmd5_check(int testing);
 
 ISC_LANG_ENDDECLS
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,7 @@ usage() {
 	fprintf(stderr, "	--rpz-nsdname\n");
 	fprintf(stderr, "	--rpz-nsip\n");
 	fprintf(stderr, "	--with-idn\n");
+	fprintf(stderr, "	--with-lmdb\n");
 }
 
 int
@@ -150,6 +151,14 @@ main(int argc, char **argv) {
 
 	if (strcmp(argv[1], "--with-idn") == 0) {
 #ifdef WITH_IDN
+		return (0);
+#else
+		return (1);
+#endif
+	}
+
+	if (strcmp(argv[1], "--with-lmdb") == 0) {
+#ifdef HAVE_LMDB
 		return (0);
 #else
 		return (1);

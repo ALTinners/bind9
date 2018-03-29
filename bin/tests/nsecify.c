@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2003, 2004, 2007-2009, 2011, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003, 2004, 2007-2009, 2011, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,7 +179,7 @@ nsecify(char *filename) {
 	len = strlen(filename);
 	if (len + 4 + 1 > sizeof(newfilename))
 		fatal("filename too long");
-	sprintf(newfilename, "%s.new", filename);
+	snprintf(newfilename, sizeof(newfilename), "%s.new", filename);
 	result = dns_db_dump(db, NULL, newfilename);
 	check_result(result, "dns_db_dump");
 	dns_db_detach(&db);

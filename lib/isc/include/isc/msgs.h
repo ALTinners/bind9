@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2009, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -121,6 +121,7 @@
 #define ISC_MSG_POSTLOCK       1207 /*%< "postlock" */
 #define ISC_MSG_PREUNLOCK      1208 /*%< "preunlock" */
 #define ISC_MSG_POSTUNLOCK     1209 /*%< "postunlock" */
+#define ISC_MSG_PRINTLOCK2     1210 /*%< "rwlock %p thread %lu ..." w/ atomic */
 
 #define ISC_MSG_UNKNOWNFAMILY  1301 /*%< "unknown address family: %d" */
 

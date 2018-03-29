@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002, 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002, 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -119,6 +119,7 @@ static isc_logcategory_t categories[] = {
 	{ "unmatched", 	     0 },
 	{ "update-security", 0 },
 	{ "query-errors",    0 },
+	{ "trust-anchor-telemetry",    0 },
 	{ NULL,		     0 }
 };
 
@@ -209,8 +210,9 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 	/*
 	 * Turn off search.
 	 */
-	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+	if (dns_name_countlabels(name) > 1U) {
+		strlcat(namebuf, ".", sizeof(namebuf));
+	}
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
@@ -398,8 +400,9 @@ checkmx(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	/*
 	 * Turn off search.
 	 */
-	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+	if (dns_name_countlabels(name) > 1U) {
+		strlcat(namebuf, ".", sizeof(namebuf));
+	}
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
@@ -483,8 +486,9 @@ checksrv(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	/*
 	 * Turn off search.
 	 */
-	if (dns_name_countlabels(name) > 1U)
-		strcat(namebuf, ".");
+	if (dns_name_countlabels(name) > 1U) {
+		strlcat(namebuf, ".", sizeof(namebuf));
+	}
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
 
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);

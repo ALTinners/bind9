@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,7 @@ managed-keys {
 EOF
 ' > managed.conf
 cp managed.conf ../ns2/managed.conf
+cp managed.conf ../ns5/managed.conf
 
 # Configure a trusted key statement (used by delve)
 cat $keyname.key | grep -v '^; ' | $PERL -n -e '

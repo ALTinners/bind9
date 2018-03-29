@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2004, 2005, 2007, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2004, 2005, 2007, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -159,8 +159,8 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 	 */
 	if (source->length > sizeof(buf) - 1)
 		return (DNS_R_SYNTAX);
-	strncpy(buf, source->base, source->length);
-	buf[source->length] = '\0';
+	/* Copy source->length bytes and NUL terminate. */
+	snprintf(buf, sizeof(buf), "%.*s", (int)source->length, source->base);
 	s = buf;
 
 	do {

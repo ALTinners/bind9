@@ -6,19 +6,17 @@ Subject: Add_--install-layout=deb_to_setup.py_call
  bin/python/Makefile.in | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/bin/python/Makefile.in b/bin/python/Makefile.in
-index a064c74..78d43d3 100644
 --- a/bin/python/Makefile.in
 +++ b/bin/python/Makefile.in
-@@ -53,9 +53,9 @@ install:: ${TARGETS} installdirs
+@@ -53,9 +53,9 @@
  	${INSTALL_DATA} ${srcdir}/dnssec-keymgr.8 ${DESTDIR}${mandir}/man8
  	if test -n "${PYTHON}" ; then \
  		if test -n "${DESTDIR}" ; then \
--			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} ; \
-+			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} --install-layout=deb ; \
+-			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} @PYTHON_INSTALL_LIB@ ; \
++			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} --install-layout=deb @PYTHON_INSTALL_LIB@ ; \
  		else \
--			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} ; \
-+			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} --install-layout=deb ; \
- 		fi \
+-			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} @PYTHON_INSTALL_LIB@ ; \
++			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} --install-layout=deb @PYTHON_INSTALL_LIB@ ; \
+ 		fi ; \
+ 		rm -rf build ; \
  	fi
- 

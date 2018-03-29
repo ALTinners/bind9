@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2003-2005, 2007, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003-2005, 2007, 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -497,7 +497,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 #else
 			INSIST("long doubles are not supported" == NULL);
 #endif
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 		case 'e':
 		case 'E':
 		case 'f':

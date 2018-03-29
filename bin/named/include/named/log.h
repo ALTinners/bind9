@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002, 2004, 2005, 2007, 2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002, 2004, 2005, 2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,7 @@
 #define NS_LOGCATEGORY_UNMATCHED	(&ns_g_categories[5])
 #define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_g_categories[6])
 #define NS_LOGCATEGORY_QUERY_ERRORS	(&ns_g_categories[7])
+#define NS_LOGCATEGORY_TAT		(&ns_g_categories[8])
 
 /*
  * Backwards compatibility.

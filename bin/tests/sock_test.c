@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001, 2004, 2007, 2008, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2004, 2007, 2008, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,8 +16,9 @@
 
 #include <isc/mem.h>
 #include <isc/print.h>
-#include <isc/task.h>
 #include <isc/socket.h>
+#include <isc/string.h>
+#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
@@ -101,12 +102,12 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	 */
 	if (strcmp(event->ev_arg, "so2") != 0) {
 		region = dev->region;
-		sprintf(buf, "\r\nReceived: %.*s\r\n\r\n",
-			(int)dev->n, (char *)region.base);
+		snprintf(buf, sizeof(buf), "\r\nReceived: %.*s\r\n\r\n",
+			 (int)dev->n, (char *)region.base);
 		region.base = isc_mem_get(mctx, strlen(buf) + 1);
 		if (region.base != NULL) {
 			region.length = strlen(buf) + 1;
-			strcpy((char *)region.base, buf);  /* strcpy is safe */
+			strlcpy((char *)region.base, buf, region.length);
 		} else
 			region.length = 0;
 		isc_socket_send(sock, &region, task, my_send, event->ev_arg);
@@ -173,14 +174,16 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 	 * Send a GET string, and set up to receive (and just display)
 	 * the result.
 	 */
-	strcpy(buf, "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
-	       "Connection: Close\r\n\r\n");
+	snprintf(buf, sizeof(buf),
+		 "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
+		 "Connection: Close\r\n\r\n");
 	region.base = isc_mem_get(mctx, strlen(buf) + 1);
 	if (region.base != NULL) {
 		region.length = strlen(buf) + 1;
-		strcpy((char *)region.base, buf);  /* This strcpy is safe. */
-	} else
+		strlcpy((char *)region.base, buf, region.length);
+	} else {
 		region.length = 0;
+	}
 
 	isc_socket_send(sock, &region, task, my_http_get, event->ev_arg);
 

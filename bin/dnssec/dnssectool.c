@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001, 2003-2005, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2003-2005, 2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1835,7 +1835,7 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 		for (i = 0; i < 256; i++) {
 			if ((ksk_algorithms[i] != 0) ||
 			    (standby_ksk[i] != 0) ||
-			    (revoked_zsk[i] != 0) ||
+			    (revoked_ksk[i] != 0) ||
 			    (zsk_algorithms[i] != 0) ||
 			    (standby_zsk[i] != 0) ||
 			    (revoked_zsk[i] != 0)) {
