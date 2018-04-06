@@ -29,6 +29,9 @@
   # ssl
   /etc/ssl/openssl.cnf r,
 
+  # root hints from dns-data-root
+  /usr/share/dns/root.* r
+
   # GeoIP data files for GeoIP ACLs
   /usr/share/GeoIP/** r,
 
