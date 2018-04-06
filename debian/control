@@ -36,6 +36,7 @@ Architecture: any
 Depends: adduser,
          bind9utils (= ${binary:Version}),
          debconf | debconf-2.0,
+         dns-root-data,
          libbind9-160 (= ${binary:Version}),
          libdns1100 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
