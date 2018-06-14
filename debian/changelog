@@ -1,3 +1,11 @@
+bind9 (1:9.11.3+dfsg-2) unstable; urgency=medium
+
+  * [CVE-2018-5738]: Add upstream fix to close the default open recursion
+    (Closes: #901483)
+  * Change the maintainer address (Closes: #899959)
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 14 Jun 2018 13:01:47 +0000
+
 bind9 (1:9.11.3+dfsg-1) unstable; urgency=medium
 
   [ Bernhard Schmidt ]
