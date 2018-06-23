@@ -1,10 +1,10 @@
-bind9 (1:9.11.3+dfsg-1~bpo9+1) stretch-backports; urgency=medium
+bind9 (1:9.11.3+dfsg-2) unstable; urgency=medium
 
-  * Rebuild for stretch-backports.
-  * Revert "Add python3-distutils Build-Dependency", this is not a
-    seperate package in Stretch.
+  * [CVE-2018-5738]: Add upstream fix to close the default open recursion
+    (Closes: #901483)
+  * Change the maintainer address (Closes: #899959)
 
- -- Bernhard Schmidt <berni@debian.org>  Thu, 29 Mar 2018 08:52:44 +0200
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 14 Jun 2018 13:01:47 +0000
 
 bind9 (1:9.11.3+dfsg-1) unstable; urgency=medium
 
