@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef NAMED_SERVER_H
@@ -119,13 +122,20 @@ struct ns_server {
 	isc_uint16_t		session_keybits;
 	isc_boolean_t		interface_auto;
 	unsigned char		secret[32];	/*%< Server Cookie Secret */
+	ns_altsecretlist_t	altsecrets;
 	ns_cookiealg_t		cookiealg;
+	isc_boolean_t		answercookie;
 
 	dns_dtenv_t		*dtenv;		/*%< Dnstap environment */
 
 	char *			lockfile;
 
 	isc_uint16_t		transfer_tcp_message_size;
+};
+
+struct ns_altsecret {
+	ISC_LINK(ns_altsecret_t) link;
+	unsigned char		secret[32];
 };
 
 #define NS_SERVER_MAGIC			ISC_MAGIC('S','V','E','R')

@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 1999-2001, 2004-2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: types.h,v 1.31 2009/01/09 23:47:45 tbox Exp $ */
 
 #ifndef NAMED_TYPES_H
 #define NAMED_TYPES_H 1
@@ -36,6 +37,8 @@ typedef struct ns_dispatch		ns_dispatch_t;
 typedef ISC_LIST(ns_dispatch_t)		ns_dispatchlist_t;
 typedef struct ns_statschannel		ns_statschannel_t;
 typedef ISC_LIST(ns_statschannel_t)	ns_statschannellist_t;
+typedef struct ns_altsecret		ns_altsecret_t;
+typedef ISC_LIST(ns_altsecret_t)	ns_altsecretlist_t;
 
 typedef enum {
 	ns_cookiealg_aes,

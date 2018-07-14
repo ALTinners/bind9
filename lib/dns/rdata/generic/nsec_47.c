@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2003, 2004, 2007-2009, 2011, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: nsec_47.c,v 1.15 2011/01/13 04:59:26 tbox Exp $ */
-
-/* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
 /* RFC 3845 */
 
@@ -62,6 +61,12 @@ totext_nsec(ARGS_TOTEXT) {
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
 	RETERR(dns_name_totext(&name, ISC_FALSE, target));
+	/*
+	 * Don't leave a trailing space when there's no typemap present.
+	 */
+	if (sr.length > 0) {
+		RETERR(str_totext(" ", target));
+	}
 	return (typemap_totext(&sr, NULL, target));
 }
 

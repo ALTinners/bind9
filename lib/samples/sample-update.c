@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2009, 2010, 2012-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: sample-update.c,v 1.10 2010/12/09 00:54:34 marka Exp $ */
 
 #include <config.h>
 
@@ -236,7 +238,7 @@ main(int argc, char *argv[]) {
 	isc_lib_register();
 	result = dns_lib_init();
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_lib_init failed: %d\n", result);
+		fprintf(stderr, "dns_lib_init failed: %u\n", result);
 		exit(1);
 	}
 	result = isc_mem_create(0, 0, &umctx);
@@ -247,7 +249,7 @@ main(int argc, char *argv[]) {
 
 	result = dns_client_create(&client, 0);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_client_create failed: %d\n", result);
+		fprintf(stderr, "dns_client_create failed: %u\n", result);
 		exit(1);
 	}
 
@@ -257,18 +259,16 @@ main(int argc, char *argv[]) {
 		namelen = strlen(zonenamestr);
 		isc_buffer_init(&b, zonenamestr, namelen);
 		isc_buffer_add(&b, namelen);
-		dns_fixedname_init(&zname0);
-		zname = dns_fixedname_name(&zname0);
+		zname = dns_fixedname_initname(&zname0);
 		result = dns_name_fromtext(zname, &b, dns_rootname, 0, NULL);
 		if (result != ISC_R_SUCCESS)
-			fprintf(stderr, "failed to convert zone name: %d\n",
+			fprintf(stderr, "failed to convert zone name: %u\n",
 				result);
 	}
 
 	/* Construct prerequisite name (if given) */
 	if (prereqstr != NULL) {
-		dns_fixedname_init(&pname0);
-		pname = dns_fixedname_name(&pname0);
+		pname = dns_fixedname_initname(&pname0);
 		evaluate_prereq(umctx, prereqstr, pname);
 		ISC_LIST_APPEND(prereqlist, pname, link);
 		prereqlistp = &prereqlist;
@@ -276,8 +276,7 @@ main(int argc, char *argv[]) {
 
 	/* Construct update name */
 	ISC_LIST_INIT(updatelist);
-	dns_fixedname_init(&uname0);
-	uname = dns_fixedname_name(&uname0);
+	uname = dns_fixedname_initname(&uname0);
 	update_addordelete(umctx, argv[1], isdelete, uname);
 	ISC_LIST_APPEND(updatelist, uname, link);
 

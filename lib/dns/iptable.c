@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2007-2009, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -83,16 +86,17 @@ dns_iptable_addprefix2(dns_iptable_t *tab, isc_netaddr_t *addr,
 	if (pfx.family == AF_UNSPEC) {
 		/* "any" or "none" */
 		INSIST(pfx.bitlen == 0);
-		for (i = 0; i < 4; i++) {
-			if (node->data[i] == NULL)
+		for (i = 0; i < RADIX_FAMILIES; i++) {
+			if (node->data[i] == NULL) {
 				node->data[i] = pos ? &dns_iptable_pos
 						    : &dns_iptable_neg;
+			}
 		}
 	} else {
 		/* any other prefix */
-		int offset = ISC_RADIX_OFF(&pfx);
-		if (node->data[offset] == NULL) {
-			node->data[offset] = pos ? &dns_iptable_pos
+		int fam = ISC_RADIX_FAMILY(&pfx);
+		if (node->data[fam] == NULL) {
+			node->data[fam] = pos ? &dns_iptable_pos
 						 : &dns_iptable_neg;
 		}
 	}
@@ -126,7 +130,7 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos)
 		 * could be a security risk.  To prevent this, we
 		 * just leave the negative nodes negative.
 		 */
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < RADIX_FAMILIES; i++) {
 			if (!pos) {
 				if (node->data[i] &&
 				    *(isc_boolean_t *) node->data[i])

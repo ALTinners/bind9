@@ -1,10 +1,13 @@
 #!/bin/sh
 #
-# Copyright (C) 2000-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -72,20 +75,41 @@ KRB5_CONFIG=/dev/null
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
-# v6synth
-SUBDIRS="acl additional addzone allow_query autosign builtin
-	 cacheclean case catz chain checkconf @CHECKDS@ checknames checkzone
-	 cookie @COVERAGE@ database digdelv dlv dlz dlzexternal
-	 dns64 dnssec @DNSTAP@ dscp dsdigest dyndb ecdsa eddsa
-	 ednscompliance emptyzones fetchlimit filter-aaaa formerr
-	 forward geoip glue gost inline integrity ixfr @KEYMGR@
-	 legacy limits logfileconfig lwresd masterfile masterformat
-	 metadata mkeys names notify nslookup nsupdate nzd2nzf
-	 pending @PKCS11_TEST@ pipelined reclimit redirect resolver
-	 rndc rpz rpzrecurse rrchecker rrl rrsetorder rsabigexponent
-	 runtime sfcache smartsign sortlist spf staticstub statistics
-	 statschannel stub tcp tkey tsig tsiggss unknown upforwd
-	 verify views wildcard xfer xferquota zero zonechecks"
+# The "dialup", "delzone", and "dupsigs" tests are also not run by
+# default because they take a very long time to complete.
+#
+# List of tests hard-coded to use ports 5300 and 9953. For this
+# reason, these must be run sequentially.
+SEQUENTIALDIRS="ecdsa eddsa gost lwresd @PKCS11_TEST@ tkey"
+
+# List of tests that use ports assigned by caller (other than 5300
+# and 9953). Because separate blocks of ports can be used for teach
+# test, these tests can be run in parallel.
+#
+# This symbol must be kept in step with the PARALLEL macro in Makefile.in
+PARALLELDIRS="acl additional addzone allow-query autosign \
+	builtin cacheclean case catz chain \
+	checkconf checknames checkzone \
+	@CHECKDS@ @COVERAGE@ @KEYMGR@ \
+	cookie database digdelv dlv dlz dlzexternal \
+	dns64 dnssec @DNSTAP@ dscp dsdigest dyndb \
+	ednscompliance emptyzones \
+	fetchlimit filter-aaaa formerr forward \
+	geoip glue idna inline integrity ixfr \
+	legacy limits logfileconfig lwresd \
+        masterfile masterformat metadata mkeys \
+        names notify nslookup nsupdate nzd2nzf \
+        pending pipelined \
+        reclimit redirect resolver rndc rootkeysentinel rpz rpzrecurse \
+        rrchecker rrl rrsetorder rsabigexponent runtime \
+        sfcache smartsign sortlist \
+        spf staticstub statistics statschannel stub \
+        tcp tools tsig tsiggss \
+        unknown upforwd verify views wildcard \
+        xfer xferquota zero zonechecks"
+
+SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
+
 
 # Things that are different on Windows
 KILL=kill
@@ -141,19 +165,23 @@ NZD=@NZD_TOOLS@
 #
 # Set up color-coded test output
 #
-if test -t 1 && type tput > /dev/null 2>&1 ; then
+if [ ${SYSTEMTEST_FORCE_COLOR:-0} -eq 1 ] || test -t 1 && type tput > /dev/null 2>&1 && tput setaf 7 > /dev/null 2>&1 ; then
+    COLOR_END=`tput setaf 4`    # blue
     COLOR_FAIL=`tput setaf 1`   # red
-    COLOR_WARN=`tput setaf 3`   # yellow
-    COLOR_PASS=`tput setaf 2`   # green
     COLOR_INFO=`tput bold`      # bold
     COLOR_NONE=`tput sgr0`
+    COLOR_PASS=`tput setaf 2`   # green
+    COLOR_START=`tput setaf 4`  # blue
+    COLOR_WARN=`tput setaf 3`   # yellow
 else
     # set to empty strings so printf succeeds
+    COLOR_END=''
     COLOR_FAIL=''
-    COLOR_WARN=''
-    COLOR_PASS=''
     COLOR_INFO=''
     COLOR_NONE=''
+    COLOR_PASS=''
+    COLOR_START=''
+    COLOR_WARN=''
 fi
 
 if type printf > /dev/null 2>&1
@@ -170,6 +198,12 @@ then
 	echoinfo () {
 		printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
 	}
+	echostart () {
+		printf "${COLOR_START}%s${COLOR_NONE}\n" "$*"
+	}
+	echoend () {
+		printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
+	}
 else
 	echofail () {
 		echo "$*"
@@ -183,11 +217,79 @@ else
 	echoinfo () {
 		echo "$*"
 	}
+	echostart () {
+		echo "$*"
+	}
+	echoend () {
+		echo "$*"
+	}
 fi
+
+SYSTESTDIR="`basename $PWD`"
+
+echo_i() {
+    echo "$@" | while read LINE ; do
+       echoinfo "I:$SYSTESTDIR:$LINE"
+    done
+}
+
+echo_ic() {
+    echo "$@" | while read LINE ; do
+       echoinfo "I:$SYSTESTDIR:  $LINE"
+    done
+}
+
+cat_i() {
+    while read LINE ; do
+       echoinfo "I:$SYSTESTDIR:$LINE"
+    done
+}
+
+digcomp() {
+    output=`$PERL $SYSTEMTESTTOP/digcomp.pl "$@"`
+    result=$?
+    [ -n "$output" ] &&  { echo "digcomp failed:"; echo "$output"; } | cat_i
+    return $result
+}
 
 #
 # Useful functions in test scripts
 #
+
+# keyfile_to_keys_section: helper function for keyfile_to_*_keys() which
+# converts keyfile data into a configuration section using the supplied
+# parameters
+keyfile_to_keys_section() {
+    section_name=$1
+    key_prefix=$2
+    shift
+    shift
+    echo "$section_name {"
+    for keyname in $*; do
+        awk '!/^; /{
+            printf "\t\""$1"\" "
+            printf "'"$key_prefix"'"
+            printf $4 " " $5 " " $6 " \""
+            for (i=7; i<=NF; i++) printf $i
+            printf "\";\n"
+        }' $keyname.key
+    done
+    echo "};"
+}
+
+# keyfile_to_trusted_keys: convert key data contained in the keyfile(s)
+# provided to a "trusted-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_trusted_keys() {
+    keyfile_to_keys_section "trusted-keys" "" $*
+}
+
+# keyfile_to_managed_keys: convert key data contained in the keyfile(s)
+# provided to a "managed-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_managed_keys() {
+    keyfile_to_keys_section "managed-keys" "initial-key " $*
+}
 
 # nextpart: read everything that's been appended to a file since the
 # last time 'nextpart' was called.
@@ -196,6 +298,29 @@ nextpart () {
     prev=`cat $1.prev`
     awk "NR > $prev "'{ print }
          END          { print NR > "/dev/stderr" }' $1 2> $1.prev
+}
+
+# copy_setports - Copy Configuration File and Replace Ports
+#
+# Convenience function to copy a configuration file, replacing the tokens
+# QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
+# environment variables. (These values are set by "run.sh", which calls the
+# scripts invoking this function.)
+#
+# Usage:
+#   copy_setports infile outfile
+
+copy_setports() {
+    sed -e "s/@PORT@/${PORT}/g" \
+        -e "s/@EXTRAPORT1@/${EXTRAPORT1}/g" \
+        -e "s/@EXTRAPORT2@/${EXTRAPORT2}/g" \
+        -e "s/@EXTRAPORT3@/${EXTRAPORT3}/g" \
+        -e "s/@EXTRAPORT4@/${EXTRAPORT4}/g" \
+        -e "s/@EXTRAPORT5@/${EXTRAPORT5}/g" \
+        -e "s/@EXTRAPORT6@/${EXTRAPORT6}/g" \
+        -e "s/@EXTRAPORT7@/${EXTRAPORT7}/g" \
+        -e "s/@EXTRAPORT8@/${EXTRAPORT8}/g" \
+        -e "s/@CONTROLPORT@/${CONTROLPORT}/g" $1 > $2
 }
 
 #

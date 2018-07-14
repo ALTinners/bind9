@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2003-2007, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: portlist.h,v 1.9 2007/06/19 23:47:17 tbox Exp $ */
 
 /*! \file dns/portlist.h */
 
@@ -15,6 +16,9 @@
 #include <isc/types.h>
 
 #include <dns/types.h>
+
+#ifndef DNS_PORTLIST_H
+#define DNS_PORTLIST_H 1
 
 ISC_LANG_BEGINDECLS
 
@@ -90,3 +94,5 @@ dns_portlist_detach(dns_portlist_t **portlistp);
  */
 
 ISC_LANG_ENDDECLS
+
+#endif /* DNS_PORTLIST_H */

@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2006, 2008, 2009, 2011, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: nsec3hash.c,v 1.8 2011/11/02 23:46:24 tbox Exp $ */
 
 #include <config.h>
 
@@ -93,8 +94,7 @@ main(int argc, char **argv) {
 	if (iterations > 0xffffU)
 		fatal("iterations to large");
 
-	dns_fixedname_init(&fixed);
-	name = dns_fixedname_name(&fixed);
+	name = dns_fixedname_initname(&fixed);
 	isc_buffer_init(&buffer, argv[4], strlen(argv[4]));
 	isc_buffer_add(&buffer, strlen(argv[4]));
 	result = dns_name_fromtext(name, &buffer, dns_rootname, 0, NULL);

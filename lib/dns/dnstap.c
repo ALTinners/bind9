@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2015-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*
@@ -1195,7 +1198,7 @@ dns_dt_datatotext(dns_dtdata_t *d, isc_buffer_t **dest) {
 
 	/* Message size */
 	if (d->msgdata.base != NULL) {
-		snprintf(buf, sizeof(buf), "%zdb ", (size_t) d->msgdata.length);
+		snprintf(buf, sizeof(buf), "%zub ", (size_t) d->msgdata.length);
 		CHECK(putstr(dest, buf));
 	} else
 		CHECK(putstr(dest, "0b "));

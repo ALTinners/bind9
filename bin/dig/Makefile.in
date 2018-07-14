@@ -1,8 +1,11 @@
-# Copyright (C) 2000-2002, 2004, 2005, 2007, 2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -16,7 +19,7 @@ READLINE_LIB = @READLINE_LIB@
 
 CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} \
 		${BIND9_INCLUDES} ${ISC_INCLUDES} \
-		${LWRES_INCLUDES} ${ISCCFG_INCLUDES} @DST_OPENSSL_INC@
+		${LWRES_INCLUDES} ${ISCCFG_INCLUDES} @LIBIDN2_CFLAGS@ @DST_OPENSSL_INC@
 
 CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@
 CWARNINGS =
@@ -38,10 +41,10 @@ DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} \
 		${ISCCFGDEPLIBS} ${LWRESDEPLIBS}
 
 LIBS =		${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
-		${ISCLIBS} @IDNLIBS@ @LIBS@
+		${ISCLIBS} @IDNKIT_LIBS@ @LIBIDN2_LIBS@ @LIBS@
 
 NOSYMLIBS =	${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
-		${ISCNOSYMLIBS} @IDNLIBS@ @LIBS@
+		${ISCNOSYMLIBS} @IDNKIT_LIBS@ @LIBIDN2_LIBS@ @LIBS@
 
 SUBDIRS =
 

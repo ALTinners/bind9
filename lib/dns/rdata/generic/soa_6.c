@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 1998-2002, 2004, 2007, 2009, 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id$ */
-
-/* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
 #ifndef RDATA_GENERIC_SOA_6_C
 #define RDATA_GENERIC_SOA_6_C

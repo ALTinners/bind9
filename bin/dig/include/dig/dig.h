@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2000-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef DIG_H
@@ -130,6 +133,7 @@ struct dig_lookup {
 		ednsneg,
 		mapped,
 		print_unknown_format,
+		idnin,
 		idnout;
 #ifdef DIG_SIGCHASE
 isc_boolean_t	sigchase;
@@ -280,7 +284,7 @@ extern unsigned int digestbits;
 #ifdef DIG_SIGCHASE
 extern char trustedkey[MXNAME];
 #endif
-extern dns_tsigkey_t *key;
+extern dns_tsigkey_t *tsigkey;
 extern isc_boolean_t validated;
 extern isc_taskmgr_t *taskmgr;
 extern isc_task_t *global_task;
@@ -292,7 +296,7 @@ extern char *progname;
 extern int tries;
 extern int fatalexit;
 extern isc_boolean_t verbose;
-#ifdef WITH_IDN
+#ifdef WITH_IDNKIT
 extern int idnoptions;
 #endif
 
@@ -413,7 +417,7 @@ extern isc_result_t
  */
 
 extern void
-(*dighost_received)(int bytes, isc_sockaddr_t *from, dig_query_t *query);
+(*dighost_received)(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query);
 /*%<
  * Print a message about where and when the response
  * was received from, like the final comment in the

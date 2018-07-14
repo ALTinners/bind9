@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2002-2011, 2013-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef ISCCFG_GRAMMAR_H
@@ -49,6 +52,8 @@
 /*% A configuration option that is ineffective due to
  * compile time options, but is harmless. */
 #define CFG_CLAUSEFLAG_NOOP		0x00000200
+/*% Clause is obsolete in a future release */
+#define CFG_CLAUSEFLAG_DEPRECATED	0x00000400
 
 /*%
  * Zone types for which a clause is valid:
@@ -249,6 +254,7 @@ struct cfg_parser {
 
 /* Parser context flags */
 #define CFG_PCTX_SKIP		0x1
+#define CFG_PCTX_NODEPRECATED	0x2
 
 /*@{*/
 /*%

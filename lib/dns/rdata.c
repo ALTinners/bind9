@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1998-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 /*! \file */
 
@@ -93,7 +95,7 @@
 #define ARGS_FROMSTRUCT	int rdclass, dns_rdatatype_t type, \
 			void *source, isc_buffer_t *target
 
-#define ARGS_TOSTRUCT	dns_rdata_t *rdata, void *target, isc_mem_t *mctx
+#define ARGS_TOSTRUCT	const dns_rdata_t *rdata, void *target, isc_mem_t *mctx
 
 #define ARGS_FREESTRUCT void *source
 
@@ -486,7 +488,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 {
 	unsigned int i, j, k;
 	unsigned int window, len;
-	isc_boolean_t first = ISC_FALSE;
+	isc_boolean_t first = ISC_TRUE;
 
 	for (i = 0; i < sr->length; i += len) {
 		if (tctx != NULL &&
@@ -1200,7 +1202,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 }
 
 isc_result_t
-dns_rdata_tostruct(dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
+dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_boolean_t use_default = ISC_FALSE;
 
@@ -1456,6 +1458,7 @@ txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target) {
 			return (ISC_R_NOSPACE);
 		*tp++ = '"';
 		tl--;
+		POST(tl);
 	}
 	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
 	isc_region_consume(source, *source->base + 1);
@@ -1606,6 +1609,7 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	*tp++ = '"';
 	tl--;
+	POST(tl);
 	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
 	return (ISC_R_SUCCESS);
 }

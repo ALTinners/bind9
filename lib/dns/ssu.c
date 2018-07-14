@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2000, 2001, 2003-2008, 2010, 2011, 2013, 2014, 2016-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
-/*
- * $Id: ssu.c,v 1.38 2011/01/06 23:47:00 tbox Exp $
- * Principal Author: Brian Wellington
- */
 
 #include <config.h>
 
@@ -453,8 +452,7 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			break;
 		case DNS_SSUMATCHTYPE_SELFWILD:
-			dns_fixedname_init(&fixed);
-			wildcard = dns_fixedname_name(&fixed);
+			wildcard = dns_fixedname_initname(&fixed);
 			result = dns_name_concatenate(dns_wildcardname, signer,
 						      wildcard, NULL);
 			if (result != ISC_R_SUCCESS)
@@ -487,8 +485,7 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			break;
 		case DNS_SSUMATCHTYPE_TCPSELF:
-			dns_fixedname_init(&fixed);
-			tcpself = dns_fixedname_name(&fixed);
+			tcpself = dns_fixedname_initname(&fixed);
 			reverse_from_address(tcpself, addr);
 			if (dns_name_iswildcard(rule->identity)) {
 				if (!dns_name_matcheswildcard(tcpself,
@@ -502,8 +499,7 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			break;
 		case DNS_SSUMATCHTYPE_6TO4SELF:
-			dns_fixedname_init(&fixed);
-			stfself = dns_fixedname_name(&fixed);
+			stfself = dns_fixedname_initname(&fixed);
 			stf_from_address(stfself, addr);
 			if (dns_name_iswildcard(rule->identity)) {
 				if (!dns_name_matcheswildcard(stfself,

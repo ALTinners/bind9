@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2009, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*
@@ -30,7 +33,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: pkcs11-list.c,v 1.7 2009/10/26 23:36:53 each Exp $ */
 
 /* pkcs11-list [-P] [-m module] [-s slot] [-i $id | -l $label] [-p $pin] */
 
@@ -125,7 +127,7 @@ main(int argc, char *argv[]) {
 		printf("slot %lu\n", slot);
 
 	if (id) {
-		printf("id %i\n", id);
+		printf("id %u\n", id);
 		attr_id[0] = (id >> 8) & 0xff;
 		attr_id[1] = id & 0xff;
 	} else if (label != NULL) {

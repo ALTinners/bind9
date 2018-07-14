@@ -1,16 +1,20 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 rm -f */K* */dsset-* */*.signed */trusted.conf */tmp* */*.jnl */*.bk
 rm -f */core
 rm -f */example.bk
 rm -f */named.memstats
 rm -f */named.run
+rm -f */named.conf
 rm -f activate-now-publish-1day.key
 rm -f active.key inact.key del.key unpub.key standby.key rev.key
 rm -f delayksk.key delayzsk.key autoksk.key autozsk.key

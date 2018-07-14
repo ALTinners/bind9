@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /* ! \file */
@@ -269,8 +272,7 @@ ATF_TC_BODY(tsig_tcp, tc) {
 
 	/* isc_log_setdebuglevel(lctx, 99); */
 
-	dns_fixedname_init(&fkeyname);
-	keyname = dns_fixedname_name(&fkeyname);
+	keyname = dns_fixedname_initname(&fkeyname);
 	result = dns_name_fromstring(keyname, "test", 0, NULL);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 

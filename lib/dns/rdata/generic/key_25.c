@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 1999-2005, 2007, 2009, 2011-2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- */
-
-/* $Id$ */
-
-/*
- * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /* RFC2535 */

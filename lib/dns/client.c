@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2009-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -847,8 +850,7 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 		want_restart = ISC_FALSE;
 
 		if (event == NULL && !rctx->canceled) {
-			dns_fixedname_init(&foundname);
-			fname = dns_fixedname_name(&foundname);
+			fname = dns_fixedname_initname(&foundname);
 			INSIST(!dns_rdataset_isassociated(rctx->rdataset));
 			INSIST(rctx->sigrdataset == NULL ||
 			       !dns_rdataset_isassociated(rctx->sigrdataset));
@@ -991,8 +993,7 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 			/*
 			 * Construct the new query name and start over.
 			 */
-			dns_fixedname_init(&fixed);
-			prefix = dns_fixedname_name(&fixed);
+			prefix = dns_fixedname_initname(&fixed);
 			dns_name_split(name, nlabels, prefix, NULL);
 			tresult = dns_name_concatenate(prefix, &dname.dname,
 						      name, NULL);

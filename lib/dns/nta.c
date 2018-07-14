@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2014-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -326,8 +329,7 @@ nta_create(dns_ntatable_t *ntatable, dns_name_t *name, dns_nta_t **target) {
 		return (result);
 	}
 
-	dns_fixedname_init(&nta->fn);
-	nta->name = dns_fixedname_name(&nta->fn);
+	nta->name = dns_fixedname_initname(&nta->fn);
 	dns_name_copy(name, nta->name, NULL);
 
 	nta->magic = NTA_MAGIC;
@@ -442,8 +444,7 @@ dns_ntatable_covered(dns_ntatable_t *ntatable, isc_stdtime_t now,
 	if (ntatable == NULL)
 		return (ISC_FALSE);
 
-	dns_fixedname_init(&fn);
-	foundname = dns_fixedname_name(&fn);
+	foundname = dns_fixedname_initname(&fn);
 
  relock:
 	RWLOCK(&ntatable->rwlock, locktype);
@@ -541,8 +542,7 @@ dns_ntatable_totext(dns_ntatable_t *ntatable, isc_buffer_t **buf) {
 			dns_name_t *name;
 			isc_time_t t;
 
-			dns_fixedname_init(&fn);
-			name = dns_fixedname_name(&fn);
+			name = dns_fixedname_initname(&fn);
 			dns_rbt_fullnamefromnode(node, name);
 			dns_name_format(name, nbuf, sizeof(nbuf));
 			isc_time_set(&t, n->expiry, 0);
@@ -597,8 +597,7 @@ dns_ntatable_dump(dns_ntatable_t *ntatable, FILE *fp) {
 			dns_name_t *name;
 			isc_time_t t;
 
-			dns_fixedname_init(&fn);
-			name = dns_fixedname_name(&fn);
+			name = dns_fixedname_initname(&fn);
 			dns_rbt_fullnamefromnode(node, name);
 			dns_name_format(name, nbuf, sizeof(nbuf));
 			isc_time_set(&t, n->expiry, 0);
@@ -677,8 +676,7 @@ dns_ntatable_save(dns_ntatable_t *ntatable, FILE *fp) {
 				dns_fixedname_t fn;
 				dns_name_t *name;
 
-				dns_fixedname_init(&fn);
-				name = dns_fixedname_name(&fn);
+				name = dns_fixedname_initname(&fn);
 				dns_rbt_fullnamefromnode(node, name);
 
 				isc_buffer_init(&b, nbuf, sizeof(nbuf));

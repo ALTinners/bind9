@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2016-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -1545,9 +1548,9 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 	 * use the DSCP value set for the first master
 	 */
 	if (entry->opts.masters.count > 0 &&
-	    entry->opts.masters.dscps[0] != -1) {
+	    entry->opts.masters.dscps[0] >= 0) {
 		isc_buffer_putstr(buffer, " dscp ");
-		snprintf(pbuf, sizeof(pbuf), "%u",
+		snprintf(pbuf, sizeof(pbuf), "%hd",
 			 entry->opts.masters.dscps[0]);
 		isc_buffer_putstr(buffer, pbuf);
 	}
@@ -1800,8 +1803,7 @@ dns_catz_update_from_db(dns_db_t *db, dns_catz_zones_t *catzs) {
 		return;
 	}
 
-	dns_fixedname_init(&fixname);
-	name = dns_fixedname_name(&fixname);
+	name = dns_fixedname_initname(&fixname);
 
 	/*
 	 * Iterate over database to fill the new zone.

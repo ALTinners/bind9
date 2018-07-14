@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2001, 2003-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -500,8 +503,7 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 	if (result == ISC_R_SUCCESS)
 		gss_ctx = dst_key_getgssctx(tsigkey->key);
 
-	dns_fixedname_init(&fixed);
-	principal = dns_fixedname_name(&fixed);
+	principal = dns_fixedname_initname(&fixed);
 
 	/*
 	 * Note that tctx->gsscred may be NULL if tctx->gssapi_keytab is set
@@ -758,8 +760,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 			goto failure;
 		}
 
-		dns_fixedname_init(&fkeyname);
-		keyname = dns_fixedname_name(&fkeyname);
+		keyname = dns_fixedname_initname(&fkeyname);
 
 		if (!dns_name_equal(qname, dns_rootname)) {
 			unsigned int n = dns_name_countlabels(qname);

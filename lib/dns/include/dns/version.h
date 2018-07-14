@@ -1,14 +1,18 @@
 /*
- * Copyright (C) 2001, 2004-2007, 2012, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: version.h,v 1.9.1234.1 2012/02/11 22:37:57 each Exp $ */
-
 /*! \file dns/version.h */
+
+#ifndef DNS_VERSION_H
+#define DNS_VERSION_H 1
 
 #include <isc/platform.h>
 
@@ -19,3 +23,5 @@ LIBDNS_EXTERNAL_DATA extern const char dns_mapapi[];
 LIBDNS_EXTERNAL_DATA extern const unsigned int dns_libinterface;
 LIBDNS_EXTERNAL_DATA extern const unsigned int dns_librevision;
 LIBDNS_EXTERNAL_DATA extern const unsigned int dns_libage;
+
+#endif /* DNS_VERSION_H */

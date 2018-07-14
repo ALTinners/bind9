@@ -1,10 +1,13 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2000-2002, 2004, 2006-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -422,8 +425,8 @@ signedfile="upper.example.db.signed"
 kskname=`$KEYGEN -q -r $RANDFILE $zone`
 zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
 cp $infile $zonefile
-$SIGNER -P -S -r $RANDFILE -o $zone -f $lower $zonefile > /dev/null 2>&1
-$CHECKZONE -D upper.example $lower 2>&- | \
+$SIGNER -P -S -r $RANDFILE -o $zone -f $lower $zonefile > /dev/null 2>/dev/null
+$CHECKZONE -D upper.example $lower 2>/dev/null | \
 	sed '/RRSIG/s/ upper.example. / UPPER.EXAMPLE. /' > $signedfile
 
 #
@@ -452,7 +455,7 @@ zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
 cp $infile $zonefile
 $SIGNER -S -r $RANDFILE -e now+1mi -o $zone $zonefile > /dev/null 2>&1
 # preserve a normalized copy of the NS RRSIG for comparison later
-$CHECKZONE -D nosign.example nosign.example.db.signed 2>&- | \
+$CHECKZONE -D nosign.example nosign.example.db.signed 2>/dev/null | \
         awk '$4 == "RRSIG" && $5 == "NS" {$2 = ""; print}' | \
         sed 's/[ 	][ 	]*/ /g'> ../nosign.before
 
