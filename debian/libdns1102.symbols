@@ -2,7 +2,9 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
+ dns__zone_findkeys@Base 1:9.11.4+dfsg
  dns__zone_loadpending@Base 1:9.11.3+dfsg
+ dns__zone_updatesigs@Base 1:9.11.4+dfsg
  dns_acache_attach@Base 1:9.11.3+dfsg
  dns_acache_attachentry@Base 1:9.11.3+dfsg
  dns_acache_cancelentry@Base 1:9.11.3+dfsg
@@ -367,6 +369,10 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_dyndb_load@Base 1:9.11.3+dfsg
  dns_ecdb_register@Base 1:9.11.3+dfsg
  dns_ecdb_unregister@Base 1:9.11.3+dfsg
+ dns_fixedname_init@Base 1:9.11.4+dfsg
+ dns_fixedname_initname@Base 1:9.11.4+dfsg
+ dns_fixedname_invalidate@Base 1:9.11.4+dfsg
+ dns_fixedname_name@Base 1:9.11.4+dfsg
  dns_fullname_hash@Base 1:9.11.3+dfsg
  dns_fwdtable_add@Base 1:9.11.3+dfsg
  dns_fwdtable_addfwd@Base 1:9.11.3+dfsg
@@ -1272,6 +1278,7 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_zone_loadnew@Base 1:9.11.3+dfsg
  dns_zone_log@Base 1:9.11.3+dfsg
  dns_zone_logc@Base 1:9.11.3+dfsg
+ dns_zone_logv@Base 1:9.11.4+dfsg
  dns_zone_maintenance@Base 1:9.11.3+dfsg
  dns_zone_markdirty@Base 1:9.11.3+dfsg
  dns_zone_mkey_day@Base 1:9.11.3+dfsg
@@ -1541,7 +1548,9 @@ libdns.so.1102 libdns1102 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
+ dns__zone_findkeys@Base 1:9.11.4+dfsg
  dns__zone_loadpending@Base 1:9.11.3+dfsg
+ dns__zone_updatesigs@Base 1:9.11.4+dfsg
  dns_acache_attach@Base 1:9.11.3+dfsg
  dns_acache_attachentry@Base 1:9.11.3+dfsg
  dns_acache_cancelentry@Base 1:9.11.3+dfsg
@@ -1906,6 +1915,10 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_dyndb_load@Base 1:9.11.3+dfsg
  dns_ecdb_register@Base 1:9.11.3+dfsg
  dns_ecdb_unregister@Base 1:9.11.3+dfsg
+ dns_fixedname_init@Base 1:9.11.4+dfsg
+ dns_fixedname_initname@Base 1:9.11.4+dfsg
+ dns_fixedname_invalidate@Base 1:9.11.4+dfsg
+ dns_fixedname_name@Base 1:9.11.4+dfsg
  dns_fullname_hash@Base 1:9.11.3+dfsg
  dns_fwdtable_add@Base 1:9.11.3+dfsg
  dns_fwdtable_addfwd@Base 1:9.11.3+dfsg
@@ -2813,6 +2826,7 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_zone_loadnew@Base 1:9.11.3+dfsg
  dns_zone_log@Base 1:9.11.3+dfsg
  dns_zone_logc@Base 1:9.11.3+dfsg
+ dns_zone_logv@Base 1:9.11.4+dfsg
  dns_zone_maintenance@Base 1:9.11.3+dfsg
  dns_zone_markdirty@Base 1:9.11.3+dfsg
  dns_zone_mkey_day@Base 1:9.11.3+dfsg
