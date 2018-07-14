@@ -66,6 +66,7 @@ override_dh_autoreconf: prepare_native_pkcs11
 	dh_autoreconf
 
 override_dh_auto_configure:
+	debian/checkapi
 	dh_auto_configure -B build -- \
 		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
 		--sysconfdir=/etc/bind \

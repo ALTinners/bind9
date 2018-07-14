@@ -1,0 +1,8 @@
+#!/bin/sh
+ret=0
+for LIB in bind9 dns irs isc lwres isccc isccfg; do
+    SONAME=$(sed -ne "s/Package: lib$LIB[-]*\([0-9]*\)$/\1/p" debian/control)
+    debian/getapi "${LIB}" "${SONAME}"
+    ret=$(($ret+$?))
+done
+exit $ret
