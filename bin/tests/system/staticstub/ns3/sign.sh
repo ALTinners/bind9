@@ -1,10 +1,13 @@
 #!/bin/sh 
 #
-# Copyright (C) 2010, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -24,16 +27,7 @@ cat $infile $keyname1.key $keyname2.key > $zonefile
 $SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
 # Configure the resolving server with a trusted key.
-
-cat $keyname2.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print <<EOF
-trusted-keys {
-    "$dn" $flags $proto $alg "$key";
-};
-EOF
-' > trusted.conf
+keyfile_to_trusted_keys $keyname2 > trusted.conf
 
 zone=undelegated
 infile=undelegated.db.in
@@ -44,14 +38,5 @@ cat $infile $keyname1.key $keyname2.key > $zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
-cat $keyname2.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print <<EOF
-trusted-keys {
-    "$dn" $flags $proto $alg "$key";
-};
-EOF
-' >> trusted.conf
-
+keyfile_to_trusted_keys $keyname2 >> trusted.conf
 cp trusted.conf ../ns2/trusted.conf

@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1999-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: cache.c,v 1.91 2011/08/26 05:12:56 marka Exp $ */
 
 /*! \file */
 
@@ -1217,8 +1219,7 @@ cleartree(dns_db_t *db, dns_name_t *name) {
 	 */
 	(void)dns_db_findnode(db, name, ISC_TRUE, &top);
 
-	dns_fixedname_init(&fnodename);
-	nodename = dns_fixedname_name(&fnodename);
+	nodename = dns_fixedname_initname(&fnodename);
 
 	result = dns_db_createiterator(db, 0, &iter);
 	if (result != ISC_R_SUCCESS)

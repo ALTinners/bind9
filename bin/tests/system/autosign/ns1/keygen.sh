@@ -1,10 +1,13 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -30,28 +33,12 @@ rm $zsknopriv.private
 ksksby=`$KEYGEN -3 -q -r $RANDFILE -P now -A now+15s -fk $zone`
 kskrev=`$KEYGEN -3 -q -r $RANDFILE -R now+15s -fk $zone`
 
-cat $ksksby.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print <<EOF
-trusted-keys {
-    "$dn" $flags $proto $alg "$key";
-};
-EOF
-' > trusted.conf
+keyfile_to_trusted_keys $ksksby > trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 cp trusted.conf ../ns3/trusted.conf
 cp trusted.conf ../ns4/trusted.conf
 
-cat $kskrev.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print <<EOF
-trusted-keys {
-    "$dn" $flags $proto $alg "$key";
-};
-EOF
-' > trusted.conf
+keyfile_to_trusted_keys $kskrev > trusted.conf
 cp trusted.conf ../ns5/trusted.conf
 
 echo $zskact > ../active.key

@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2000, 2001, 2003-2005, 2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -208,12 +211,14 @@ cleanup_logging(isc_log_t **logp) {
 	REQUIRE(logp != NULL);
 
 	log = *logp;
+	*logp = NULL;
+
 	if (log == NULL)
 		return;
+
 	isc_log_destroy(&log);
 	isc_log_setcontext(NULL);
 	dns_log_setcontext(NULL);
-	logp = NULL;
 }
 
 void
@@ -562,6 +567,21 @@ is_delegation(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 		if (ttlp != NULL)
 			*ttlp = nsset.ttl;
 		dns_rdataset_disassociate(&nsset);
+	}
+
+	return (ISC_TF(result == ISC_R_SUCCESS));
+}
+
+isc_boolean_t
+has_dname(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node) {
+	dns_rdataset_t dnameset;
+	isc_result_t result;
+
+	dns_rdataset_init(&dnameset);
+	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_dname, 0, 0,
+				     &dnameset, NULL);
+	if (dns_rdataset_isassociated(&dnameset)) {
+		dns_rdataset_disassociate(&dnameset);
 	}
 
 	return (ISC_TF(result == ISC_R_SUCCESS));
@@ -1687,10 +1707,8 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 	 * present in the DNSKEY RRSET.
 	 */
 
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
-	dns_fixedname_init(&fnextname);
-	nextname = dns_fixedname_name(&fnextname);
+	name = dns_fixedname_initname(&fname);
+	nextname = dns_fixedname_initname(&fnextname);
 	dns_fixedname_init(&fprevname);
 	prevname = NULL;
 	dns_fixedname_init(&fzonecut);
@@ -1721,6 +1739,9 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 			zonecut = dns_fixedname_name(&fzonecut);
 			dns_name_copy(name, zonecut, NULL);
 			isdelegation = ISC_TRUE;
+		} else if (has_dname(db, ver, node)) {
+			zonecut = dns_fixedname_name(&fzonecut);
+			dns_name_copy(name, zonecut, NULL);
 		}
 		nextnode = NULL;
 		result = dns_dbiterator_next(dbiter);

@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2002, 2004-2007, 2009, 2010, 2014, 2016, 2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: namedconf.h,v 1.18 2010/08/11 18:14:20 each Exp $ */
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1

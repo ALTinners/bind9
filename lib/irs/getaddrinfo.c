@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /* $Id: getaddrinfo.c,v 1.3 2009/09/02 23:48:02 tbox Exp $ */
@@ -550,8 +553,7 @@ make_resstate(isc_mem_t *mctx, gai_statehead_t *head, const char *hostname,
 	namelen = strlen(domain);
 	isc_buffer_constinit(&b, domain, namelen);
 	isc_buffer_add(&b, namelen);
-	dns_fixedname_init(&fixeddomain);
-	qdomain = dns_fixedname_name(&fixeddomain);
+	qdomain = dns_fixedname_initname(&fixeddomain);
 	result = dns_name_fromtext(qdomain, &b, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		isc_mem_put(mctx, state, sizeof(*state));
@@ -562,8 +564,7 @@ make_resstate(isc_mem_t *mctx, gai_statehead_t *head, const char *hostname,
 	namelen = strlen(hostname);
 	isc_buffer_constinit(&b, hostname, namelen);
 	isc_buffer_add(&b, namelen);
-	dns_fixedname_init(&state->fixedname);
-	state->qname = dns_fixedname_name(&state->fixedname);
+	state->qname = dns_fixedname_initname(&state->fixedname);
 	result = dns_name_fromtext(state->qname, &b, qdomain, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		isc_mem_put(mctx, state, sizeof(*state));

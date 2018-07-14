@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2008, 2011, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 
 #ifndef GENERIC_NSEC3_50_H
 #define GENERIC_NSEC3_50_H 1
 
-/* $Id$ */
 
 /*!
  * \brief Per RFC 5155 */

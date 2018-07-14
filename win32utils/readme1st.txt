@@ -1,8 +1,6 @@
-Copyright (C) 2001, 2003-2005, 2007-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 NOTES ON BIND 9.10 FOR WINDOWS:
 

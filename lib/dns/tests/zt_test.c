@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2011, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id$ */
 
 /*! \file */
 
@@ -216,12 +217,12 @@ ATF_TC_BODY(asyncload_zt, tc) {
 	dns_zone_setfile(zone1, "testdata/zt/zone1.db");
 	view = dns_zone_getview(zone1);
 
-	result = dns_test_makezone("bar", &zone2, view, ISC_TRUE);
+	result = dns_test_makezone("bar", &zone2, view, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	dns_zone_setfile(zone2, "testdata/zt/zone1.db");
 
 	/* This one will fail to load */
-	result = dns_test_makezone("fake", &zone3, view, ISC_TRUE);
+	result = dns_test_makezone("fake", &zone3, view, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	dns_zone_setfile(zone3, "testdata/zt/nonexistent.db");
 

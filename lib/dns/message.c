@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -46,7 +49,7 @@ hexdump(const char *msg, const char *msg2, void *base, size_t len) {
 	p = base;
 	cnt = 0;
 
-	printf("*** %s [%s] (%u bytes @ %p)\n", msg, msg2, len, base);
+	printf("*** %s [%s] (%u bytes @ %p)\n", msg, msg2, (unsigned)len, base);
 
 	while (cnt < len) {
 		if (cnt % 16 == 0)

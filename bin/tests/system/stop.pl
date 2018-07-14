@@ -1,12 +1,13 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2001, 2004-2007, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# $Id: stop.pl,v 1.12 2007/06/19 23:47:00 tbox Exp $
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 # Framework for stopping test servers
 # Based on the type of server specified, signal the server to stop, wait
@@ -15,34 +16,35 @@
 
 use strict;
 use Cwd 'abs_path';
+use Getopt::Long;
 
-# Option handling
-#   [--use-rndc] test [server]
+# Usage:
+#   perl stop.pl [--use-rndc [--port port]] test [server]
 #
-#   test - name of the test directory
-#   server - name of the server directory
+#   --use-rndc      Attempt to stop the server via the "rndc stop" command.
+#
+#   --port port     Only relevant if --use-rndc is specified, this sets the
+#                   command port over which the attempt should be made.  If
+#                   not specified, port 9953 is used.
+#
+#   test            Name of the test directory.
+#
+#   server          Name of the server directory.
 
-my $usage = "usage: $0 [--use-rndc] test-directory [server-directory]";
-my $use_rndc;
+my $usage = "usage: $0 [--use-rndc [--port port]] test-directory [server-directory]";
 
-while (@ARGV && $ARGV[0] =~ /^-/) {
-	my $opt = shift @ARGV;
-	if ($opt eq '--use-rndc') {
-		$use_rndc = 1;
-	} else {
-		die "$usage\n";
-	}
-}
-
-my $test = $ARGV[0];
-my $server = $ARGV[1];
+my $use_rndc = 0;
+my $port = 9953;
+GetOptions('use-rndc' => \$use_rndc, 'port=i' => \$port) or die "$usage\n";
 
 my $errors = 0;
 
+my $test = $ARGV[0];
+my $server = $ARGV[1];
 die "$usage\n" unless defined($test);
 die "No test directory: \"$test\"\n" unless (-d $test);
 die "No server directory: \"$server\"\n" if (defined($server) && !-d "$test/$server");
-    
+
 # Global variables
 my $testdir = abs_path($test);
 my @servers;
@@ -134,7 +136,7 @@ sub stop_rndc {
 	my $ip = "10.53.0.$1";
 
 	# Ugly, but should work.
-	system("$ENV{RNDC} -c ../common/rndc.conf -s $ip -p 9953 stop | sed 's/^/I:$server /'");
+	system("$ENV{RNDC} -c ../common/rndc.conf -s $ip -p $port stop | sed 's/^/I:$server /'");
 	return;
 }
 

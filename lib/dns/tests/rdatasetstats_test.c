@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 /*! \file */
 
@@ -54,6 +56,7 @@ set_nxdomainstats(dns_stats_t *stats, isc_boolean_t stale) {
 	dns_rdatasetstats_increment(stats, which);
 }
 
+#define ATTRIBUTE_SET(y) ((attributes & (y)) != 0)
 static void
 checkit1(dns_rdatastatstype_t which, isc_uint64_t value, void *arg) {
 	unsigned int attributes;
@@ -69,10 +72,10 @@ checkit1(dns_rdatastatstype_t which, isc_uint64_t value, void *arg) {
 	type = DNS_RDATASTATSTYPE_BASE(which);
 
 	fprintf(stderr, "%s%s%s%s/%u, %u\n",
-		attributes & DNS_RDATASTATSTYPE_ATTR_OTHERTYPE ? "O" : " ",
-		attributes & DNS_RDATASTATSTYPE_ATTR_NXRRSET ? "!" : " ",
-		attributes & DNS_RDATASTATSTYPE_ATTR_STALE ? "#" : " ",
-		attributes & DNS_RDATASTATSTYPE_ATTR_NXDOMAIN ? "X" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_OTHERTYPE) ? "O" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_NXRRSET) ? "!" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_STALE) ? "#" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_NXDOMAIN) ? "X" : " ",
 		type, (unsigned)value);
 #endif
 	if ((attributes & DNS_RDATASTATSTYPE_ATTR_STALE) == 0)
@@ -96,10 +99,10 @@ checkit2(dns_rdatastatstype_t which, isc_uint64_t value, void *arg) {
 	type = DNS_RDATASTATSTYPE_BASE(which);
 
 	fprintf(stderr, "%s%s%s%s/%u, %u\n",
-		attributes & DNS_RDATASTATSTYPE_ATTR_OTHERTYPE ? "O" : " ",
-		attributes & DNS_RDATASTATSTYPE_ATTR_NXRRSET ? "!" : " ",
-		attributes & DNS_RDATASTATSTYPE_ATTR_STALE ? "#" : " ",
-		attributes & DNS_RDATASTATSTYPE_ATTR_NXDOMAIN ? "X" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_OTHERTYPE) ? "O" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_NXRRSET) ? "!" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_STALE) ? "#" : " ",
+		ATTRIBUTE_SET(DNS_RDATASTATSTYPE_ATTR_NXDOMAIN) ? "X" : " ",
 		type, (unsigned)value);
 #endif
 	if ((attributes & DNS_RDATASTATSTYPE_ATTR_STALE) == 0)

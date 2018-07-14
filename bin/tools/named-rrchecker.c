@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -161,8 +164,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_lex_openstream(lex, stdin) == ISC_R_SUCCESS);
 
 	if (origin != NULL) {
-		dns_fixedname_init(&fixed);
-		name = dns_fixedname_name(&fixed);
+		name = dns_fixedname_initname(&fixed);
 		result = dns_name_fromstring(name, origin, 0, NULL);
 		if (result != ISC_R_SUCCESS) {
 			fatal("dns_name_fromstring: %s",

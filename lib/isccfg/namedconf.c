@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2002-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -1021,13 +1024,14 @@ static cfg_type_t cfg_type_fstrm_model = {
  */
 static cfg_clausedef_t
 options_clauses[] = {
+	{ "answer-cookie", &cfg_type_boolean, 0 },
 	{ "automatic-interface-scan", &cfg_type_boolean, 0 },
 	{ "avoid-v4-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "avoid-v6-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "bindkeys-file", &cfg_type_qstring, 0 },
 	{ "blackhole", &cfg_type_bracketed_aml, 0 },
 	{ "cookie-algorithm", &cfg_type_cookiealg, 0 },
-	{ "cookie-secret", &cfg_type_sstring, 0 },
+	{ "cookie-secret", &cfg_type_sstring, CFG_CLAUSEFLAG_MULTI },
 	{ "coresize", &cfg_type_size, 0 },
 	{ "datasize", &cfg_type_size, 0 },
 	{ "deallocate-on-exit", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
@@ -1803,6 +1807,7 @@ view_clauses[] = {
 	{ "response-policy", &cfg_type_rpz, 0 },
 	{ "rfc2308-type1", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
 	{ "root-delegation-only",  &cfg_type_optional_exclude, 0 },
+	{ "root-key-sentinel", &cfg_type_boolean, 0 },
 	{ "rrset-order", &cfg_type_rrsetorder, 0 },
 	{ "send-cookie", &cfg_type_boolean, 0 },
 	{ "servfail-ttl", &cfg_type_ttlval, 0 },

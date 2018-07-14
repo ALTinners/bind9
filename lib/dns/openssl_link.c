@@ -1,11 +1,14 @@
 /*
- * Portions Copyright (C) 1999-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,9 +23,6 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * Principal Author: Brian Wellington
- */
 #ifdef OPENSSL
 
 #include <config.h>
@@ -42,7 +42,7 @@
 #include "dst_internal.h"
 #include "dst_openssl.h"
 
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 #include <openssl/engine.h>
 #endif
 
@@ -53,7 +53,7 @@ static isc_mutex_t *locks = NULL;
 static int nlocks;
 #endif
 
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 static ENGINE *e = NULL;
 #endif
 
@@ -190,10 +190,9 @@ _set_thread_id(CRYPTO_THREADID *id)
 isc_result_t
 dst__openssl_init(const char *engine) {
 	isc_result_t result;
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 	ENGINE *re;
 #else
-
 	UNUSED(engine);
 #endif
 
@@ -233,7 +232,7 @@ dst__openssl_init(const char *engine) {
 	rm->pseudorand = entropy_getpseudo;
 	rm->status = entropy_status;
 
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 #if !defined(CONF_MFLAGS_DEFAULT_SECTION)
 	OPENSSL_config(NULL);
 #else
@@ -279,10 +278,10 @@ dst__openssl_init(const char *engine) {
 		ENGINE_finish(re);
 #else
 	RAND_set_rand_method(rm);
-#endif /* USE_ENGINE */
+#endif /* !defined(OPENSSL_NO_ENGINE) */
 	return (ISC_R_SUCCESS);
 
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
  cleanup_rm:
 	if (e != NULL)
 		ENGINE_free(e);
@@ -325,11 +324,11 @@ dst__openssl_destroy(void) {
 #endif
 	OBJ_cleanup();
 	EVP_cleanup();
-#if defined(USE_ENGINE)
+#if !defined(OPENSSL_NO_ENGINE)
 	if (e != NULL)
 		ENGINE_free(e);
 	e = NULL;
-#if defined(USE_ENGINE) && OPENSSL_VERSION_NUMBER >= 0x00907000L
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER >= 0x00907000L
 	ENGINE_cleanup();
 #endif
 #endif
@@ -441,7 +440,7 @@ dst__openssl_toresult3(isc_logcategory_t *category,
 	return (result);
 }
 
-#if defined(USE_ENGINE)
+#if !defined(OPENSSL_NO_ENGINE)
 ENGINE *
 dst__openssl_getengine(const char *engine) {
 

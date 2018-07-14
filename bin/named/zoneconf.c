@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -490,8 +493,7 @@ configure_staticstub_servernames(const cfg_obj_t *zconfig, dns_zone_t *zone,
 		obj = cfg_listelt_value(element);
 		str = cfg_obj_asstring(obj);
 
-		dns_fixedname_init(&fixed_name);
-		nsname = dns_fixedname_name(&fixed_name);
+		nsname = dns_fixedname_initname(&fixed_name);
 
 		isc_buffer_constinit(&b, str, strlen(str));
 		isc_buffer_add(&b, strlen(str));
@@ -1347,31 +1349,33 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	}
 
 	if (ztype == dns_zone_master || raw != NULL) {
+		const cfg_obj_t *validity, *resign;
 		isc_boolean_t allow = ISC_FALSE, maint = ISC_FALSE;
 
 		obj = NULL;
 		result = ns_config_get(maps, "sig-validity-interval", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		{
-			const cfg_obj_t *validity, *resign;
 
-			validity = cfg_tuple_get(obj, "validity");
-			seconds = cfg_obj_asuint32(validity) * 86400;
-			dns_zone_setsigvalidityinterval(zone, seconds);
-
-			resign = cfg_tuple_get(obj, "re-sign");
-			if (cfg_obj_isvoid(resign)) {
-				seconds /= 4;
-			} else {
-				if (seconds > 7 * 86400)
-					seconds = cfg_obj_asuint32(resign) *
-							86400;
-				else
-					seconds = cfg_obj_asuint32(resign) *
-							3600;
-			}
-			dns_zone_setsigresigninginterval(zone, seconds);
+		validity = cfg_tuple_get(obj, "validity");
+		seconds = cfg_obj_asuint32(validity);
+		if (!ns_g_sigvalinsecs) {
+			seconds *= 86400;
 		}
+		dns_zone_setsigvalidityinterval(zone, seconds);
+
+		resign = cfg_tuple_get(obj, "re-sign");
+		if (cfg_obj_isvoid(resign)) {
+			seconds /= 4;
+		} else if (!ns_g_sigvalinsecs) {
+			if (seconds > 7 * 86400) {
+				seconds = cfg_obj_asuint32(resign) * 86400;
+			} else {
+				seconds = cfg_obj_asuint32(resign) * 3600;
+			}
+		} else {
+			seconds = cfg_obj_asuint32(resign);
+		}
+		dns_zone_setsigresigninginterval(zone, seconds);
 
 		obj = NULL;
 		result = ns_config_get(maps, "key-directory", &obj);
@@ -1600,6 +1604,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 							     ipkl.addrs,
 							     ipkl.keys,
 							     ipkl.count);
+			count = ipkl.count;
 			dns_ipkeylist_clear(mctx, &ipkl);
 			RETERR(result);
 		} else

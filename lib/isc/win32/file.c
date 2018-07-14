@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2000-2002, 2004, 2007, 2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 #include <config.h>
 
@@ -320,9 +322,11 @@ isc_file_template(const char *path, const char *templet, char *buf,
 {
 	char *s;
 
-	REQUIRE(path != NULL);
 	REQUIRE(templet != NULL);
 	REQUIRE(buf != NULL);
+
+	if (path == NULL)
+		path = "";
 
 	s = strrchr(templet, '\\');
 	if (s != NULL)
@@ -780,7 +784,7 @@ isc_result_t
 isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		  char *path, size_t length)
 {
-	char buf[PATH_MAX], hash[PATH_MAX];
+	char buf[PATH_MAX], hash[ISC_SHA256_DIGESTSTRINGLENGTH];
 	size_t l = 0;
 
 	REQUIRE(base != NULL);
