@@ -9,9 +9,10 @@ bind9 (1:9.11.4+dfsg-1) unstable; urgency=medium
   * Rebase patches for 9.11.4+dfsg release
   * Bump libdns SONAME to libdns.so.1102
   * Add a SONAME version check early in a build process
-  * Use getapi to dynamically pick soversions for dh_makeshlibs
+  * Use debian/getapi to dynamically pick soversions for dh_makeshlibs
+  * Update the symbols in libdns and libisccfg packages
 
- -- Ondřej Surý <ondrej@debian.org>  Sat, 14 Jul 2018 10:10:27 +0000
+ -- Ondřej Surý <ondrej@debian.org>  Sat, 14 Jul 2018 12:27:56 +0000
 
 bind9 (1:9.11.3+dfsg-2) unstable; urgency=medium
 
