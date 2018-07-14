@@ -3,11 +3,6 @@ CURRENT=$(sed -ne "s/^LIBINTERFACE = //p" lib/$1/api)
 REVISION=$(sed -ne "s/^LIBREVISION = //p" lib/$1/api)
 AGE=$(sed -ne "s/^LIBAGE = //p" lib/$1/api)
 
-SOVERSION=$((${CURRENT}-${AGE}))
-
-if [ "$2" -ne "$SOVERSION" ]; then
-    echo "SONAME of lib$1 has changed from lib$1.so.$2 to lib$1.so.$SOVERSION"
-    exit 1
-fi
+echo $((${CURRENT}-${AGE}))
 
 exit 0

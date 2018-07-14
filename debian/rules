@@ -147,12 +147,17 @@ override_dh_systemd_enable:
 	dh_systemd_enable -pbind9 --no-enable --name=bind9-pkcs11 bind9-pkcs11.service
 	dh_systemd_enable -pbind9 bind9.service
 
+override_dh_makeshlibs: DNS_SOVER=$(shell debian/getapi dns)
+override_dh_makeshlibs: IRS_SOVER=$(shell debian/getapi irs)
+override_dh_makeshlibs: ISCCC_SOVER=$(shell debian/getapi isccc)
+override_dh_makeshlibs: ISCCFG_SOVER=$(shell debian/getapi isccfg)
+override_dh_makeshlibs: ISC_SOVER=$(shell debian/getapi isc)
 override_dh_makeshlibs:
-	dh_makeshlibs -plibdns-export1100 --add-udeb=libdns-export1100-udeb
-	dh_makeshlibs -plibirs-export160 --add-udeb=libirs-export160-udeb
-	dh_makeshlibs -plibisccc-export160 --add-udeb=libisccc-export160-udeb
-	dh_makeshlibs -plibisccfg-export160 --add-udeb=libisccfg-export160-udeb
-	dh_makeshlibs -plibisc-export169 --add-udeb=libisc-export169-udeb
+	dh_makeshlibs -plibdns-export$(DNS_SOVER) --add-udeb=libdns-export$(DNS_SOVER)-udeb
+	dh_makeshlibs -plibirs-export$(IRS_SOVER) --add-udeb=libirs-export$(IRS_SOVER)-udeb
+	dh_makeshlibs -plibisccc-export$(ISCCC_SOVER) --add-udeb=libisccc-export$(ISCCC_SOVER)-udeb
+	dh_makeshlibs -plibisccfg-export$(ISCCFG_SOVER) --add-udeb=libisccfg-export$(ISCCFG_SOVER)-udeb
+	dh_makeshlibs -plibisc-export$(ISC_SOVER) --add-udeb=libisc-export$(ISC_SOVER)-udeb
 	dh_makeshlibs --remaining-packages
 
 .PHONY: prepare_native_pkcs11 clean_native_pkcs11

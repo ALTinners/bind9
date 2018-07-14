@@ -1,8 +1,11 @@
 #!/bin/sh
 ret=0
 for LIB in bind9 dns irs isc lwres isccc isccfg; do
-    SONAME=$(sed -ne "s/Package: lib$LIB[-]*\([0-9]*\)$/\1/p" debian/control)
-    debian/getapi "${LIB}" "${SONAME}"
-    ret=$(($ret+$?))
+    OLD_SOVERSION=$(sed -ne "s/Package: lib$LIB[-]*\([0-9]*\)$/\1/p" debian/control)
+    NEW_SOVERSION=$(debian/getapi "${LIB}")
+    if [ "$OLD_SOVERSION" -ne "$NEW_SOVERSION" ]; then
+	echo "ERROR: SONAME of lib$LIB has changed from lib$LIB.so.$OLD_SOVERSION to lib$1.so.$NEW_SOVERSION"
+	ret=1
+    fi
 done
 exit $ret
