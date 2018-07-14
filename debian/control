@@ -85,19 +85,6 @@ Description: DNS Lookup Utility
  This package provides the 'host' DNS lookup utility in the form that
  is bundled with the BIND sources.
 
-Package: bind-dev
-Section: libdevel
-Architecture: any
-Breaks: libbind-dev (<< 1:9.12.0~)
-Replaces: libbind-dev (<< 1:9.12.0~)
-Depends: bind-libs (= ${binary:Version}),
-         ${misc:Depends}
-Description: Static Libraries and Headers used by BIND
- This package delivers archive-style libraries, header files, and API man
- pages for libbind, libdns, libisc, and liblwres.  These are only needed
- if you want to compile other packages that need more nameserver API than the
- resolver code provided in libc.
-
 Package: bind-libs
 Section: libs
 Priority: standard

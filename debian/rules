@@ -67,8 +67,8 @@ override_dh_auto_configure:
 		--enable-ipv6 \
 		--enable-rrl \
 		--enable-filter-aaaa \
+		--disable-static \
 		--disable-native-pkcs11 \
-		--with-randomdev=/dev/urandom \
 		$(EXTRA_FEATURES)
 
 override_dh_auto_build:
@@ -78,7 +78,11 @@ override_dh_auto_clean: clean_version_extensions
 	dh_auto_clean -B build
 
 override_dh_auto_install:
-	dh_auto_install -B build      --destdir=$(CURDIR)/debian/tmp
+	dh_auto_install -B build --destdir=$(CURDIR)/debian/tmp
+	-rm -r $(CURDIR)/debian/tmp/usr/include
+	-rm $(CURDIR)/debian/tmp/usr/lib/*/*.so \
+	    $(CURDIR)/debian/tmp/usr/lib/*/*.a \
+	    $(CURDIR)/debian/tmp/usr/bin/isc-config.sh
 
 override_dh_install:
 	dh_install --exclude=.la --exclude=lwresd --exclude=__pycache__ --fail-missing
