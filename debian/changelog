@@ -1,3 +1,18 @@
+bind9 (1:9.11.4+dfsg-1) unstable; urgency=medium
+
+  [ Bernhard Schmidt ]
+  * Use systemd Type=forking to signal daemon init.
+    Thanks to Elie Roudninski (Closes: #900788)
+
+  [ Ondřej Surý ]
+  * New upstream version 9.11.4+dfsg
+  * Rebase patches for 9.11.4+dfsg release
+  * Bump libdns SONAME to libdns.so.1102
+  * Add a SONAME version check early in a build process
+  * Use getapi to dynamically pick soversions for dh_makeshlibs
+
+ -- Ondřej Surý <ondrej@debian.org>  Sat, 14 Jul 2018 10:10:27 +0000
+
 bind9 (1:9.11.3+dfsg-2) unstable; urgency=medium
 
   * [CVE-2018-5738]: Add upstream fix to close the default open recursion
