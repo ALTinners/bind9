@@ -7,10 +7,12 @@ Subject: _version
  version | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/version b/version
+index 112781d..3a38745 100644
 --- a/version
 +++ b/version
-@@ -8,4 +8,4 @@
- PATCHVER=3
+@@ -8,4 +8,4 @@ MINORVER=11
+ PATCHVER=4
  RELEASETYPE=
  RELEASEVER=
 -EXTENSIONS=

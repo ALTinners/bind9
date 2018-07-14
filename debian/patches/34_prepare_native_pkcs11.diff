@@ -12,20 +12,24 @@ Subject: _prepare_native_pkcs11
  make/includes.in       | 10 ++++++++++
  7 files changed, 53 insertions(+), 22 deletions(-)
 
+diff --git a/bin/Makefile.in b/bin/Makefile.in
+index f0c504a..ef6bf5f 100644
 --- a/bin/Makefile.in
 +++ b/bin/Makefile.in
-@@ -10,7 +10,7 @@
+@@ -11,7 +11,7 @@ srcdir =	@srcdir@
  VPATH =		@srcdir@
  top_srcdir =	@top_srcdir@
  
--SUBDIRS =	named rndc dig delv dnssec tools tests nsupdate \
-+SUBDIRS =	named named-pkcs11 rndc dig delv dnssec dnssec-pkcs11 tools tests nsupdate \
- 		check confgen @NZD_TOOLS@ @PYTHON_TOOLS@ @PKCS11_TOOLS@
+-SUBDIRS =	named rndc dig delv dnssec tools nsupdate check confgen \
++SUBDIRS =	named named-pkcs11 rndc dig delv dnssec dnssec-pkcs11 tools nsupdate check confgen \
+ 		@NZD_TOOLS@ @PYTHON_TOOLS@ @PKCS11_TOOLS@ tests
  TARGETS =
  
+diff --git a/bin/dnssec/Makefile.in b/bin/dnssec/Makefile.in
+index 1be1d5f..fc983bf 100644
 --- a/bin/dnssec/Makefile.in
 +++ b/bin/dnssec/Makefile.in
-@@ -16,7 +16,7 @@
+@@ -19,7 +19,7 @@ VERSION=@BIND9_VERSION@
  
  CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
  
@@ -34,9 +38,11 @@ Subject: _prepare_native_pkcs11
  		@CRYPTO@ -DPK11_LIB_LOCATION=\"@PKCS11_PROVIDER@\"
  CWARNINGS =
  
+diff --git a/bin/named/Makefile.in b/bin/named/Makefile.in
+index 1c41397..5e6e84c 100644
 --- a/bin/named/Makefile.in
 +++ b/bin/named/Makefile.in
-@@ -44,7 +44,7 @@
+@@ -47,7 +47,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
  		${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} ${ISC_INCLUDES} \
  		${DLZDRIVER_INCLUDES} ${DBDRIVER_INCLUDES} @DST_OPENSSL_INC@
  
@@ -45,9 +51,11 @@ Subject: _prepare_native_pkcs11
  
  CWARNINGS =
  
+diff --git a/bin/pkcs11/Makefile.in b/bin/pkcs11/Makefile.in
+index ae90616..4bc1256 100644
 --- a/bin/pkcs11/Makefile.in
 +++ b/bin/pkcs11/Makefile.in
-@@ -12,13 +12,13 @@
+@@ -15,13 +15,13 @@ top_srcdir =	@top_srcdir@
  
  @BIND9_MAKE_INCLUDES@
  
@@ -64,9 +72,11 @@ Subject: _prepare_native_pkcs11
  
  DEPLIBS =	${ISCDEPLIBS}
  
+diff --git a/configure.in b/configure.in
+index 7af8ab7..21b51de 100644
 --- a/configure.in
 +++ b/configure.in
-@@ -1161,12 +1161,14 @@
+@@ -1164,12 +1164,14 @@ AC_SUBST(USE_GSSAPI)
  AC_SUBST(DST_GSSAPI_INC)
  AC_SUBST(DNS_GSSAPI_LIBS)
  DNS_CRYPTO_LIBS="$DNS_GSSAPI_LIBS $DNS_CRYPTO_LIBS"
@@ -81,7 +91,7 @@ Subject: _prepare_native_pkcs11
  
  #
  # was --with-randomdev specified?
-@@ -1551,11 +1553,6 @@
+@@ -1554,11 +1556,6 @@ fi
  AC_MSG_CHECKING(for OpenSSL library)
  OPENSSL_WARNING=
  openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
@@ -93,7 +103,7 @@ Subject: _prepare_native_pkcs11
  
  if test "auto" = "$use_openssl"
  then
-@@ -1568,6 +1565,7 @@
+@@ -1571,6 +1568,7 @@ then
  		fi
  	done
  fi
@@ -101,7 +111,7 @@ Subject: _prepare_native_pkcs11
  OPENSSL_ECDSA=""
  OPENSSL_GOST=""
  OPENSSL_ED25519=""
-@@ -1589,11 +1587,10 @@
+@@ -1592,11 +1590,10 @@ case "$with_gost" in
  		;;
  esac
  
@@ -116,7 +126,7 @@ Subject: _prepare_native_pkcs11
  		OPENSSLECDSALINKOBJS=""
  		OPENSSLECDSALINKSRCS=""
  		OPENSSLEDDSALINKOBJS=""
-@@ -1602,7 +1599,9 @@
+@@ -1605,7 +1602,9 @@ case "$use_openssl" in
  		OPENSSLGOSTLINKSRCS=""
  		OPENSSLLINKOBJS=""
  		OPENSSLLINKSRCS=""
@@ -127,7 +137,7 @@ Subject: _prepare_native_pkcs11
  	no)
  		AC_MSG_RESULT(no)
  		DST_OPENSSL_INC=""
-@@ -1632,11 +1631,6 @@
+@@ -1635,11 +1634,6 @@ case "$use_openssl" in
  If you don't want OpenSSL, use --without-openssl])
  		;;
  	*)
@@ -139,7 +149,7 @@ Subject: _prepare_native_pkcs11
  		if test "yes" = "$use_openssl"
  		then
  			# User did not specify a path - guess it
-@@ -2094,6 +2088,7 @@
+@@ -2062,6 +2056,7 @@ AC_SUBST(OPENSSL_ED25519)
  AC_SUBST(OPENSSL_GOST)
  
  DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
@@ -147,7 +157,7 @@ Subject: _prepare_native_pkcs11
  
  ISC_PLATFORM_WANTAES="#undef ISC_PLATFORM_WANTAES"
  if test "yes" = "$with_aes"
-@@ -2413,6 +2408,7 @@
+@@ -2381,6 +2376,7 @@ esac
  AC_SUBST(PKCS11LINKOBJS)
  AC_SUBST(PKCS11LINKSRCS)
  AC_SUBST(CRYPTO)
@@ -155,7 +165,7 @@ Subject: _prepare_native_pkcs11
  AC_SUBST(PKCS11_ECDSA)
  AC_SUBST(PKCS11_GOST)
  AC_SUBST(PKCS11_ED25519)
-@@ -5397,8 +5393,11 @@
+@@ -5424,8 +5420,11 @@ AC_CONFIG_FILES([
  	bin/delv/Makefile
  	bin/dig/Makefile
  	bin/dnssec/Makefile
@@ -167,7 +177,7 @@ Subject: _prepare_native_pkcs11
  	bin/nsupdate/Makefile
  	bin/pkcs11/Makefile
  	bin/python/Makefile
-@@ -5499,6 +5498,10 @@
+@@ -5499,6 +5498,10 @@ AC_CONFIG_FILES([
  	lib/dns/include/dns/Makefile
  	lib/dns/include/dst/Makefile
  	lib/dns/tests/Makefile
@@ -178,7 +188,7 @@ Subject: _prepare_native_pkcs11
  	lib/irs/Makefile
  	lib/irs/include/Makefile
  	lib/irs/include/irs/Makefile
-@@ -5523,6 +5526,24 @@
+@@ -5523,6 +5526,24 @@ AC_CONFIG_FILES([
  	lib/isc/unix/include/Makefile
  	lib/isc/unix/include/isc/Makefile
  	lib/isc/unix/include/pkcs11/Makefile
@@ -203,20 +213,24 @@ Subject: _prepare_native_pkcs11
  	lib/isccc/Makefile
  	lib/isccc/include/Makefile
  	lib/isccc/include/isccc/Makefile
+diff --git a/lib/Makefile.in b/lib/Makefile.in
+index 81270a0..bcb5312 100644
 --- a/lib/Makefile.in
 +++ b/lib/Makefile.in
-@@ -14,7 +14,7 @@
+@@ -15,7 +15,7 @@ top_srcdir =	@top_srcdir@
  # Attempt to disable parallel processing.
  .NOTPARALLEL:
  .NO_PARALLEL:
--SUBDIRS =	isc isccc dns isccfg bind9 lwres irs tests samples
-+SUBDIRS =	isc isc-pkcs11 isccc dns dns-pkcs11 isccfg bind9 lwres irs tests samples
+-SUBDIRS =	isc isccc dns isccfg bind9 lwres irs samples
++SUBDIRS =	isc isc-pkcs11 isccc dns dns-pkcs11 isccfg bind9 lwres irs samples
  TARGETS =
  
  @BIND9_MAKE_RULES@
+diff --git a/make/includes.in b/make/includes.in
+index fa86ad1..3cfbe9f 100644
 --- a/make/includes.in
 +++ b/make/includes.in
-@@ -40,3 +40,13 @@
+@@ -43,3 +43,13 @@ BIND9_INCLUDES = @BIND9_BIND9_BUILDINCLUDE@ \
  
  TEST_INCLUDES = \
  	-I${top_srcdir}/lib/tests/include
