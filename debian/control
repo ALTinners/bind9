@@ -33,7 +33,6 @@ Build-Depends: autotools-dev,
                pkg-config,
                protobuf-c-compiler,
                python3,
-               python3-distutils,
                python3-ply
 Standards-Version: 4.1.2
 Vcs-Browser: https://salsa.debian.org/dns-team/bind9
