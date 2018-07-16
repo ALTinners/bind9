@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 1998-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/*! \file
- * \author Principal Author: Bob Halley
- */
+/*! \file */
 
 /*
  * XXXRTH  Need to document the states a task can be in, and the rules
@@ -1448,7 +1449,7 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 				      &manager->threads[manager->workers]) ==
 		    ISC_R_SUCCESS) {
 			char name[16];	/* thread name limit on Linux */
-			snprintf(name, sizeof(name), "isc-worker%04d", i);
+			snprintf(name, sizeof(name), "isc-worker%04u", i);
 			isc_thread_setname(manager->threads[manager->workers],
 					   name);
 			manager->workers++;

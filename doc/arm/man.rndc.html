@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@
 <title>rndc</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
-<link rel="up" href="Bv9ARM.ch13.html" title="Manual pages">
+<link rel="up" href="Bv9ARM.ch12.html" title="Manual pages">
 <link rel="prev" href="man.rndc.conf.html" title="rndc.conf">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -67,7 +67,7 @@
   </div>
 
   <div class="refsection">
-<a name="id-1.14.38.7"></a><h2>DESCRIPTION</h2>
+<a name="id-1.13.38.7"></a><h2>DESCRIPTION</h2>
 
     <p><span class="command"><strong>rndc</strong></span>
       controls the operation of a name
@@ -100,7 +100,7 @@
   </div>
 
   <div class="refsection">
-<a name="id-1.14.38.8"></a><h2>OPTIONS</h2>
+<a name="id-1.13.38.8"></a><h2>OPTIONS</h2>
 
 
     <div class="variablelist"><dl class="variablelist">
@@ -210,7 +210,7 @@
   </div>
 
   <div class="refsection">
-<a name="id-1.14.38.9"></a><h2>COMMANDS</h2>
+<a name="id-1.13.38.9"></a><h2>COMMANDS</h2>
 
     <p>
       A list of commands supported by <span class="command"><strong>rndc</strong></span> can
@@ -571,7 +571,7 @@
 	    and <code class="option">-f</code>.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional">on|off</span>] </span></dt>
+<dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional"> on | off </span>] </span></dt>
 <dd>
 	  <p>
 	    Enable or disable query logging.  (For backward
@@ -654,22 +654,6 @@
 	     <span class="command"><strong>interface-interval</strong></span> timer.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>serve-stale ( on | off | reset | status) [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
-<dd>
-	  <p>
-	    Enable, disable, or reset the serving of stale answers
-	    as configured in named.conf. Serving of stale answers
-	    will remain disabled across <code class="filename">named.conf</code>
-	    reloads if disabled via rndc until it is reset via rndc.
-	  </p>
-	  <p>
-	    Status will report whether serving of stale answers is
-	    currently enabled, disabled or not configured for a
-	    view.  If serving of stale records is configured then
-	    the values of stale-answer-ttl and max-stale-ttl are
-	    reported.
-	  </p>
-	</dd>
 <dt><span class="term"><strong class="userinput"><code>secroots [<span class="optional">-</span>] [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>]</code></strong></span></dt>
 <dd>
 	  <p>
@@ -694,6 +678,30 @@
 	  </p>
 	  <p>
 	    See also <span class="command"><strong>rndc managed-keys</strong></span>.
+	  </p>
+	</dd>
+<dt><span class="term"><strong class="userinput"><code>serve-stale ( on | off | reset | status ) [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
+<dd>
+	  <p>
+	    Enable, disable, reset, or report the current status
+            of the serving of stale answers as configured in
+            <code class="filename">named.conf</code>.
+	  </p>
+	  <p>
+            If serving of stale answers is disabled by
+            <span class="command"><strong>rndc-serve-stale off</strong></span>, then it
+	    will remain disabled even if <span class="command"><strong>named</strong></span>
+            is reloaded or reconfigured.
+            <span class="command"><strong>rndc serve-stale reset</strong></span> restores
+            the setting as configured in <code class="filename">named.conf</code>.
+	  </p>
+	  <p>
+	    <span class="command"><strong>rndc serve-stale status</strong></span> will report
+            whether serving of stale answers is currently enabled,
+            disabled by the configuration, or disabled by
+            <span class="command"><strong>rndc</strong></span>.  It will also report the
+	    values of <span class="command"><strong>stale-answer-ttl</strong></span> and
+	    <span class="command"><strong>max-stale-ttl</strong></span>.
 	  </p>
 	</dd>
 <dt><span class="term"><strong class="userinput"><code>showzone <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>] </code></strong></span></dt>
@@ -906,7 +914,7 @@
 	    TKEY-negotiated keys.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>validation ( on | off | check ) [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>] </code></strong></span></dt>
+<dt><span class="term"><strong class="userinput"><code>validation ( on | off | status ) [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>] </code></strong></span></dt>
 <dd>
 	  <p>
 	    Enable, disable, or check the current status of
@@ -951,7 +959,7 @@
   </div>
 
   <div class="refsection">
-<a name="id-1.14.38.10"></a><h2>LIMITATIONS</h2>
+<a name="id-1.13.38.10"></a><h2>LIMITATIONS</h2>
 
     <p>
       There is currently no way to provide the shared secret for a
@@ -963,7 +971,7 @@
   </div>
 
   <div class="refsection">
-<a name="id-1.14.38.11"></a><h2>SEE ALSO</h2>
+<a name="id-1.13.38.11"></a><h2>SEE ALSO</h2>
 
     <p><span class="citerefentry">
 	<span class="refentrytitle">rndc.conf</span>(5)
@@ -991,7 +999,7 @@
 <tr>
 <td width="40%" align="left">
 <a accesskey="p" href="man.rndc.conf.html">Prev</a> </td>
-<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch13.html">Up</a></td>
+<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch12.html">Up</a></td>
 <td width="40%" align="right"> </td>
 </tr>
 <tr>
@@ -1002,6 +1010,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.0</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2</p>
 </body>
 </html>

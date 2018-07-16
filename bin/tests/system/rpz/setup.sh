@@ -1,10 +1,13 @@
 #! /bin/sh
 #
-# Copyright (C) 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 # touch dnsrps-off to not test with DNSRPS
 
@@ -21,6 +24,7 @@ while getopts "Dx" c; do
     case $c in
 	x) set -x; DEBUG=-x;;
         D) TEST_DNSRPS="-D";;
+	N) NOCLEAN=set;;
 	*) echo "$USAGE" 1>&2; exit 1;;
     esac
 done
@@ -30,7 +34,17 @@ if test "$#" -ne 0; then
     exit 1
 fi
 
-$SHELL clean.sh $DEBUG
+[ ${NOCLEAN:-unset} = unset ] && $SHELL clean.sh $DEBUG
+
+copy_setports ns1/named.conf.in ns1/named.conf
+copy_setports ns2/named.conf.in ns2/named.conf
+copy_setports ns3/named.conf.in ns3/named.conf
+copy_setports ns4/named.conf.in ns4/named.conf
+copy_setports ns5/named.conf.in ns5/named.conf
+copy_setports ns6/named.conf.in ns6/named.conf
+copy_setports ns7/named.conf.in ns7/named.conf
+
+copy_setports dnsrpzd.conf.in dnsrpzd.conf
 
 # decide whether to test DNSRPS
 # Note that dnsrps.conf and dnsrps-slave.conf are included in named.conf
@@ -135,6 +149,9 @@ $PERL -e 'for ($cnt = $val = 1; $cnt <= 3000; ++$cnt) {
 cp ns2/bl.tld2.db.in ns2/bl.tld2.db
 cp ns5/empty.db.in ns5/empty.db
 cp ns5/empty.db.in ns5/policy2.db
+rm -f ns2/bl.tld2.db.jnl
+rm -f ns5/empty.db.jnl
+rm -f cp ns5/policy2.db.jnl
 
 # Run dnsrpzd to get the license and prime the static policy zones
 if test -n "$TEST_DNSRPS"; then

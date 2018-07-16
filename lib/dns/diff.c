@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2000-2005, 2007-2009, 2011, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: diff.c,v 1.26 2011/03/25 23:53:02 each Exp $ */
 
 /*! \file */
 
@@ -80,11 +82,16 @@ dns_difftuple_create(isc_mem_t *mctx,
 
 	t->ttl = ttl;
 
-	memmove(datap, rdata->data, rdata->length);
 	dns_rdata_init(&t->rdata);
 	dns_rdata_clone(rdata, &t->rdata);
-	t->rdata.data = datap;
-	datap += rdata->length;
+	if (rdata->data != NULL) {
+		memmove(datap, rdata->data, rdata->length);
+		t->rdata.data = datap;
+		datap += rdata->length;
+	} else {
+		t->rdata.data = NULL;
+		INSIST(rdata->length == 0);
+	}
 
 	ISC_LINK_INIT(&t->rdata, link);
 	ISC_LINK_INIT(t, link);

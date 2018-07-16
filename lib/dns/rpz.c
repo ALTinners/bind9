@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -174,8 +177,7 @@ catch_name(const dns_name_t *src_name, const char *tgt, const char *str) {
 	dns_fixedname_t tgt_namef;
 	dns_name_t *tgt_name;
 
-	dns_fixedname_init(&tgt_namef);
-	tgt_name = dns_fixedname_name(&tgt_namef);
+	tgt_name = dns_fixedname_initname(&tgt_namef);
 	dns_name_fromstring(tgt_name, tgt, DNS_NAME_DOWNCASE, NULL);
 	if (dns_name_equal(src_name, tgt_name)) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,
@@ -703,12 +705,12 @@ ip2name(const dns_rpz_cidr_key_t *tgt_ip, dns_rpz_prefix_t tgt_prefix,
 	int i, n, len;
 
 	if (KEY_IS_IPV4(tgt_prefix, tgt_ip)) {
-		len = snprintf(str, sizeof(str), "%d.%d.%d.%d.%d",
-			       tgt_prefix - 96,
-			       tgt_ip->w[3] & 0xff,
-			       (tgt_ip->w[3]>>8) & 0xff,
-			       (tgt_ip->w[3]>>16) & 0xff,
-			       (tgt_ip->w[3]>>24) & 0xff);
+		len = snprintf(str, sizeof(str), "%u.%u.%u.%u.%u",
+			       tgt_prefix - 96U,
+			       tgt_ip->w[3] & 0xffU,
+			       (tgt_ip->w[3]>>8) & 0xffU,
+			       (tgt_ip->w[3]>>16) & 0xffU,
+			       (tgt_ip->w[3]>>24) & 0xffU);
 		if (len < 0 || len > (int)sizeof(str)) {
 			return (ISC_R_FAILURE);
 		}
@@ -851,6 +853,11 @@ name2ipkey(int log_level,
 			"; invalid leading prefix length", "");
 		return (ISC_R_FAILURE);
 	}
+	/*
+	 * Patch in trailing nul character to print just the length
+	 * label (for various cases below).
+	 */
+	*cp2 = '\0';
 	if (prefix_num < 1U || prefix_num > 128U) {
 		badname(log_level, src_name,
 			"; invalid prefix length of ", prefix_str);
@@ -954,8 +961,7 @@ name2ipkey(int log_level,
 		 * Convert the address back to a canonical domain name
 		 * to ensure that the original name is in canonical form.
 		 */
-		dns_fixedname_init(&ip_name2f);
-		ip_name2 = dns_fixedname_name(&ip_name2f);
+		ip_name2 = dns_fixedname_initname(&ip_name2f);
 		result = ip2name(tgt_ip, (dns_rpz_prefix_t)prefix_num,
 				 NULL, ip_name2);
 		if (result != ISC_R_SUCCESS ||
@@ -1396,8 +1402,7 @@ add_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	 * because wildcard triggers are handled differently.
 	 */
 
-	dns_fixedname_init(&trig_namef);
-	trig_name = dns_fixedname_name(&trig_namef);
+	trig_name = dns_fixedname_initname(&trig_namef);
 	name2data(rpzs, rpz_num, rpz_type, src_name, trig_name, &new_data);
 
 	result = add_nm(rpzs, trig_name, &new_data);
@@ -1614,8 +1619,8 @@ dns_rpz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
 		zone->updatepending = ISC_TRUE;
 		isc_time_now(&now);
 		tdiff = isc_time_microdiff(&now, &zone->lastupdated) / 1000000;
-		if (tdiff < zone->min_update_int) {
-			isc_uint64_t defer = zone->min_update_int - tdiff;
+		if (tdiff < zone->min_update_interval) {
+			isc_uint64_t defer = zone->min_update_interval - tdiff;
 			isc_interval_t interval;
 			dns_name_format(&zone->origin, dname,
 					DNS_NAME_FORMATSIZE);
@@ -1778,8 +1783,7 @@ finish_update(dns_rpz_zone_t *rpz) {
 		goto cleanup;
 	}
 
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
+	name = dns_fixedname_initname(&fname);
 
 	for (result = isc_ht_iter_first(iter);
 	     result == ISC_R_SUCCESS;
@@ -1806,7 +1810,7 @@ finish_update(dns_rpz_zone_t *rpz) {
 	 * If there's an update pending schedule it
 	 */
 	if (rpz->updatepending == ISC_TRUE) {
-		isc_uint64_t defer = rpz->min_update_int;
+		isc_uint64_t defer = rpz->min_update_interval;
 		isc_interval_t interval;
 		dns_name_format(&rpz->origin, dname,
 				DNS_NAME_FORMATSIZE);
@@ -1847,8 +1851,7 @@ update_quantum(isc_task_t *task, isc_event_t *event) {
 	REQUIRE(rpz->updbit != NULL);
 	REQUIRE(rpz->newnodes != NULL);
 
-	dns_fixedname_init(&fixname);
-	name = dns_fixedname_name(&fixname);
+	name = dns_fixedname_initname(&fixname);
 
 	dns_name_format(&rpz->origin, domain, DNS_NAME_FORMATSIZE);
 
@@ -2325,8 +2328,7 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	 * because wildcard triggers are handled differently.
 	 */
 
-	dns_fixedname_init(&trig_namef);
-	trig_name = dns_fixedname_name(&trig_namef);
+	trig_name = dns_fixedname_initname(&trig_namef);
 	name2data(rpzs, rpz_num, rpz_type, src_name, trig_name, &del_data);
 
 	nmnode = NULL;

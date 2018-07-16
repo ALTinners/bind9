@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2001-2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: control.c,v 1.49 2012/01/31 23:47:31 tbox Exp $ */
 
 /*! \file */
 
@@ -114,7 +116,8 @@ named_control_docommand(isccc_sexpr_t *message, isc_boolean_t readonly,
 	/*
 	 * Compare the 'command' parameter against all known control commands.
 	 */
-	if (command_compare(command, NAMED_COMMAND_NULL) ||
+	if ((command_compare(command, NAMED_COMMAND_NULL) &&
+	     strlen(cmdline) == 4) ||
 	    command_compare(command, NAMED_COMMAND_STATUS))
 	{
 		log_level = ISC_LOG_DEBUG(1);

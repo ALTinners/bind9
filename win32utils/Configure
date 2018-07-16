@@ -1,10 +1,13 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 # Configure
 #
@@ -113,26 +116,6 @@ my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
                    "..\\bin\\tools\\win32\\nsec3hash.vcxproj.filters",
                    "..\\bin\\tools\\win32\\rrchecker.vcxproj",
                    "..\\bin\\tools\\win32\\rrchecker.vcxproj.filters",
-                   "..\\bin\\tests\\atomic\\win32\\t_atomic.vcxproj",
-                   "..\\bin\\tests\\atomic\\win32\\t_atomic.vcxproj.filters",
-                   "..\\bin\\tests\\db\\win32\\t_db.vcxproj",
-                   "..\\bin\\tests\\db\\win32\\t_db.vcxproj.filters",
-                   "..\\bin\\tests\\dst\\win32\\t_dst.vcxproj",
-                   "..\\bin\\tests\\dst\\win32\\t_dst.vcxproj.filters",
-                   "..\\bin\\tests\\master\\win32\\t_master.vcxproj",
-                   "..\\bin\\tests\\master\\win32\\t_master.vcxproj.filters",
-                   "..\\bin\\tests\\mem\\win32\\t_mem.vcxproj",
-                   "..\\bin\\tests\\mem\\win32\\t_mem.vcxproj.filters",
-                   "..\\bin\\tests\\hashes\\win32\\t_hashes.vcxproj",
-                   "..\\bin\\tests\\hashes\\win32\\t_hashes.vcxproj.filters",
-                   "..\\bin\\tests\\names\\win32\\t_names.vcxproj",
-                   "..\\bin\\tests\\names\\win32\\t_names.vcxproj.filters",
-                   "..\\bin\\tests\\rbt\\win32\\t_rbt.vcxproj",
-                   "..\\bin\\tests\\rbt\\win32\\t_rbt.vcxproj.filters",
-                   "..\\bin\\tests\\resolver\\win32\\t_resolver.vcxproj",
-                   "..\\bin\\tests\\resolver\\win32\\t_resolver.vcxproj.filters",
-                   "..\\bin\\tests\\sockaddr\\win32\\t_sockaddr.vcxproj",
-                   "..\\bin\\tests\\sockaddr\\win32\\t_sockaddr.vcxproj.filters",
                    "..\\bin\\tests\\system\\win32\\bigkey.vcxproj",
                    "..\\bin\\tests\\system\\win32\\bigkey.vcxproj.filters",
                    "..\\bin\\tests\\system\\win32\\feature-test.vcxproj",
@@ -145,10 +128,6 @@ my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
                    "..\\bin\\tests\\system\\win32\\keydelete.vcxproj.filters",
                    "..\\bin\\tests\\system\\win32\\pipequeries.vcxproj",
                    "..\\bin\\tests\\system\\win32\\pipequeries.vcxproj.filters",
-                   "..\\bin\\tests\\tasks\\win32\\t_tasks.vcxproj",
-                   "..\\bin\\tests\\tasks\\win32\\t_tasks.vcxproj.filters",
-                   "..\\bin\\tests\\timers\\win32\\t_timers.vcxproj",
-                   "..\\bin\\tests\\timers\\win32\\t_timers.vcxproj.filters",
                    "..\\bin\\tests\\win32\\backtrace_test.vcxproj",
                    "..\\bin\\tests\\win32\\backtrace_test.vcxproj.filters",
                    "..\\bin\\tests\\win32\\inter_test.vcxproj",
@@ -206,8 +185,6 @@ my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
                    "..\\lib\\samples\\win32\\request.vcxproj.filters",
                    "..\\lib\\samples\\win32\\nsprobe.vcxproj",
                    "..\\lib\\samples\\win32\\nsprobe.vcxproj.filters",
-                   "..\\lib\\tests\\win32\\libtests.vcxproj",
-                   "..\\lib\\tests\\win32\\libtests.vcxproj.filters",
                    "..\\lib\\win32\\bindevt\\bindevt.vcxproj",
                    "..\\lib\\win32\\bindevt\\bindevt.vcxproj.filters",
                    "bind9.sln");
@@ -224,6 +201,7 @@ my @substdefh = ("AES_CC",
                  "HAVE_EVP_SHA256",
                  "HAVE_EVP_SHA384",
                  "HAVE_EVP_SHA512",
+                 "HAVE_FIPS_MODE",
                  "HAVE_GEOIP",
                  "HAVE_GEOIP_CITY_V6",
                  "HAVE_GEOIP_V6",
@@ -343,6 +321,7 @@ my @substvar = ("BIND9_VERSION",
                 "PLATFORM",
                 "PKCS11_TOOLS",
                 "prefix",
+                "PSSUSPEND",
                 "PYTHON",
                 "PYTHON_INSTALL_DIR",
                 "VCREDIST_PATH"),
@@ -411,6 +390,7 @@ my @withlist = ("aes",
                 "openssl",
                 "libxml2",
                 "pkcs11",
+                "pssuspend",
                 "python",
                 "readline",
                 "samples",
@@ -468,6 +448,7 @@ my @help = (
 "  with-gssapi[=PATH]    build with MIT KfW GSSAPI yes|no|path\n",
 "  with-libxml2[=PATH]   build with libxml2 library yes|no|path\n",
 "  with-geoip[=PATH]     build with GeoIP support yes|no|path\n",
+"  with-pssuspend[=COMMAND] specify pssuspend command\n",
 "  with-python[=COMMAND] specify python interpreter python|command\n",
 "  with-readline[=PATH]  build with readline library support yes|no|path\n",
 "  with-idn[=PATH]       build with IDN kit support yes|no|path\n",
@@ -519,6 +500,8 @@ my $use_geoip = "no";
 my $geoip_path = "";
 my $use_libxml2 = "auto";
 my $libxml2_path = "..\\..\\";
+my $with_pssuspend = "no";
+my $pssuspend_command = "pssuspend.exe";
 my $use_python = "auto";
 my $python_command = "python.exe";
 my $use_readline = "no";
@@ -874,6 +857,14 @@ sub mywith {
                 $zlib_path = $val;
             }
         }
+    } elsif ($key =~ /^pssuspend$/i) {
+	if ($val =~ /^no$/i) {
+	    $with_pssuspend = "no";
+	} else {
+	    if ($val !~ /^yes$/i) {
+	        $pssuspend_command = $val;
+	    }
+        }
     } elsif ($key =~ /^python$/i) {
         if ($val =~ /^no$/i) {
             $use_python = "no";
@@ -1101,6 +1092,11 @@ if ($verbose) {
         print "zlib: disabled\n";
     } else {
         print "zlib-path: $zlib_path\n";
+    }
+    if ($with_pssuspend eq "no") {
+        print "pssuspend: disabled\n";
+    } else {
+        print "pssuspend-command: $pssuspend_command\n";
     }
     if ($use_python eq "no") {
         print "python: disabled\n";
@@ -1610,6 +1606,33 @@ EOF
         }
     } else {
         die "can't compile OpenSSL version test: $compret\n";
+    }
+}
+
+# check FIPS_mode
+
+if ($use_openssl eq "yes") {
+    if ($verbose) {
+        printf "checking for FIPS_mode\n";
+    }
+    open F, ">testfips.c" || die $!;
+    print F << 'EOF';
+extern int FIPS_mode();
+
+int main() {
+    return FIPS_mode();
+}
+EOF
+    close F;
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD testfips.c "$library"`;
+    if (grep { -f and -x } ".\\testfips.exe") {
+        $configdefh{"HAVE_FIPS_MODE"} = 1;
+    } else {
+        if ($verbose) {
+            print "can't compile FIPS_mode test: $compret\n";
+            print "disabling FIPS_mode\n";
+        }
     }
 }
 
@@ -2457,6 +2480,10 @@ if ($use_zlib eq "no") {
     $configlib{"ZLIB_LIB"} = "$zlib_lib";
     my $zlib_dll = File::Spec->catfile($zlib_path, "zlib1.dll");
     $configdll{"ZLIB_DLL"} = "$zlib_dll";
+}
+
+if ($with_pssuspend ne "no") {
+    $configvar{"PSSUSPEND"} = "$pssuspend_command";
 }
 
 # with-python
@@ -3428,7 +3455,7 @@ exit 0;
 #  --with-dlz-* ?
 #
 # Notes: MSVC versions
-# MSVC 15.0 _MSC_VER == 1910 (VS 2017)
+# MSVC 15.x _MSC_VER == 191y (VS 2017)
 # MSVC 14.0 _MSC_VER == 1900 (VS 2015)
 # MSVC 12.0 _MSC_VER == 1800 (VS 2013)
 # MSVC 11.0 _MSC_VER == 1700 (VS 2012)

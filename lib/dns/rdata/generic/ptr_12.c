@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 1998-2001, 2004, 2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: ptr_12.c,v 1.45 2009/12/04 22:06:37 tbox Exp $ */
-
-/* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
 #ifndef RDATA_GENERIC_PTR_12_C
 #define RDATA_GENERIC_PTR_12_C

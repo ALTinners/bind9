@@ -1,11 +1,14 @@
 /*
- * Portions Copyright (C) 1999-2002, 2004-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,11 +21,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.19 2011/01/11 23:47:13 tbox Exp $
  */
 
 #include <config.h>
@@ -42,6 +40,9 @@
 #include <dst/result.h>
 
 #include "dst_internal.h"
+#ifdef HAVE_FIPS_MODE
+#include "dst_openssl.h"	/* FIPS_mode() prototype */
+#endif
 #include "dst_parse.h"
 
 #ifndef PK11_MD5_DISABLE
@@ -337,6 +338,28 @@ static dst_func_t hmacmd5_functions = {
 
 isc_result_t
 dst__hmacmd5_init(dst_func_t **funcp) {
+#ifdef HAVE_FIPS_MODE
+	/*
+	 * Problems from OpenSSL are likely from FIPS mode
+	 */
+	int fips_mode = FIPS_mode();
+
+	if (fips_mode != 0) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "FIPS mode is %d: MD5 is only supported "
+				 "if the value is 0.\n"
+				 "Please disable either FIPS mode or MD5.",
+				 fips_mode);
+	}
+#endif
+
+	/*
+	 * Prevent use of incorrect crypto
+	 */
+
+	RUNTIME_CHECK(isc_md5_check(ISC_FALSE));
+	RUNTIME_CHECK(isc_hmacmd5_check(0));
+
 	REQUIRE(funcp != NULL);
 	if (*funcp == NULL)
 		*funcp = &hmacmd5_functions;
@@ -623,6 +646,12 @@ static dst_func_t hmacsha1_functions = {
 
 isc_result_t
 dst__hmacsha1_init(dst_func_t **funcp) {
+	/*
+	 * Prevent use of incorrect crypto
+	 */
+	RUNTIME_CHECK(isc_sha1_check(ISC_FALSE));
+	RUNTIME_CHECK(isc_hmacsha1_check(0));
+
 	REQUIRE(funcp != NULL);
 	if (*funcp == NULL)
 		*funcp = &hmacsha1_functions;

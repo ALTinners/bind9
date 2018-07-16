@@ -1,11 +1,14 @@
 /*
- * Portions Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -519,8 +522,7 @@ main(int argc, char **argv) {
 		if (argc > isc_commandline_index + 1)
 			fatal("extraneous arguments");
 
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		isc_buffer_init(&buf, argv[isc_commandline_index],
 				strlen(argv[isc_commandline_index]));
 		isc_buffer_add(&buf, strlen(argv[isc_commandline_index]));

@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
-
-/*
- * Principal Author: Bob Halley
- */
 
 #include <config.h>
 
@@ -1973,15 +1972,13 @@ delete_node(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node) {
 		 * Though this may be wasteful, it has to be done before
 		 * node is deleted.
 		 */
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		dns_rbt_fullnamefromnode(node, name);
 
 		result = dns_rbt_deletenode(rbtdb->tree, node, ISC_FALSE);
 		break;
 	case DNS_RBT_NSEC_HAS_NSEC:
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		dns_rbt_fullnamefromnode(node, name);
 		/*
 		 * Delete the corresponding node from the auxiliary NSEC
@@ -3496,10 +3493,8 @@ activeempty(rbtdb_search_t *search, dns_rbtnodechain_t *chain,
 	rbtdb = search->rbtdb;
 
 	dns_name_init(&prefix, NULL);
-	dns_fixedname_init(&fnext);
-	next = dns_fixedname_name(&fnext);
-	dns_fixedname_init(&forigin);
-	origin = dns_fixedname_name(&forigin);
+	next = dns_fixedname_initname(&fnext);
+	origin = dns_fixedname_initname(&forigin);
 
 	result = dns_rbtnodechain_next(chain, NULL, NULL);
 	while (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
@@ -3558,12 +3553,9 @@ activeemtpynode(rbtdb_search_t *search, const dns_name_t *qname,
 	dns_name_init(&name, NULL);
 	dns_name_init(&tname, NULL);
 	dns_name_init(&rname, NULL);
-	dns_fixedname_init(&fnext);
-	next = dns_fixedname_name(&fnext);
-	dns_fixedname_init(&fprev);
-	prev = dns_fixedname_name(&fprev);
-	dns_fixedname_init(&forigin);
-	origin = dns_fixedname_name(&forigin);
+	next = dns_fixedname_initname(&fnext);
+	prev = dns_fixedname_initname(&fprev);
+	origin = dns_fixedname_initname(&forigin);
 
 	/*
 	 * Find if qname is at or below a empty node.
@@ -3717,8 +3709,7 @@ find_wildcard(rbtdb_search_t *search, dns_rbtnode_t **nodep,
 			 */
 			dns_name_init(&name, NULL);
 			dns_rbt_namefromnode(node, &name);
-			dns_fixedname_init(&fwname);
-			wname = dns_fixedname_name(&fwname);
+			wname = dns_fixedname_initname(&fwname);
 			result = dns_name_concatenate(dns_wildcardname, &name,
 						      wname, NULL);
 			j = i;
@@ -3872,8 +3863,7 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 		return (result);
 	}
 
-	dns_fixedname_init(&ftarget);
-	target = dns_fixedname_name(&ftarget);
+	target = dns_fixedname_initname(&ftarget);
 
 	for (;;) {
 		if (*firstp) {
@@ -3994,10 +3984,8 @@ find_closest_nsec(rbtdb_search_t *search, dns_dbnode_t **nodep,
 	 * Use the auxiliary tree only starting with the second node in the
 	 * hope that the original node will be right much of the time.
 	 */
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
-	dns_fixedname_init(&forigin);
-	origin = dns_fixedname_name(&forigin);
+	name = dns_fixedname_initname(&fname);
+	origin = dns_fixedname_initname(&forigin);
  again:
 	node = NULL;
 	prevnode = NULL;
@@ -4697,6 +4685,7 @@ check_stale_header(dns_rbtnode_t *node, rdatasetheader_t *header,
 		 */
 		if (KEEPSTALE(search->rbtdb) && stale > search->now) {
 			header->attributes |= RDATASET_ATTR_STALE;
+			*header_prev = header;
 			return ((search->options & DNS_DBFIND_STALEOK) == 0);
 		}
 
@@ -4976,10 +4965,8 @@ find_coveringnsec(rbtdb_search_t *search, dns_dbnode_t **nodep,
 
 	do {
 		node = NULL;
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
-		dns_fixedname_init(&forigin);
-		origin = dns_fixedname_name(&forigin);
+		name = dns_fixedname_initname(&fname);
+		origin = dns_fixedname_initname(&forigin);
 		result = dns_rbtnodechain_current(&chain, name, origin, &node);
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -6838,8 +6825,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	dns_fixedname_init(&fixed);
-	name = dns_fixedname_name(&fixed);
+	name = dns_fixedname_initname(&fixed);
 	RWLOCK(&rbtdb->tree_lock, isc_rwlocktype_read);
 	dns_rbt_fullnamefromnode(node, name);
 	RWUNLOCK(&rbtdb->tree_lock, isc_rwlocktype_read);
@@ -10118,13 +10104,11 @@ glue_nsdname_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype) {
 
 	ctx = (rbtdb_glue_additionaldata_ctx_t *) arg;
 
-	dns_fixedname_init(&fixedname_a);
-	name_a = dns_fixedname_name(&fixedname_a);
+	name_a = dns_fixedname_initname(&fixedname_a);
 	dns_rdataset_init(&rdataset_a);
 	dns_rdataset_init(&sigrdataset_a);
 
-	dns_fixedname_init(&fixedname_aaaa);
-	name_aaaa = dns_fixedname_name(&fixedname_aaaa);
+	name_aaaa = dns_fixedname_initname(&fixedname_aaaa);
 	dns_rdataset_init(&rdataset_aaaa);
 	dns_rdataset_init(&sigrdataset_aaaa);
 
@@ -10139,8 +10123,7 @@ glue_nsdname_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype) {
 			goto out;
 		}
 
-		dns_fixedname_init(&glue->fixedname);
-		gluename = dns_fixedname_name(&glue->fixedname);
+		gluename = dns_fixedname_initname(&glue->fixedname);
 		dns_name_copy(name_a, gluename, NULL);
 
 		dns_rdataset_init(&glue->rdataset_a);
@@ -10168,8 +10151,7 @@ glue_nsdname_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype) {
 				goto out;
 			}
 
-			dns_fixedname_init(&glue->fixedname);
-			gluename = dns_fixedname_name(&glue->fixedname);
+			gluename = dns_fixedname_initname(&glue->fixedname);
 			dns_name_copy(name_aaaa, gluename, NULL);
 
 			dns_rdataset_init(&glue->rdataset_a);

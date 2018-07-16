@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2012, 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -150,9 +153,9 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	/*
 	 * Try converting text form RDATA into uncompressed wire form.
 	 */
-	result = dns_test_rdata_fromstring(&rdata, rdclass, type, buf_fromtext,
-					   sizeof(buf_fromtext),
-					   text_ok->text_in);
+	result = dns_test_rdatafromstring(&rdata, rdclass, type, buf_fromtext,
+					  sizeof(buf_fromtext),
+					  text_ok->text_in);
 	/*
 	 * Check whether result is as expected.
 	 */
@@ -1091,6 +1094,35 @@ ATF_TC_BODY(nsec, tc) {
 }
 
 /*
+ * NSEC3 tests.
+ *
+ * RFC 5155.
+ */
+ATF_TC(nsec3);
+ATF_TC_HEAD(nsec3, tc) {
+	atf_tc_set_md_var(tc, "descr", "NSEC3 RDATA manipulations");
+}
+ATF_TC_BODY(nsec3, tc) {
+	text_ok_t text_ok[] = {
+		TEXT_INVALID(""),
+		TEXT_INVALID("."),
+		TEXT_INVALID(". RRSIG"),
+		TEXT_INVALID("1 0 10 76931F"),
+		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONG;UED541AS"),
+		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONG;UED541AS A RRSIG"),
+		TEXT_VALID("1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM A RRSIG"),
+		TEXT_VALID("1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
+		TEXT_VALID("1 0 10 - AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
+		TEXT_SENTINEL()
+	};
+
+	UNUSED(tc);
+
+	check_rdata(text_ok, NULL, ISC_FALSE, dns_rdataclass_in,
+		    dns_rdatatype_nsec3, sizeof(dns_rdata_nsec3_t));
+}
+
+/*
  * WKS tests.
  *
  * RFC 1035:
@@ -1174,6 +1206,7 @@ ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, hip);
 	ATF_TP_ADD_TC(tp, isdn);
 	ATF_TP_ADD_TC(tp, nsec);
+	ATF_TP_ADD_TC(tp, nsec3);
 	ATF_TP_ADD_TC(tp, wks);
 
 	return (atf_no_error());

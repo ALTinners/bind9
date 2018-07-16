@@ -1,11 +1,14 @@
 /*
- * Portions Copyright (C) 1999-2002, 2004-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,11 +21,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*%
- * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.29 2011/08/18 23:46:35 tbox Exp $
  */
 
 #include <config.h>
@@ -207,9 +205,7 @@ check_rsa(const dst_private_t *priv, isc_boolean_t external) {
 		have[i] = ISC_TRUE;
 	}
 
-	mask = ~0;
-	mask <<= sizeof(mask) * 8 - TAG_SHIFT;
-	mask >>= sizeof(mask) * 8 - TAG_SHIFT;
+	mask = (1ULL << TAG_SHIFT) - 1;
 
 	if (have[TAG_RSA_ENGINE & mask])
 		ok = have[TAG_RSA_MODULUS & mask] &&
@@ -301,9 +297,7 @@ check_ecdsa(const dst_private_t *priv, isc_boolean_t external) {
 		have[i] = ISC_TRUE;
 	}
 
-	mask = ~0;
-	mask <<= sizeof(mask) * 8 - TAG_SHIFT;
-	mask >>= sizeof(mask) * 8 - TAG_SHIFT;
+	mask = (1ULL << TAG_SHIFT) - 1;
 
 	if (have[TAG_ECDSA_ENGINE & mask])
 		ok = have[TAG_ECDSA_LABEL & mask];
@@ -333,9 +327,7 @@ check_eddsa(const dst_private_t *priv, isc_boolean_t external) {
 		have[i] = ISC_TRUE;
 	}
 
-	mask = ~0;
-	mask <<= sizeof(mask) * 8 - TAG_SHIFT;
-	mask >>= sizeof(mask) * 8 - TAG_SHIFT;
+	mask = (1ULL << TAG_SHIFT) - 1;
 
 	if (have[TAG_EDDSA_ENGINE & mask])
 		ok = have[TAG_EDDSA_LABEL & mask];
@@ -738,7 +730,7 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 	/* XXXDCL return value should be checked for full filesystem */
 	fprintf(fp, "%s v%d.%d\n", PRIVATE_KEY_STR, major, minor);
 
-	fprintf(fp, "%s %d ", ALGORITHM_STR, dst_key_alg(key));
+	fprintf(fp, "%s %u ", ALGORITHM_STR, dst_key_alg(key));
 
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (dst_key_alg(key)) {

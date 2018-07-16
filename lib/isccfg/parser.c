@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2000-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -157,8 +160,8 @@ print_open(cfg_printer_t *pctx) {
 	}
 }
 
-static void
-print_indent(cfg_printer_t *pctx) {
+void
+cfg_print_indent(cfg_printer_t *pctx) {
 	int indent = pctx->indent;
 	if ((pctx->flags & CFG_PRINTER_ONELINE) != 0) {
 		cfg_print_cstr(pctx, " ");
@@ -174,7 +177,7 @@ static void
 print_close(cfg_printer_t *pctx) {
 	if ((pctx->flags & CFG_PRINTER_ONELINE) == 0) {
 		pctx->indent--;
-		print_indent(pctx);
+		cfg_print_indent(pctx);
 	}
 	cfg_print_cstr(pctx, "}");
 }
@@ -612,7 +615,7 @@ isc_result_t
 cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
 	const cfg_type_t *type, cfg_obj_t **ret)
 {
-	return (cfg_parse_buffer3(pctx, buffer, NULL, 0, type, ret));
+	return (cfg_parse_buffer4(pctx, buffer, NULL, 0, type, 0, ret));
 }
 
 isc_result_t
@@ -620,7 +623,7 @@ cfg_parse_buffer2(cfg_parser_t *pctx, isc_buffer_t *buffer,
 		  const char *file, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
-	return (cfg_parse_buffer3(pctx, buffer, file, 0, type, ret));
+	return (cfg_parse_buffer4(pctx, buffer, file, 0, type, 0, ret));
 }
 
 isc_result_t
@@ -628,16 +631,27 @@ cfg_parse_buffer3(cfg_parser_t *pctx, isc_buffer_t *buffer,
 		  const char *file, unsigned int line,
 		  const cfg_type_t *type, cfg_obj_t **ret)
 {
+	return (cfg_parse_buffer4(pctx, buffer, file, line, type, 0, ret));
+}
+
+isc_result_t
+cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
+		  const char *file, unsigned int line,
+		  const cfg_type_t *type, unsigned int flags,
+		  cfg_obj_t **ret)
+{
 	isc_result_t result;
 
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
 	REQUIRE(buffer != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
+	REQUIRE((flags & ~(CFG_PCTX_NODEPRECATED)) == 0);
 
 	CHECK(isc_lex_openbuffer(pctx->lexer, buffer));
 
 	pctx->buf_name = file;
+	pctx->flags = flags;
 
 	if (line != 0U)
 		CHECK(isc_lex_setsourceline(pctx->lexer, line));
@@ -1290,7 +1304,7 @@ cfg_parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	cfg_obj_t *obj = NULL;
 
 	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && ret != NULL);
+	REQUIRE(ret != NULL && *ret == NULL);
 
 	UNUSED(type);
 
@@ -1467,7 +1481,7 @@ print_list(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 			cfg_print_obj(pctx, elt->obj);
 			cfg_print_cstr(pctx, "; ");
 		} else {
-			print_indent(pctx);
+			cfg_print_indent(pctx);
 			cfg_print_obj(pctx, elt->obj);
 			cfg_print_cstr(pctx, ";\n");
 		}
@@ -1694,12 +1708,14 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		}
 	done:
 		if (clause == NULL || clause->name == NULL) {
-			cfg_parser_error(pctx, CFG_LOG_NOPREP, "unknown option");
+			cfg_parser_error(pctx, CFG_LOG_NOPREP,
+					 "unknown option");
 			/*
 			 * Try to recover by parsing this option as an unknown
 			 * option and discarding it.
 			 */
-			CHECK(cfg_parse_obj(pctx, &cfg_type_unsupported, &eltobj));
+			CHECK(cfg_parse_obj(pctx, &cfg_type_unsupported,
+					    &eltobj));
 			cfg_obj_destroy(pctx, &eltobj);
 			CHECK(parse_semicolon(pctx));
 			continue;
@@ -1708,16 +1724,24 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		/* Clause is known. */
 
 		/* Issue warnings if appropriate */
-		if ((clause->flags & CFG_CLAUSEFLAG_OBSOLETE) != 0)
+		if ((pctx->flags & CFG_PCTX_NODEPRECATED) == 0 &&
+		    (clause->flags & CFG_CLAUSEFLAG_DEPRECATED) != 0)
+		{
+			cfg_parser_warning(pctx, 0, "option '%s' is deprecated",
+					   clause->name);
+		}
+		if ((clause->flags & CFG_CLAUSEFLAG_OBSOLETE) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' is obsolete",
-				       clause->name);
-		if ((clause->flags & CFG_CLAUSEFLAG_NOTIMP) != 0)
+					   clause->name);
+		}
+		if ((clause->flags & CFG_CLAUSEFLAG_NOTIMP) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' is "
-				       "not implemented", clause->name);
-		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0)
+					   "not implemented", clause->name);
+		}
+		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' is "
-				       "not implemented", clause->name);
-
+					   "not implemented", clause->name);
+		}
 		if ((clause->flags & CFG_CLAUSEFLAG_NOOP) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' was not "
 					   "enabled at compile time "
@@ -1909,7 +1933,7 @@ cfg_parse_netprefix_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **
 static void
 print_symval(cfg_printer_t *pctx, const char *name, cfg_obj_t *obj) {
 	if ((pctx->flags & CFG_PRINTER_ONELINE) == 0)
-		print_indent(pctx);
+		cfg_print_indent(pctx);
 
 	cfg_print_cstr(pctx, name);
 	cfg_print_cstr(pctx, " ");
@@ -1984,8 +2008,8 @@ static struct flagtext {
 	{ 0, NULL }
 };
 
-static void
-print_clause_flags(cfg_printer_t *pctx, unsigned int flags) {
+void
+cfg_print_clauseflags(cfg_printer_t *pctx, unsigned int flags) {
 	struct flagtext *p;
 	isc_boolean_t first = ISC_TRUE;
 	for (p = flagtexts; p->flag != 0; p++) {
@@ -2009,14 +2033,12 @@ cfg_doc_mapbody(cfg_printer_t *pctx, const cfg_type_t *type) {
 	REQUIRE(type != NULL);
 
 	for (clauseset = type->of; *clauseset != NULL; clauseset++) {
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
+		for (clause = *clauseset; clause->name != NULL; clause++) {
 			cfg_print_cstr(pctx, clause->name);
 			cfg_print_cstr(pctx, " ");
 			cfg_doc_obj(pctx, clause->type);
 			cfg_print_cstr(pctx, ";");
-			print_clause_flags(pctx, clause->flags);
+			cfg_print_clauseflags(pctx, clause->flags);
 			cfg_print_cstr(pctx, "\n\n");
 		}
 	}
@@ -2058,16 +2080,14 @@ cfg_doc_map(cfg_printer_t *pctx, const cfg_type_t *type) {
 	print_open(pctx);
 
 	for (clauseset = type->of; *clauseset != NULL; clauseset++) {
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
-			print_indent(pctx);
+		for (clause = *clauseset; clause->name != NULL; clause++) {
+			cfg_print_indent(pctx);
 			cfg_print_cstr(pctx, clause->name);
 			if (clause->type->print != cfg_print_void)
 				cfg_print_cstr(pctx, " ");
 			cfg_doc_obj(pctx, clause->type);
 			cfg_print_cstr(pctx, ";");
-			print_clause_flags(pctx, clause->flags);
+			cfg_print_clauseflags(pctx, clause->flags);
 			cfg_print_cstr(pctx, "\n");
 		}
 	}
@@ -2113,6 +2133,55 @@ cfg_map_count(const cfg_obj_t *mapobj) {
 
 	map = &mapobj->value.map;
 	return (isc_symtab_count(map->symtab));
+}
+
+const char *
+cfg_map_firstclause(const cfg_type_t *map, const void **clauses,
+		    unsigned int *idx)
+{
+	cfg_clausedef_t * const * clauseset;
+
+	REQUIRE(map != NULL && map->rep == &cfg_rep_map);
+	REQUIRE(idx != NULL);
+	REQUIRE(clauses != NULL && *clauses == NULL);
+
+	clauseset = map->of;
+	if (*clauseset == NULL) {
+		return (NULL);
+	}
+	*clauses = *clauseset;
+	*idx = 0;
+	while ((*clauseset)[*idx].name == NULL) {
+		*clauses = (*++clauseset);
+		if (*clauses == NULL)
+			return (NULL);
+	}
+	return ((*clauseset)[*idx].name);
+}
+
+const char *
+cfg_map_nextclause(const cfg_type_t *map, const void **clauses,
+		   unsigned int *idx)
+{
+	cfg_clausedef_t * const * clauseset;
+
+	REQUIRE(map != NULL && map->rep == &cfg_rep_map);
+	REQUIRE(idx != NULL);
+	REQUIRE(clauses != NULL && *clauses != NULL);
+
+	clauseset = map->of;
+	while (*clauseset != NULL && *clauseset != *clauses) {
+		clauseset++;
+	}
+	INSIST(*clauseset == *clauses);
+	(*idx)++;
+	while ((*clauseset)[*idx].name == NULL) {
+		*idx = 0;
+		*clauses = (*++clauseset);
+		if (*clauses == NULL)
+			return (NULL);
+	}
+	return ((*clauseset)[*idx].name);
 }
 
 /* Parse an arbitrary token, storing its raw text representation. */

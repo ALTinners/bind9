@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2002, 2004-2009, 2011, 2013, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -231,12 +234,13 @@ dns_acl_match2(const isc_netaddr_t *reqaddr,
 
 	/* Found a match. */
 	if (result == ISC_R_SUCCESS && node != NULL) {
-		int off = ISC_RADIX_OFF(&pfx);
-		match_num = node->node_num[off];
-		if (*(isc_boolean_t *) node->data[off])
+		int fam = ISC_RADIX_FAMILY(&pfx);
+		match_num = node->node_num[fam];
+		if (*(isc_boolean_t *) node->data[fam]) {
 			*match = match_num;
-		else
+		} else {
 			*match = -match_num;
+		}
 	}
 
 	isc_refcount_destroy(&pfx.refcount);
@@ -261,17 +265,19 @@ dns_acl_match2(const isc_netaddr_t *reqaddr,
 
 		result = isc_radix_search(acl->iptable->radix, &node, &pfx);
 		if (result == ISC_R_SUCCESS && node != NULL) {
-			int off = ISC_RADIX_OFF(&pfx);
+			int off = ISC_RADIX_FAMILY(&pfx);
 			if (match_num == -1 ||
 			    node->node_num[off] < match_num)
 			{
 				match_num = node->node_num[off];
-				if (scope != NULL)
+				if (scope != NULL) {
 					*scope = node->bit;
-				if (*(isc_boolean_t *) node->data[off])
+				}
+				if (*(isc_boolean_t *) node->data[off]) {
 					*match = match_num;
-				else
+				} else {
 					*match = -match_num;
+				}
 			}
 		}
 

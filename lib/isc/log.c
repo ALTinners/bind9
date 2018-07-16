@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 1999-2007, 2009, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
-
-/*! \file
- * \author  Principal Authors: DCL */
+/*! \file */
 
 #include <config.h>
 
@@ -1281,8 +1281,8 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 							      &digit_end, 10);
 				if (*digit_end == '\0') {
 					int i = 0;
-					while (version < to_keep[i] &&
-					       i < versions)
+					while (i < versions &&
+					       version < to_keep[i])
 					{
 						i++;
 					}
@@ -1353,7 +1353,7 @@ roll_increment(isc_logfile_t *file) {
 		 */
 		for (greatest = 0; greatest < INT_MAX; greatest++) {
 			n = snprintf(current, sizeof(current),
-				     "%s.%u", path, greatest) ;
+				     "%s.%u", path, (unsigned)greatest) ;
 			if (n >= (int)sizeof(current) || n < 0 ||
 			    !isc_file_exists(current))
 			{
@@ -1380,13 +1380,14 @@ roll_increment(isc_logfile_t *file) {
 
 	for (i = greatest; i > 0; i--) {
 		result = ISC_R_SUCCESS;
-		n = snprintf(current, sizeof(current), "%s.%u", path, i - 1);
+		n = snprintf(current, sizeof(current), "%s.%u", path,
+			     (unsigned)(i - 1));
 		if (n >= (int)sizeof(current) || n < 0) {
 			result = ISC_R_NOSPACE;
 		}
 		if (result == ISC_R_SUCCESS) {
 			n = snprintf(newpath, sizeof(newpath), "%s.%u",
-				     path, i);
+				     path, (unsigned)i);
 			if (n >= (int)sizeof(newpath) || n < 0) {
 				result = ISC_R_NOSPACE;
 			}

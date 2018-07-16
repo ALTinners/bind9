@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1999-2001, 2004, 2007-2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: interfaceiter.c,v 1.15 2009/01/18 23:48:14 tbox Exp $ */
 
 /*
  * Note that this code will need to be revisited to support IPv6 Interfaces.
@@ -388,7 +390,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 		iter->current.flags = INTERFACE_F_UP;
 
 		snprintf(iter->current.name, sizeof(iter->current.name),
-			 "TCP/IPv6 Interface %d", iter->pos6 + 1);
+			 "TCP/IPv6 Interface %u", iter->pos6 + 1);
 
 		for (i = 0; i < 16; i++)
 			iter->current.netmask.type.in6.s6_addr[i] = 0xff;

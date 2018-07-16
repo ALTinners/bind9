@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2013, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -60,8 +63,7 @@ loadzone(dns_db_t **db, const char *origin, const char *filename) {
 	dns_fixedname_t fixed;
 	dns_name_t *name;
 
-	dns_fixedname_init(&fixed);
-	name = dns_fixedname_name(&fixed);
+	name = dns_fixedname_initname(&fixed);
 
 	result = dns_name_fromstring(name, origin, 0, NULL);
 	if (result != ISC_R_SUCCESS)

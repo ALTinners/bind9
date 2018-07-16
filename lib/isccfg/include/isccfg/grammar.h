@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2002-2011, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: grammar.h,v 1.24 2011/01/04 23:47:14 tbox Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -51,6 +52,23 @@
 /*% A configuration option that is ineffective due to
  * compile time options, but is harmless. */
 #define CFG_CLAUSEFLAG_NOOP		0x00000200
+/*% Clause is obsolete in a future release */
+#define CFG_CLAUSEFLAG_DEPRECATED	0x00000400
+
+/*%
+ * Zone types for which a clause is valid:
+ * These share space with CFG_CLAUSEFLAG values, but count
+ * down from the top.
+ */
+#define CFG_ZONE_MASTER			0x80000000
+#define CFG_ZONE_SLAVE			0x40000000
+#define CFG_ZONE_STUB			0x20000000
+#define CFG_ZONE_HINT			0x10000000
+#define CFG_ZONE_FORWARD		0x08000000
+#define CFG_ZONE_STATICSTUB		0x04000000
+#define CFG_ZONE_REDIRECT		0x02000000
+#define CFG_ZONE_DELEGATION		0x01000000
+#define CFG_ZONE_INVIEW			0x00800000
 
 typedef struct cfg_clausedef cfg_clausedef_t;
 typedef struct cfg_tuplefielddef cfg_tuplefielddef_t;
@@ -236,6 +254,7 @@ struct cfg_parser {
 
 /* Parser context flags */
 #define CFG_PCTX_SKIP		0x1
+#define CFG_PCTX_NODEPRECATED	0x2
 
 /*@{*/
 /*%
@@ -506,5 +525,33 @@ cfg_parser_warning(cfg_parser_t *pctx, unsigned int flags,
 isc_boolean_t
 cfg_is_enum(const char *s, const char *const *enums);
 /*%< Return true iff the string 's' is one of the strings in 'enums' */
+
+isc_boolean_t
+cfg_clause_validforzone(const char *name, unsigned int ztype);
+/*%<
+ * Check whether an option is legal for the specified zone type.
+ */
+
+void
+cfg_print_zonegrammar(const unsigned int zonetype,
+		      void (*f)(void *closure, const char *text, int textlen),
+		      void *closure);
+/*%<
+ * Print a summary of the grammar of the zone type represented by
+ * 'zonetype'.
+ */
+
+void
+cfg_print_clauseflags(cfg_printer_t *pctx, unsigned int flags);
+/*%<
+ * Print clause flags (e.g. "obsolete", "not implemented", etc) in
+ * human readable form
+ */
+
+void
+cfg_print_indent(cfg_printer_t *pctx);
+/*%<
+ * Print the necessary indent required by the current settings of 'pctx'.
+ */
 
 #endif /* ISCCFG_GRAMMAR_H */

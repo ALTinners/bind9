@@ -1,17 +1,15 @@
 /*
- * Copyright (C) 1996-2001, 2004, 2005, 2007, 2009, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] =
-	"$Id: inet_ntop.c,v 1.21 2009/07/17 23:47:41 tbox Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
 

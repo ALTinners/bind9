@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1999-2001, 2004-2007, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: fixedname.h,v 1.19 2007/06/19 23:47:16 tbox Exp $ */
 
 #ifndef DNS_FIXEDNAME_H
 #define DNS_FIXEDNAME_H 1
@@ -19,8 +21,9 @@
  * \brief
  * Fixed-size Names
  *
- * dns_fixedname_t is a convenience type containing a name, an offsets table,
- * and a dedicated buffer big enough for the longest possible name.
+ * dns_fixedname_t is a convenience type containing a name, an offsets
+ * table, and a dedicated buffer big enough for the longest possible
+ * name. This is typically used for stack-allocated names.
  *
  * MP:
  *\li	The caller must ensure any required synchronization.
@@ -61,17 +64,16 @@ struct dns_fixedname {
 	unsigned char			data[DNS_NAME_MAXWIRE];
 };
 
-#define dns_fixedname_init(fn) \
-	do { \
-		dns_name_init(&((fn)->name), (fn)->offsets); \
-		isc_buffer_init(&((fn)->buffer), (fn)->data, \
-				  DNS_NAME_MAXWIRE); \
-		dns_name_setbuffer(&((fn)->name), &((fn)->buffer)); \
-	} while (0)
+void
+dns_fixedname_init(dns_fixedname_t *fixed);
 
-#define dns_fixedname_invalidate(fn) \
-	dns_name_invalidate(&((fn)->name))
+void
+dns_fixedname_invalidate(dns_fixedname_t *fixed);
 
-#define dns_fixedname_name(fn)		(&((fn)->name))
+dns_name_t *
+dns_fixedname_name(dns_fixedname_t *fixed);
+
+dns_name_t *
+dns_fixedname_initname(dns_fixedname_t *fixed);
 
 #endif /* DNS_FIXEDNAME_H */

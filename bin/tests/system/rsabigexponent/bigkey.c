@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 #include <config.h>
 
@@ -207,8 +209,7 @@ main(int argc, char **argv) {
 	      "isc_log_createchannel()");
 	CHECK(isc_log_usechannel(logconfig, "stderr", NULL, NULL),
 	      "isc_log_usechannel()");
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
+	name = dns_fixedname_initname(&fname);
 	isc_buffer_constinit(&buf, "example.", strlen("example."));
 	isc_buffer_add(&buf, strlen("example."));
 	CHECK(dns_name_fromtext(name, &buf, dns_rootname, 0, NULL),

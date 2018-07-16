@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2000, 2001, 2003-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id$ */
 
 /*! \file */
 
@@ -104,10 +105,10 @@ typedef struct sdb_rdatasetiter {
 #define VALID_SDBNODE(sdbn)	VALID_SDBLOOKUP(sdbn)
 
 /* These values are taken from RFC1537 */
-#define SDB_DEFAULT_REFRESH	(60 * 60 * 8)
-#define SDB_DEFAULT_RETRY	(60 * 60 * 2)
-#define SDB_DEFAULT_EXPIRE	(60 * 60 * 24 * 7)
-#define SDB_DEFAULT_MINIMUM	(60 * 60 * 24)
+#define SDB_DEFAULT_REFRESH	28800U		/* 8 hours */
+#define SDB_DEFAULT_RETRY	7200U		/* 2 hours */
+#define SDB_DEFAULT_EXPIRE	604800U		/* 7 days */
+#define SDB_DEFAULT_MINIMUM	86400U		/* 1 day */
 
 /* This is a reasonable value */
 #define SDB_DEFAULT_TTL		(60 * 60 * 24)
@@ -431,8 +432,7 @@ getnode(dns_sdballnodes_t *allnodes, const char *name, dns_sdbnode_t **nodep) {
 	isc_buffer_t b;
 	isc_result_t result;
 
-	dns_fixedname_init(&fnewname);
-	newname = dns_fixedname_name(&fnewname);
+	newname = dns_fixedname_initname(&fnewname);
 
 	if ((imp->flags & DNS_SDBFLAG_RELATIVERDATA) != 0)
 		origin = &sdb->common.origin;
@@ -833,8 +833,7 @@ findext(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 	olabels = dns_name_countlabels(&db->origin);
 	nlabels = dns_name_countlabels(name);
 
-	dns_fixedname_init(&fname);
-	xname = dns_fixedname_name(&fname);
+	xname = dns_fixedname_initname(&fname);
 
 	if (rdataset == NULL) {
 		dns_rdataset_init(&xrdataset);
@@ -1409,7 +1408,7 @@ rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target) {
 	source->private5 = tempdb;
 }
 
-static dns_rdatasetmethods_t methods = {
+static dns_rdatasetmethods_t sdb_rdataset_methods = {
 	disassociate,
 	isc__rdatalist_first,
 	isc__rdatalist_next,
@@ -1444,7 +1443,7 @@ list_tordataset(dns_rdatalist_t *rdatalist,
 	RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset) ==
 		      ISC_R_SUCCESS);
 
-	rdataset->methods = &methods;
+	rdataset->methods = &sdb_rdataset_methods;
 	dns_db_attachnode(db, node, &rdataset->private5);
 }
 

@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2007-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -362,8 +365,7 @@ main(int argc, char **argv) {
 		if (argc > isc_commandline_index + 1)
 			fatal("extraneous arguments");
 
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		isc_buffer_init(&buf, argv[isc_commandline_index],
 				strlen(argv[isc_commandline_index]));
 		isc_buffer_add(&buf, strlen(argv[isc_commandline_index]));
@@ -609,8 +611,13 @@ main(int argc, char **argv) {
 	isc_buffer_init(&buf, filename, sizeof(filename) - 1);
 
 	/* associate the key */
-	ret = dst_key_fromlabel(name, alg, flags, protocol,
-				rdclass, "pkcs11", label, NULL, mctx, &key);
+	ret = dst_key_fromlabel(name, alg, flags, protocol, rdclass,
+#ifdef PKCS11CRYPTO
+				"pkcs11",
+#else
+				engine,
+#endif
+				label, NULL, mctx, &key);
 	isc_entropy_stopcallbacksources(ectx);
 
 	if (ret != ISC_R_SUCCESS) {

@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2000, 2001, 2004-2007, 2009, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.19 2009/02/06 23:47:42 tbox Exp $ */
 
 /*	$NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp $	*/
 
@@ -64,6 +66,9 @@ isc_sha1_update(isc_sha1_t *ctx, const unsigned char *data, unsigned int len);
 
 void
 isc_sha1_final(isc_sha1_t *ctx, unsigned char *digest);
+
+isc_boolean_t
+isc_sha1_check(isc_boolean_t testing);
 
 ISC_LANG_ENDDECLS
 

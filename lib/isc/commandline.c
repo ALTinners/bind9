@@ -1,9 +1,12 @@
 /*
- * Portions Copyright (C) 1999-2001, 2004, 2005, 2007, 2008, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*
@@ -35,7 +38,6 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: commandline.c,v 1.22 2008/09/25 04:02:39 tbox Exp $ */
 
 /*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:
@@ -43,11 +45,6 @@
  *
  * The primary change has been to rename items to the ISC namespace
  * and format in the ISC coding style.
- */
-
-/*
- * \author Principal Authors: Computer Systems Research Group at UC Berkeley
- * \author Principal ISC caretaker: DCL
  */
 
 #include <config.h>

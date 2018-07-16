@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1999-2002, 2004, 2005, 2007, 2010-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 /*! \file */
 
@@ -164,7 +166,7 @@ isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 
 	isc_buffer_putmem(target, (unsigned char *)abuf, alen);
-	isc_buffer_putmem(target, (unsigned char *)zbuf, zlen);
+	isc_buffer_putmem(target, (unsigned char *)zbuf, (unsigned int)zlen);
 
 	return (ISC_R_SUCCESS);
 }

@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2000, 2001, 2004, 2005, 2007, 2009, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: md5.c,v 1.16 2009/02/06 23:47:42 tbox Exp $ */
 
 /*! \file
  * This code implements the MD5 message-digest algorithm.
@@ -55,7 +57,9 @@ void
 isc_md5_init(isc_md5_t *ctx) {
 	ctx->ctx = EVP_MD_CTX_new();
 	RUNTIME_CHECK(ctx->ctx != NULL);
-	RUNTIME_CHECK(EVP_DigestInit(ctx->ctx, EVP_md5()) == 1);
+	if (EVP_DigestInit(ctx->ctx, EVP_md5()) != 1) {
+		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize MD5.");
+	}
 }
 
 void
@@ -335,6 +339,46 @@ isc_md5_final(isc_md5_t *ctx, unsigned char *digest) {
 }
 #endif
 
+/*
+ * Check for MD5 support; if it does not work, raise a fatal error.
+ *
+ * Use "a" as the test vector.
+ *
+ * Standard use is testing false and result true.
+ * Testing use is testing true and result false;
+ */
+isc_boolean_t
+isc_md5_check(isc_boolean_t testing) {
+	isc_md5_t ctx;
+	unsigned char input = 'a';
+	unsigned char digest[ISC_MD5_DIGESTLENGTH];
+	unsigned char expected[] = {
+		0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8,
+		0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77, 0x26, 0x61
+	};
+
+	INSIST(sizeof(expected) == ISC_MD5_DIGESTLENGTH);
+
+	/*
+	 * Introduce a fault for testing.
+	 */
+	if (testing) {
+		input ^= 0x01;
+	}
+
+	/*
+	 * These functions do not return anything; any failure will be fatal.
+	 */
+	isc_md5_init(&ctx);
+	isc_md5_update(&ctx, &input, 1U);
+	isc_md5_final(&ctx, digest);
+
+	/*
+	 * Must return true in standard case, should return false for testing.
+	 */
+	return (ISC_TF(memcmp(digest, expected, ISC_MD5_DIGESTLENGTH) == 0));
+}
+
 #else /* !PK11_MD5_DISABLE */
 #ifdef WIN32
 /* Make the Visual Studio linker happy */
@@ -344,5 +388,6 @@ void isc_md5_final() { INSIST(0); }
 void isc_md5_init() { INSIST(0); }
 void isc_md5_invalidate() { INSIST(0); }
 void isc_md5_update() { INSIST(0); }
+void isc_md5_check() { INSIST(0); }
 #endif
 #endif /* PK11_MD5_DISABLE */

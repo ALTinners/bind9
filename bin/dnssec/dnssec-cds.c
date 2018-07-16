@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*
@@ -85,7 +88,7 @@ static dns_rdataclass_t rdclass = dns_rdataclass_in;
  */
 static isc_uint8_t dtype[8];
 
-static const char *startstr  = NULL;  	/* from which we derive notbefore */
+static const char *startstr  = NULL;	/* from which we derive notbefore */
 static isc_stdtime_t notbefore = 0;	/* restrict sig inception times */
 static dns_rdata_rrsig_t oldestsig;	/* for recording inception time */
 
@@ -170,8 +173,7 @@ initname(char *setname) {
 	isc_result_t result;
 	isc_buffer_t buf;
 
-	dns_fixedname_init(&fixed);
-	name = dns_fixedname_name(&fixed);
+	name = dns_fixedname_initname(&fixed);
 	namestr = setname;
 
 	isc_buffer_init(&buf, setname, strlen(setname));
@@ -521,6 +523,13 @@ match_key_dsset(keyinfo_t *ki, dns_rdataset_t *dsset, strictness_t strictness)
 		}
 	}
 
+	vbprintf(1, "no matching %s for %s %d %d\n",
+		 dsset->type == dns_rdatatype_cds
+		 ? "CDS" : "DS",
+		 ki->rdata.type == dns_rdatatype_cdnskey
+		 ? "CDNSKEY" : "DNSKEY",
+		 ki->tag, ki->algo);
+
 	return (ISC_FALSE);
 }
 
@@ -647,17 +656,25 @@ matching_sigs(keyinfo_t *keytbl, dns_rdataset_t *rdataset,
 
 		for (i = 0; i < nkey; i++) {
 			keyinfo_t *ki = &keytbl[i];
-			if (ki->dst == NULL ||
-			    sig.keyid != ki->tag ||
+			if (sig.keyid != ki->tag ||
 			    sig.algorithm != ki->algo ||
 			    !dns_name_equal(&sig.signer, name))
 			{
+				continue;
+			}
+			if (ki->dst == NULL) {
+				vbprintf(1, "skip RRSIG by key %d:"
+					 " no matching (C)DS\n",
+					 sig.keyid);
 				continue;
 			}
 
 			result = dns_dnssec_verify(name, rdataset, ki->dst,
 						   ISC_FALSE, mctx, &sigrdata);
 			if (result != ISC_R_SUCCESS) {
+				vbprintf(1, "skip RRSIG by key %d:"
+					 " verification failed: %s\n",
+					 sig.keyid, isc_result_totext(result));
 				continue;
 			}
 

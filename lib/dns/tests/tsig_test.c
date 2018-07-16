@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -75,7 +78,7 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
 	isc_stdtime_t now;
 	unsigned char tsigbuf[1024];
 	unsigned int count;
-	unsigned int sigsize;
+	unsigned int sigsize = 0;
 	isc_boolean_t invalidate_ctx = ISC_FALSE;
 
 	memset(&tsig, 0, sizeof(tsig));
@@ -110,6 +113,7 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
 	isc_buffer_init(&sigbuf, tsig.signature, sigsize);
 	CHECK(dst_context_sign(tsigctx, &sigbuf));
 	tsig.siglen = isc_buffer_usedlength(&sigbuf);
+	ATF_CHECK_EQ(sigsize, tsig.siglen);
 
 	CHECK(isc_buffer_allocate(mctx, &dynbuf, 512));
 	CHECK(dns_rdata_fromstruct(&rdata, dns_rdataclass_any,
@@ -279,8 +283,7 @@ ATF_TC_BODY(tsig_tcp, tc) {
 
 	/* isc_log_setdebuglevel(lctx, 99); */
 
-	dns_fixedname_init(&fkeyname);
-	keyname = dns_fixedname_name(&fkeyname);
+	keyname = dns_fixedname_initname(&fkeyname);
 	result = dns_name_fromstring(keyname, "test", 0, NULL);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
@@ -487,12 +490,7 @@ ATF_TC_BODY(tsig_tcp, tc) {
 		isc_buffer_free(&tsigin);
 	if (tsigout != NULL)
 		isc_buffer_free(&tsigout);
-	if (buf != NULL)
-		isc_buffer_free(&buf);
-	if (msg != NULL)
-		dns_message_destroy(&msg);
-	if (key != NULL)
-		dns_tsigkey_detach(&key);
+	dns_tsigkey_detach(&key);
 	if (ring != NULL)
 		dns_tsigkeyring_detach(&ring);
 	dns_test_end();

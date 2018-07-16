@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -101,6 +104,7 @@ ns_server_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	sctx->gethostname = NULL;
 
 	sctx->matchingview = matchingview;
+	sctx->answercookie = ISC_TRUE;
 
 	ISC_LIST_INIT(sctx->altsecrets);
 

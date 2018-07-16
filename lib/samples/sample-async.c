@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: sample-async.c,v 1.5 2009/09/29 15:06:07 fdupont Exp $ */
 
 #include <config.h>
 
@@ -161,7 +163,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 	printf("answer[%2d]\n", trans->id);
 
 	if (rev->result != ISC_R_SUCCESS)
-		printf("  failed: %d(%s)\n", rev->result,
+		printf("  failed: %u(%s)\n", rev->result,
 		       dns_result_totext(rev->result));
 
 	for (name = ISC_LIST_HEAD(rev->answerlist); name != NULL;
@@ -219,8 +221,7 @@ dispatch_query(struct query_trans *trans) {
 	namelen = strlen(buf);
 	isc_buffer_init(&b, buf, namelen);
 	isc_buffer_add(&b, namelen);
-	dns_fixedname_init(&trans->fixedname);
-	trans->qname = dns_fixedname_name(&trans->fixedname);
+	trans->qname = dns_fixedname_initname(&trans->fixedname);
 	result = dns_name_fromtext(trans->qname, &b, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
@@ -323,14 +324,14 @@ main(int argc, char *argv[]) {
 	isc_lib_register();
 	result = dns_lib_init();
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_lib_init failed: %d\n", result);
+		fprintf(stderr, "dns_lib_init failed: %u\n", result);
 		exit(1);
 	}
 
 	result = ctxs_init(&mctx, &query_actx, &taskmgr, &socketmgr,
 			   &timermgr);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "ctx create failed: %d\n", result);
+		fprintf(stderr, "ctx create failed: %u\n", result);
 		exit(1);
 	}
 
@@ -339,7 +340,7 @@ main(int argc, char *argv[]) {
 	result = dns_client_createx(mctx, query_actx, taskmgr, socketmgr,
 				    timermgr, 0, &client);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_client_createx failed: %d\n", result);
+		fprintf(stderr, "dns_client_createx failed: %u\n", result);
 		exit(1);
 	}
 
@@ -357,7 +358,7 @@ main(int argc, char *argv[]) {
 	result = dns_client_setservers(client, dns_rdataclass_in, NULL,
 				       &servers);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "set server failed: %d\n", result);
+		fprintf(stderr, "set server failed: %u\n", result);
 		exit(1);
 	}
 
@@ -365,7 +366,7 @@ main(int argc, char *argv[]) {
 	query_task = NULL;
 	result = isc_task_create(taskmgr, 0, &query_task);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to create task: %d\n", result);
+		fprintf(stderr, "failed to create task: %u\n", result);
 		exit(1);
 	}
 

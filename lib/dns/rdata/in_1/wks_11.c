@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 1999-2002, 2004, 2007, 2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id$ */
-
-/* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
 #ifndef RDATA_IN_1_WKS_11_C
 #define RDATA_IN_1_WKS_11_C
@@ -19,6 +18,16 @@
 #include <isc/net.h>
 #include <isc/netdb.h>
 #include <isc/once.h>
+
+/*
+ * Redefine CHECK here so cppcheck "sees" the define.
+ */
+#ifndef CHECK
+#define CHECK(op)						\
+	do { result = (op);					\
+		if (result != ISC_R_SUCCESS) goto cleanup;	\
+	} while (0)
+#endif
 
 #define RRTYPE_WKS_ATTRIBUTES (0)
 

@@ -1,10 +1,13 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -12,7 +15,7 @@ SYSTEMTESTTOP=..
 status=0
 n=0
 fail() {
-	echo "I:failed"
+	echo_i "failed"
 	status=`expr $status + 1`
 }
 
@@ -23,7 +26,7 @@ runcmd() {
 
 testcase() {
 	n=`expr $n + 1`
-	echo "I:$name ($n)"
+	echo_i "$name ($n)"
 	expect=$1
 	shift
 	result=`runcmd "$@"`
@@ -234,5 +237,5 @@ name='prefer CDNSKEY'
 out=DS.2-2
 testcase 0 $CDS -D -s -7200 -f sig.cds.cdnskey.2 -d DS.1 $Z
 
-echo "I:exit status: $status"
+echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1999-2001, 2004-2007, 2009, 2010, 2012, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: tkeyconf.c,v 1.33 2010/12/20 23:47:20 tbox Exp $ */
 
 /*! \file */
 
@@ -66,8 +68,7 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		n = cfg_obj_asuint32(cfg_tuple_get(obj, "keyid"));
 		isc_buffer_constinit(&b, s, strlen(s));
 		isc_buffer_add(&b, strlen(s));
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 		type = DST_TYPE_PUBLIC|DST_TYPE_PRIVATE|DST_TYPE_KEY;
 		RETERR(dst_key_fromfile(name, (dns_keytag_t) n, DNS_KEYALG_DH,
@@ -80,8 +81,7 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		s = cfg_obj_asstring(obj);
 		isc_buffer_constinit(&b, s, strlen(s));
 		isc_buffer_add(&b, strlen(s));
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 		tctx->domain = isc_mem_get(mctx, sizeof(dns_name_t));
 		if (tctx->domain == NULL) {
@@ -99,8 +99,7 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 
 		isc_buffer_constinit(&b, s, strlen(s));
 		isc_buffer_add(&b, strlen(s));
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
+		name = dns_fixedname_initname(&fname);
 		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 		RETERR(dst_gssapi_acquirecred(name, ISC_FALSE, &tctx->gsscred));
 	}

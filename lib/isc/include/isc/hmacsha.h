@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2005-2007, 2009, 2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: hmacsha.h,v 1.9 2009/02/06 23:47:42 tbox Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -100,6 +102,9 @@ isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len);
 
 isc_boolean_t
 isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len);
+
+isc_boolean_t
+isc_hmacsha1_check(int testing);
 
 
 void

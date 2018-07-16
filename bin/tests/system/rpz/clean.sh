@@ -1,8 +1,11 @@
-# Copyright (C) 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 # Clean up after rpz tests.
 
@@ -14,5 +17,8 @@ rm -f */named.memstats */*.run */named.stats */session.key
 rm -f */*.log */*.jnl */*core */*.pid
 rm -f */policy2.db
 rm -f ns*/named.lock
+rm -f ns*/named.conf
 rm -f dnsrps*.conf
+rm -f dnsrpzd.conf
 rm -f dnsrpzd-license-cur.conf dnsrpzd.rpzf dnsrpzd.sock dnsrpzd.pid
+rm -f tmp

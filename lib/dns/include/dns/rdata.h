@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1998-2009, 2011-2013, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: rdata.h,v 1.80 2011/03/20 02:31:53 marka Exp $ */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
@@ -499,7 +501,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  */
 
 isc_result_t
-dns_rdata_tostruct(dns_rdata_t *rdata, void *target, isc_mem_t *mctx);
+dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx);
 /*%<
  * Convert an rdata into its C structure representation.
  *

@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2000-2002, 2004-2007, 2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: cfg.h,v 1.46 2010/08/13 23:47:04 tbox Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -120,6 +121,11 @@ isc_result_t
 cfg_parse_buffer3(cfg_parser_t *pctx, isc_buffer_t *buffer,
 		  const char *file, unsigned int line,
 		  const cfg_type_t *type, cfg_obj_t **ret);
+isc_result_t
+cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
+		  const char *file, unsigned int line,
+		  const cfg_type_t *type, unsigned int flags,
+		  cfg_obj_t **ret);
 /*%<
  * Read a configuration containing data of type 'type'
  * and make '*ret' point to its parse tree.
@@ -142,6 +148,7 @@ cfg_parse_buffer3(cfg_parser_t *pctx, isc_buffer_t *buffer,
  *\li 	"mem" is valid.
  *\li	"type" is valid.
  *\li 	"cfg" is non-NULL and "*cfg" is NULL.
+ *\li   "flags" be one or more of CFG_PCTX_NODEPRECATED or zero.
  *
  * Returns:
  *     \li #ISC_R_SUCCESS                 - success
@@ -537,6 +544,13 @@ cfg_obj_line(const cfg_obj_t *obj);
 /*%<
  * Return the line in file where this object was defined.
  */
+
+const char *
+cfg_map_firstclause(const cfg_type_t *map, const void **clauses,
+		    unsigned int *idx);
+const char *
+cfg_map_nextclause(const cfg_type_t *map, const void **clauses,
+		   unsigned int *idx);
 
 ISC_LANG_ENDDECLS
 

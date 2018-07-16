@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -1245,7 +1248,7 @@ client_send(ns_client_t *client) {
 #ifdef HAVE_DNSTAP
 		if (client->view != NULL) {
 			dns_dt_send(client->view, dtmsgtype,
-				    &client->peeraddr, &client->interface->addr,
+				    &client->peeraddr, &client->destsockaddr,
 				    ISC_TRUE, &zr, &client->requesttime, NULL,
 				    &buffer);
 		}
@@ -1275,7 +1278,7 @@ client_send(ns_client_t *client) {
 		if (client->view != NULL) {
 			dns_dt_send(client->view, dtmsgtype,
 				    &client->peeraddr,
-				    &client->interface->addr,
+				    &client->destsockaddr,
 				    ISC_FALSE, &zr,
 				    &client->requesttime, NULL, &buffer);
 		}
@@ -1847,8 +1850,6 @@ compute_cookie(ns_client_t *client, isc_uint32_t when, isc_uint32_t nonce,
 			INSIST(0);
 		}
 		isc_hmacsha1_update(&hmacsha1, cp, length);
-		isc_hmacsha1_update(&hmacsha1, client->cookie,
-				    sizeof(client->cookie));
 		isc_hmacsha1_sign(&hmacsha1, digest, sizeof(digest));
 		isc_buffer_putmem(buf, digest, 8);
 		isc_hmacsha1_invalidate(&hmacsha1);
@@ -1884,8 +1885,6 @@ compute_cookie(ns_client_t *client, isc_uint32_t when, isc_uint32_t nonce,
 			INSIST(0);
 		}
 		isc_hmacsha256_update(&hmacsha256, cp, length);
-		isc_hmacsha256_update(&hmacsha256, client->cookie,
-				      sizeof(client->cookie));
 		isc_hmacsha256_sign(&hmacsha256, digest, sizeof(digest));
 		isc_buffer_putmem(buf, digest, 8);
 		isc_hmacsha256_invalidate(&hmacsha256);
@@ -1909,7 +1908,9 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	/*
 	 * If we have already seen a cookie option skip this cookie option.
 	 */
-	if ((client->attributes & NS_CLIENTATTR_WANTCOOKIE) != 0) {
+	if ((!client->sctx->answercookie) ||
+	    (client->attributes & NS_CLIENTATTR_WANTCOOKIE) != 0)
+	{
 		isc_buffer_forward(buf, (unsigned int)optlen);
 		return;
 	}
@@ -2262,6 +2263,7 @@ ns__client_request(isc_task_t *task, isc_event_t *event) {
 	unsigned int flags;
 	isc_boolean_t notimp;
 	size_t reqsize;
+	dns_aclenv_t *env;
 	dns_ecs_t *ecs = NULL;
 #ifdef HAVE_DNSTAP
 	dns_dtmsgtype_t dtmsgtype;
@@ -2372,9 +2374,8 @@ ns__client_request(isc_task_t *task, isc_event_t *event) {
 	 * Check the blackhole ACL for UDP only, since TCP is done in
 	 * client_newconn.
 	 */
+	env = ns_interfacemgr_getaclenv(client->interface->mgr);
 	if (!TCP_CLIENT(client)) {
-		dns_aclenv_t *env =
-			ns_interfacemgr_getaclenv(client->interface->mgr);
 		if (client->sctx->blackholeacl != NULL &&
 		    dns_acl_match(&netaddr, NULL, client->sctx->blackholeacl,
 				  env, &match, NULL) == ISC_R_SUCCESS &&
@@ -2553,9 +2554,10 @@ ns__client_request(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (client->message->rdclass == 0) {
-		if ((client->attributes & NS_CLIENTATTR_WANTCOOKIE) != 0 ||
-		    (client->message->opcode == dns_opcode_query &&
-		     client->message->counts[DNS_SECTION_QUESTION] == 0U)) {
+		if ((client->attributes & NS_CLIENTATTR_WANTCOOKIE) != 0 &&
+		    client->message->opcode == dns_opcode_query &&
+		    client->message->counts[DNS_SECTION_QUESTION] == 0U)
+		{
 			result = dns_message_reply(client->message, ISC_TRUE);
 			if (result != ISC_R_SUCCESS) {
 				ns_client_error(client, result);
@@ -2632,7 +2634,7 @@ ns__client_request(isc_task_t *task, isc_event_t *event) {
 		ecs = &client->ecs;
 	}
 	result = client->sctx->matchingview(&netaddr, &client->destaddr,
-					    client->message, ecs,
+					    client->message, env, ecs,
 					    &sigresult, &client->view);
 	if (result != ISC_R_SUCCESS) {
 		char classname[DNS_RDATACLASS_FORMATSIZE];
@@ -2821,7 +2823,7 @@ ns__client_request(isc_task_t *task, isc_event_t *event) {
 			dtmsgtype = DNS_DTTYPE_AQ;
 
 		dns_dt_send(client->view, dtmsgtype, &client->peeraddr,
-			    &client->interface->addr, TCP_CLIENT(client), NULL,
+			    &client->destsockaddr, TCP_CLIENT(client), NULL,
 			    &client->requesttime, NULL, buffer);
 #endif /* HAVE_DNSTAP */
 
@@ -3974,7 +3976,7 @@ ns_client_dumprecursing(FILE *f, ns_clientmgr_t *manager) {
 		}
 		UNLOCK(&client->query.fetchlock);
 		fprintf(f, "; client %s%s%s: id %u '%s/%s/%s'%s%s "
-			"requesttime %d\n", peerbuf, sep, name,
+			"requesttime %u\n", peerbuf, sep, name,
 			client->message->id, namebuf, typebuf, classbuf,
 			origfor, original,
 			isc_time_seconds(&client->requesttime));
