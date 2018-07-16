@@ -1,10 +1,13 @@
 #!/usr/bin/env perl
 #
-# Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 use strict;
 use warnings;
@@ -19,8 +22,11 @@ my $no_more_waiting = 0;
 my @delayed_response;
 my $timeout;
 
+my $localport = int($ENV{'PORT'});
+if (!$localport) { $localport = 5300; }
+
 my $udpsock = IO::Socket::INET->new(LocalAddr => "$localaddr",
-   LocalPort => 5300, Proto => "udp", Reuse => 1) or die "$!";
+   LocalPort => $localport, Proto => "udp", Reuse => 1) or die "$!";
 
 my $pidf = new IO::File "ans.pid", "w" or die "cannot open pid file: $!";
 print $pidf "$$\n" or die "cannot write pid file: $!";

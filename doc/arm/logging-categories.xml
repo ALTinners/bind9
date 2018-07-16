@@ -1,9 +1,12 @@
 <!--
- - Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
@@ -309,6 +312,17 @@
 	<entry colname="2">
 	  <para>
 	    Approval and denial of requests.
+	  </para>
+	</entry>
+      </row>
+      <row rowsep="0">
+	<entry colname="1">
+	  <para><command>serve-stale</command></para>
+	</entry>
+	<entry colname="2">
+	  <para>
+	    Whether or not a stale answer is used
+	    following a resolver failure.
 	  </para>
 	</entry>
       </row>

@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /* RFC 7477 */
@@ -66,6 +69,12 @@ totext_csync(ARGS_TOTEXT) {
 	snprintf(buf, sizeof(buf), "%lu", num);
 	RETERR(str_totext(buf, target));
 
+	/*
+	 * Don't leave a trailing space when there's no typemap present.
+	 */
+	if (sr.length > 0) {
+		RETERR(str_totext(" ", target));
+	}
 	return (typemap_totext(&sr, NULL, target));
 }
 

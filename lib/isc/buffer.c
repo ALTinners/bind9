@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1998-2002, 2004-2008, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -56,7 +59,10 @@ isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length) {
 	REQUIRE(base != NULL);
 	REQUIRE(!b->autore);
 
-	(void)memmove(base, b->base, b->length);
+	if (b->length > 0U) {
+		(void)memmove(base, b->base, b->length);
+	}
+
 	b->base = base;
 	b->length = length;
 }
@@ -250,7 +256,9 @@ isc_buffer_compact(isc_buffer_t *b) {
 
 	src = isc_buffer_current(b);
 	length = isc_buffer_remaininglength(b);
-	(void)memmove(b->base, src, (size_t)length);
+	if (length > 0U) {
+		(void)memmove(b->base, src, (size_t)length);
+	}
 
 	if (b->active > b->current)
 		b->active -= b->current;
@@ -523,8 +531,10 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r) {
 	}
 	if (r->length > available)
 		return (ISC_R_NOSPACE);
-	memmove(base, r->base, r->length);
-	b->used += r->length;
+	if (r->length > 0U) {
+		memmove(base, r->base, r->length);
+		b->used += r->length;
+	}
 
 	return (ISC_R_SUCCESS);
 }

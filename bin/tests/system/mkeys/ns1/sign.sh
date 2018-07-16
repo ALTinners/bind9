@@ -1,10 +1,13 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -15,32 +18,16 @@ zonefile=root.db
 keyname=`$KEYGEN -a rsasha256 -qfk -r $RANDFILE $zone`
 zskkeyname=`$KEYGEN -a rsasha256 -q -r $RANDFILE $zone`
 
-$SIGNER -Sg -r $RANDFILE -o $zone $zonefile > /dev/null 2>&-
+$SIGNER -Sg -r $RANDFILE -o $zone $zonefile > /dev/null 2>/dev/null
 
 # Configure the resolving server with a managed trusted key.
-cat $keyname.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print <<EOF
-managed-keys {
-    "$dn" initial-key $flags $proto $alg "$key";
-};
-EOF
-' > managed.conf
+keyfile_to_managed_keys $keyname > managed.conf
 cp managed.conf ../ns2/managed.conf
 cp managed.conf ../ns4/managed.conf
 cp managed.conf ../ns5/managed.conf
 
-# Configure a trusted key statement (used by delve)
-cat $keyname.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print <<EOF
-trusted-keys {
-    "$dn" $flags $proto $alg "$key";
-};
-EOF
-' > trusted.conf
+# Configure a trusted key statement (used by delv)
+keyfile_to_trusted_keys $keyname > trusted.conf
 
 #
 #  Save keyname and keyid for managed key id test.

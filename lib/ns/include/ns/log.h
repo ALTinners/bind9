@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef NS_LOG_H
@@ -25,6 +28,7 @@ LIBNS_EXTERNAL_DATA extern isc_logmodule_t ns_modules[];
 #define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_categories[4])
 #define NS_LOGCATEGORY_QUERY_ERRORS	(&ns_categories[5])
 #define NS_LOGCATEGORY_TAT		(&ns_categories[6])
+#define NS_LOGCATEGORY_SERVE_STALE	(&ns_categories[7])
 
 /*
  * Backwards compatibility.

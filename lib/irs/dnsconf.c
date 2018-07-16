@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2009, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: dnsconf.c,v 1.3 2009/09/02 23:48:02 tbox Exp $ */
 
 /*! \file */
 
@@ -134,8 +136,7 @@ configure_dnsseckeys(irs_dnsconf_t *conf, cfg_obj_t *cfgobj,
 				goto cleanup;
 
 			/* Configure key name */
-			dns_fixedname_init(&fkeyname);
-			keyname_base = dns_fixedname_name(&fkeyname);
+			keyname_base = dns_fixedname_initname(&fkeyname);
 			isc_buffer_constinit(&namebuf, keynamestr,
 					     strlen(keynamestr));
 			isc_buffer_add(&namebuf, strlen(keynamestr));

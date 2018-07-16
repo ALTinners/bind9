@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2000, 2001, 2003, 2004, 2007-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: dnssectool.h,v 1.33 2011/10/20 23:46:51 tbox Exp $ */
 
 #ifndef DNSSECTOOL_H
 #define DNSSECTOOL_H 1
@@ -87,6 +89,13 @@ key_collision(dst_key_t *key, dns_name_t *name, const char *dir,
 isc_boolean_t
 is_delegation(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 		      dns_name_t *name, dns_dbnode_t *node, isc_uint32_t *ttlp);
+
+/*%
+ * Return ISC_TRUE if version 'ver' of database 'db' contains a DNAME RRset at
+ * 'node'; return ISC_FALSE otherwise.
+ */
+isc_boolean_t
+has_dname(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node);
 
 void
 verifyzone(dns_db_t *db, dns_dbversion_t *ver,

@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*
@@ -223,7 +226,7 @@ print_yaml(dns_dtdata_t *dt) {
 	}
 
 	if (dt->msgdata.base != NULL) {
-		printf("  message_size: %zdb\n", (size_t) dt->msgdata.length);
+		printf("  message_size: %zub\n", (size_t) dt->msgdata.length);
 	} else
 		printf("  message_size: 0b\n");
 
@@ -269,8 +272,7 @@ print_yaml(dns_dtdata_t *dt) {
 		isc_buffer_t b;
 		dns_decompress_t dctx;
 
-		dns_fixedname_init(&fn);
-		name = dns_fixedname_name(&fn);
+		name = dns_fixedname_initname(&fn);
 
 		isc_buffer_init(&b, m->query_zone.data, m->query_zone.len);
 		isc_buffer_add(&b, m->query_zone.len);

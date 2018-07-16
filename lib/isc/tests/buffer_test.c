@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -28,7 +31,7 @@ ATF_TC_BODY(isc_buffer_reserve, tc) {
 	isc_result_t result;
 	isc_buffer_t *b;
 
-	result = isc_test_begin(NULL, ISC_TRUE);
+	result = isc_test_begin(NULL, ISC_TRUE, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	b = NULL;
@@ -102,7 +105,7 @@ ATF_TC_BODY(isc_buffer_reallocate, tc) {
 	isc_result_t result;
 	isc_buffer_t *b;
 
-	result = isc_test_begin(NULL, ISC_TRUE);
+	result = isc_test_begin(NULL, ISC_TRUE, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	b = NULL;
@@ -139,7 +142,7 @@ ATF_TC_BODY(isc_buffer_dynamic, tc) {
 	size_t last_length = 10;
 	int i;
 
-	result = isc_test_begin(NULL, ISC_TRUE);
+	result = isc_test_begin(NULL, ISC_TRUE, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	b = NULL;
@@ -202,7 +205,7 @@ ATF_TC_BODY(isc_buffer_printf, tc) {
 	isc_buffer_t *b, sb;
 	char buf[8];
 
-	result = isc_test_begin(NULL, ISC_TRUE);
+	result = isc_test_begin(NULL, ISC_TRUE, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/*
@@ -262,10 +265,15 @@ ATF_TC_BODY(isc_buffer_printf, tc) {
 
 	/*
 	 * Check an empty format string is properly handled.
+	 *
+	 * Note: we don't use a string literal for the format string to
+	 * avoid triggering [-Werror=format-zero-length].
+	 * Note: we have a dummy third argument as some compilers complain
+	 * without it.
 	 */
 	prev_used = used;
 	empty_fmt = "";
-	result = isc_buffer_printf(b, empty_fmt, NULL);
+	result = isc_buffer_printf(b, empty_fmt, "");
 	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
 	used = isc_buffer_usedlength(b);
 	ATF_CHECK_EQ(prev_used, used);

@@ -1,4 +1,4 @@
-.\" Copyright (C) 2004-2017 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,12 +10,12 @@
 .\"     Title: named.conf
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2017-04-25
+.\"      Date: 2018-06-21
 .\"    Manual: BIND9
 .\"    Source: ISC
 .\"  Language: English
 .\"
-.TH "NAMED\&.CONF" "5" "2017\-04\-25" "ISC" "BIND9"
+.TH "NAMED\&.CONF" "5" "2018\-06\-21" "ISC" "BIND9"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -181,10 +181,6 @@ masters \fIstring\fR [ port \fIinteger\fR ] [ dscp
 .\}
 .nf
 options {
-	acache\-cleaning\-interval \fIinteger\fR;
-	acache\-enable \fIboolean\fR;
-	additional\-from\-auth \fIboolean\fR;
-	additional\-from\-cache \fIboolean\fR;
 	allow\-new\-zones \fIboolean\fR;
 	allow\-notify { \fIaddress_match_element\fR; \&.\&.\&. };
 	allow\-query { \fIaddress_match_element\fR; \&.\&.\&. };
@@ -203,6 +199,7 @@ options {
 	    ] [ dscp \fIinteger\fR ];
 	alt\-transfer\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR |
 	    * ) ] [ dscp \fIinteger\fR ];
+	answer\-cookie \fIboolean\fR;
 	attach\-cache \fIstring\fR;
 	auth\-nxdomain \fIboolean\fR; // default changed
 	auto\-dnssec ( allow | maintain | off );
@@ -254,6 +251,8 @@ options {
 	};
 	dns64\-contact \fIstring\fR;
 	dns64\-server \fIstring\fR;
+	dnsrps\-enable \fIboolean\fR;
+	dnsrps\-options { \fIunspecified\-text\fR };
 	dnssec\-accept\-expired \fIboolean\fR;
 	dnssec\-dnskey\-kskonly \fIboolean\fR;
 	dnssec\-enable \fIboolean\fR;
@@ -302,7 +301,8 @@ options {
 	fstrm\-set\-output\-queue\-size \fIinteger\fR;
 	fstrm\-set\-reopen\-interval \fIinteger\fR;
 	geoip\-directory ( \fIquoted_string\fR | none );
-	geoip\-use\-ecs ( \fIquoted_string\fR | none );
+	geoip\-use\-ecs \fIboolean\fR;
+	glue\-cache \fIboolean\fR;
 	heartbeat\-interval \fIinteger\fR;
 	hostname ( \fIquoted_string\fR | none );
 	inline\-signing \fIboolean\fR;
@@ -323,11 +323,10 @@ options {
 	masterfile\-format ( map | raw | text );
 	masterfile\-style ( full | relative );
 	match\-mapped\-addresses \fIboolean\fR;
-	max\-acache\-size ( unlimited | \fIsizeval\fR );
 	max\-cache\-size ( default | unlimited | \fIsizeval\fR | \fIpercentage\fR );
 	max\-cache\-ttl \fIinteger\fR;
 	max\-clients\-per\-query \fIinteger\fR;
-	max\-journal\-size ( unlimited | \fIsizeval\fR );
+	max\-journal\-size ( default | unlimited | \fIsizeval\fR );
 	max\-ncache\-ttl \fIinteger\fR;
 	max\-records \fIinteger\fR;
 	max\-recursion\-depth \fIinteger\fR;
@@ -335,6 +334,7 @@ options {
 	max\-refresh\-time \fIinteger\fR;
 	max\-retry\-time \fIinteger\fR;
 	max\-rsa\-exponent\-size \fIinteger\fR;
+	max\-stale\-ttl \fIttlval\fR;
 	max\-transfer\-idle\-in \fIinteger\fR;
 	max\-transfer\-idle\-out \fIinteger\fR;
 	max\-transfer\-time\-in \fIinteger\fR;
@@ -349,6 +349,7 @@ options {
 	minimal\-any \fIboolean\fR;
 	minimal\-responses ( no\-auth | no\-auth\-recursive | \fIboolean\fR );
 	multi\-master \fIboolean\fR;
+	new\-zones\-directory \fIquoted_string\fR;
 	no\-case\-compress { \fIaddress_match_element\fR; \&.\&.\&. };
 	nocookie\-udp\-size \fIinteger\fR;
 	notify ( explicit | master\-only | \fIboolean\fR );
@@ -359,7 +360,6 @@ options {
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ]
 	    [ dscp \fIinteger\fR ];
 	notify\-to\-soa \fIboolean\fR;
-	nsec3\-test\-zone \fIboolean\fR; // test only
 	nta\-lifetime \fIttlval\fR;
 	nta\-recheck \fIttlval\fR;
 	nxdomain\-redirect \fIstring\fR;
@@ -375,7 +375,7 @@ options {
 	    \fIinteger\fR | * ) ] ) | ( [ [ address ] ( \fIipv6_address\fR | * ) ]
 	    port ( \fIinteger\fR | * ) ) ) [ dscp \fIinteger\fR ];
 	querylog \fIboolean\fR;
-	random\-device \fIquoted_string\fR;
+	random\-device ( \fIquoted_string\fR | none );
 	rate\-limit {
 		all\-per\-second \fIinteger\fR;
 		errors\-per\-second \fIinteger\fR;
@@ -401,18 +401,25 @@ options {
 	request\-nsid \fIboolean\fR;
 	require\-server\-cookie \fIboolean\fR;
 	reserved\-sockets \fIinteger\fR;
+	resolver\-nonbackoff\-tries \fIinteger\fR;
 	resolver\-query\-timeout \fIinteger\fR;
+	resolver\-retry\-interval \fIinteger\fR;
 	response\-padding { \fIaddress_match_element\fR; \&.\&.\&. } block\-size
 	    \fIinteger\fR;
 	response\-policy { zone \fIquoted_string\fR [ log \fIboolean\fR ] [
 	    max\-policy\-ttl \fIinteger\fR ] [ min\-update\-interval \fIinteger\fR ] [
 	    policy ( cname | disabled | drop | given | no\-op | nodata |
 	    nxdomain | passthru | tcp\-only \fIquoted_string\fR ) ] [
-	    recursive\-only \fIboolean\fR ]; \&.\&.\&. } [ break\-dnssec \fIboolean\fR ] [
+	    recursive\-only \fIboolean\fR ] [ nsip\-enable \fIboolean\fR ] [
+	    nsdname\-enable \fIboolean\fR ]; \&.\&.\&. } [ break\-dnssec \fIboolean\fR ] [
 	    max\-policy\-ttl \fIinteger\fR ] [ min\-update\-interval \fIinteger\fR ] [
 	    min\-ns\-dots \fIinteger\fR ] [ nsip\-wait\-recurse \fIboolean\fR ] [
-	    qname\-wait\-recurse \fIboolean\fR ] [ recursive\-only \fIboolean\fR ];
+	    qname\-wait\-recurse \fIboolean\fR ] [ recursive\-only \fIboolean\fR ] [
+	    nsip\-enable \fIboolean\fR ] [ nsdname\-enable \fIboolean\fR ] [
+	    dnsrps\-enable \fIboolean\fR ] [ dnsrps\-options { \fIunspecified\-text\fR
+	    } ];
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; \&.\&.\&. } ];
+	root\-key\-sentinel \fIboolean\fR;
 	rrset\-order { [ class \fIstring\fR ] [ type \fIstring\fR ] [ name
 	    \fIquoted_string\fR ] \fIstring\fR \fIstring\fR; \&.\&.\&. };
 	secroots\-file \fIquoted_string\fR;
@@ -430,6 +437,8 @@ options {
 	sig\-validity\-interval \fIinteger\fR [ \fIinteger\fR ];
 	sortlist { \fIaddress_match_element\fR; \&.\&.\&. };
 	stacksize ( default | unlimited | \fIsizeval\fR );
+	stale\-answer\-enable \fIboolean\fR;
+	stale\-answer\-ttl \fIttlval\fR;
 	startup\-notify\-rate \fIinteger\fR;
 	statistics\-file \fIquoted_string\fR;
 	synth\-from\-dnssec \fIboolean\fR;
@@ -545,10 +554,6 @@ trusted\-keys { \fIstring\fR \fIinteger\fR \fIinteger\fR
 .\}
 .nf
 view \fIstring\fR [ \fIclass\fR ] {
-	acache\-cleaning\-interval \fIinteger\fR;
-	acache\-enable \fIboolean\fR;
-	additional\-from\-auth \fIboolean\fR;
-	additional\-from\-cache \fIboolean\fR;
 	allow\-new\-zones \fIboolean\fR;
 	allow\-notify { \fIaddress_match_element\fR; \&.\&.\&. };
 	allow\-query { \fIaddress_match_element\fR; \&.\&.\&. };
@@ -612,6 +617,8 @@ view \fIstring\fR [ \fIclass\fR ] {
 	};
 	dns64\-contact \fIstring\fR;
 	dns64\-server \fIstring\fR;
+	dnsrps\-enable \fIboolean\fR;
+	dnsrps\-options { \fIunspecified\-text\fR };
 	dnssec\-accept\-expired \fIboolean\fR;
 	dnssec\-dnskey\-kskonly \fIboolean\fR;
 	dnssec\-enable \fIboolean\fR;
@@ -643,6 +650,7 @@ view \fIstring\fR [ \fIclass\fR ] {
 	forward ( first | only );
 	forwarders [ port \fIinteger\fR ] [ dscp \fIinteger\fR ] { ( \fIipv4_address\fR
 	    | \fIipv6_address\fR ) [ port \fIinteger\fR ] [ dscp \fIinteger\fR ]; \&.\&.\&. };
+	glue\-cache \fIboolean\fR;
 	inline\-signing \fIboolean\fR;
 	ixfr\-from\-differences ( master | slave | \fIboolean\fR );
 	key \fIstring\fR {
@@ -660,17 +668,17 @@ view \fIstring\fR [ \fIclass\fR ] {
 	match\-clients { \fIaddress_match_element\fR; \&.\&.\&. };
 	match\-destinations { \fIaddress_match_element\fR; \&.\&.\&. };
 	match\-recursive\-only \fIboolean\fR;
-	max\-acache\-size ( unlimited | \fIsizeval\fR );
 	max\-cache\-size ( default | unlimited | \fIsizeval\fR | \fIpercentage\fR );
 	max\-cache\-ttl \fIinteger\fR;
 	max\-clients\-per\-query \fIinteger\fR;
-	max\-journal\-size ( unlimited | \fIsizeval\fR );
+	max\-journal\-size ( default | unlimited | \fIsizeval\fR );
 	max\-ncache\-ttl \fIinteger\fR;
 	max\-records \fIinteger\fR;
 	max\-recursion\-depth \fIinteger\fR;
 	max\-recursion\-queries \fIinteger\fR;
 	max\-refresh\-time \fIinteger\fR;
 	max\-retry\-time \fIinteger\fR;
+	max\-stale\-ttl \fIttlval\fR;
 	max\-transfer\-idle\-in \fIinteger\fR;
 	max\-transfer\-idle\-out \fIinteger\fR;
 	max\-transfer\-time\-in \fIinteger\fR;
@@ -683,6 +691,7 @@ view \fIstring\fR [ \fIclass\fR ] {
 	minimal\-any \fIboolean\fR;
 	minimal\-responses ( no\-auth | no\-auth\-recursive | \fIboolean\fR );
 	multi\-master \fIboolean\fR;
+	new\-zones\-directory \fIquoted_string\fR;
 	no\-case\-compress { \fIaddress_match_element\fR; \&.\&.\&. };
 	nocookie\-udp\-size \fIinteger\fR;
 	notify ( explicit | master\-only | \fIboolean\fR );
@@ -692,7 +701,6 @@ view \fIstring\fR [ \fIclass\fR ] {
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ]
 	    [ dscp \fIinteger\fR ];
 	notify\-to\-soa \fIboolean\fR;
-	nsec3\-test\-zone \fIboolean\fR; // test only
 	nta\-lifetime \fIttlval\fR;
 	nta\-recheck \fIttlval\fR;
 	nxdomain\-redirect \fIstring\fR;
@@ -727,18 +735,25 @@ view \fIstring\fR [ \fIclass\fR ] {
 	request\-ixfr \fIboolean\fR;
 	request\-nsid \fIboolean\fR;
 	require\-server\-cookie \fIboolean\fR;
+	resolver\-nonbackoff\-tries \fIinteger\fR;
 	resolver\-query\-timeout \fIinteger\fR;
+	resolver\-retry\-interval \fIinteger\fR;
 	response\-padding { \fIaddress_match_element\fR; \&.\&.\&. } block\-size
 	    \fIinteger\fR;
 	response\-policy { zone \fIquoted_string\fR [ log \fIboolean\fR ] [
 	    max\-policy\-ttl \fIinteger\fR ] [ min\-update\-interval \fIinteger\fR ] [
 	    policy ( cname | disabled | drop | given | no\-op | nodata |
 	    nxdomain | passthru | tcp\-only \fIquoted_string\fR ) ] [
-	    recursive\-only \fIboolean\fR ]; \&.\&.\&. } [ break\-dnssec \fIboolean\fR ] [
+	    recursive\-only \fIboolean\fR ] [ nsip\-enable \fIboolean\fR ] [
+	    nsdname\-enable \fIboolean\fR ]; \&.\&.\&. } [ break\-dnssec \fIboolean\fR ] [
 	    max\-policy\-ttl \fIinteger\fR ] [ min\-update\-interval \fIinteger\fR ] [
 	    min\-ns\-dots \fIinteger\fR ] [ nsip\-wait\-recurse \fIboolean\fR ] [
-	    qname\-wait\-recurse \fIboolean\fR ] [ recursive\-only \fIboolean\fR ];
+	    qname\-wait\-recurse \fIboolean\fR ] [ recursive\-only \fIboolean\fR ] [
+	    nsip\-enable \fIboolean\fR ] [ nsdname\-enable \fIboolean\fR ] [
+	    dnsrps\-enable \fIboolean\fR ] [ dnsrps\-options { \fIunspecified\-text\fR
+	    } ];
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; \&.\&.\&. } ];
+	root\-key\-sentinel \fIboolean\fR;
 	rrset\-order { [ class \fIstring\fR ] [ type \fIstring\fR ] [ name
 	    \fIquoted_string\fR ] \fIstring\fR \fIstring\fR; \&.\&.\&. };
 	send\-cookie \fIboolean\fR;
@@ -783,6 +798,8 @@ view \fIstring\fR [ \fIclass\fR ] {
 	sig\-signing\-type \fIinteger\fR;
 	sig\-validity\-interval \fIinteger\fR [ \fIinteger\fR ];
 	sortlist { \fIaddress_match_element\fR; \&.\&.\&. };
+	stale\-answer\-enable \fIboolean\fR;
+	stale\-answer\-ttl \fIttlval\fR;
 	synth\-from\-dnssec \fIboolean\fR;
 	transfer\-format ( many\-answers | one\-answer );
 	transfer\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ] [
@@ -849,7 +866,7 @@ view \fIstring\fR [ \fIclass\fR ] {
 		    | \fIipv4_address\fR [ port \fIinteger\fR ] | \fIipv6_address\fR [
 		    port \fIinteger\fR ] ) [ key \fIstring\fR ]; \&.\&.\&. };
 		max\-ixfr\-log\-size ( default | unlimited |
-		max\-journal\-size ( unlimited | \fIsizeval\fR );
+		max\-journal\-size ( default | unlimited | \fIsizeval\fR );
 		max\-records \fIinteger\fR;
 		max\-refresh\-time \fIinteger\fR;
 		max\-retry\-time \fIinteger\fR;
@@ -868,7 +885,6 @@ view \fIstring\fR [ \fIclass\fR ] {
 		notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR
 		    | * ) ] [ dscp \fIinteger\fR ];
 		notify\-to\-soa \fIboolean\fR;
-		nsec3\-test\-zone \fIboolean\fR; // test only
 		pubkey \fIinteger\fR
 		    \fIinteger\fR
 		    \fIinteger\fR
@@ -957,7 +973,7 @@ zone \fIstring\fR [ \fIclass\fR ] {
 	masters [ port \fIinteger\fR ] [ dscp \fIinteger\fR ] { ( \fImasters\fR |
 	    \fIipv4_address\fR [ port \fIinteger\fR ] | \fIipv6_address\fR [ port
 	    \fIinteger\fR ] ) [ key \fIstring\fR ]; \&.\&.\&. };
-	max\-journal\-size ( unlimited | \fIsizeval\fR );
+	max\-journal\-size ( default | unlimited | \fIsizeval\fR );
 	max\-records \fIinteger\fR;
 	max\-refresh\-time \fIinteger\fR;
 	max\-retry\-time \fIinteger\fR;
@@ -976,7 +992,6 @@ zone \fIstring\fR [ \fIclass\fR ] {
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ]
 	    [ dscp \fIinteger\fR ];
 	notify\-to\-soa \fIboolean\fR;
-	nsec3\-test\-zone \fIboolean\fR; // test only
 	pubkey \fIinteger\fR \fIinteger\fR
 	request\-expire \fIboolean\fR;
 	request\-ixfr \fIboolean\fR;
@@ -1024,5 +1039,5 @@ BIND 9 Administrator Reference Manual\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004-2017 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004-2018 Internet Systems Consortium, Inc. ("ISC")
 .br

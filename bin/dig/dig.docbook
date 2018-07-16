@@ -1,11 +1,14 @@
 <!DOCTYPE book [
 <!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2000-2011, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
@@ -48,6 +51,7 @@
       <year>2015</year>
       <year>2016</year>
       <year>2017</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -271,9 +275,9 @@
 	<term>-i</term>
 	<listitem>
 	  <para>
-	    Do reverse IPv6 lookups using the obsolete RFC1886 IP6.INT
+	    Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT
 	    domain, which is no longer in use. Obsolete bit string
-	    label queries (RFC2874) are not attempted.
+	    label queries (RFC 2874) are not attempted.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -334,17 +338,33 @@
 	<term>-t <replaceable class="parameter">type</replaceable></term>
 	<listitem>
 	  <para>
-	    The resource record type to query. It can be any valid query type
-	    which is
-	    supported in BIND 9.  The default query type is "A", unless the
-	    <option>-x</option> option is supplied to indicate a reverse lookup.
-	    A zone transfer can be requested by specifying a type of AXFR.  When
+	    The resource record type to query. It can be any valid query
+	    type.  If it is a resource record type supported in BIND 9, it
+	    can be given by the type mnemonic (such as "NS" or "AAAA").
+	    The default query type is "A", unless the <option>-x</option>
+	    option is supplied to indicate a reverse lookup.  A zone
+	    transfer can be requested by specifying a type of AXFR.  When
 	    an incremental zone transfer (IXFR) is required, set the
 	    <parameter>type</parameter> to <literal>ixfr=N</literal>.
 	    The incremental zone transfer will contain the changes
 	    made to the zone since the serial number in the zone's SOA
 	    record was
 	    <parameter>N</parameter>.
+	  </para>
+	  <para>
+	    All resource record types can be expressed as "TYPEnn", where
+	    "nn" is the number of the type. If the resource record type is
+	    not supported in BIND 9, the result will be displayed as
+	    described in RFC 3597.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-u</term>
+	<listitem>
+	  <para>
+	    Print query times in microseconds instead of milliseconds.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -764,6 +784,17 @@
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>+[no]idnin</option></term>
+	  <listitem>
+	    <para>
+	      Process [do not process] IDN domain names on input.
+	      This requires IDN SUPPORT to have been enabled at
+	      compile time.  The default is to process IDN input.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>+[no]idnout</option></term>
 	  <listitem>
 	    <para>
@@ -1019,7 +1050,7 @@
 	  <listitem>
 	    <para>
 	      This feature is now obsolete and has been removed;
-              use <command>delv</command> instead.
+	      use <command>delv</command> instead.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1104,8 +1135,8 @@
 	  <listitem>
 	    <para>
 	      This feature is related to <command>dig +sigchase</command>,
-              which is obsolete and has been removed. Use
-              <command>delv</command> instead.
+	      which is obsolete and has been removed. Use
+	      <command>delv</command> instead.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1150,9 +1181,9 @@
 	  <listitem>
 	    <para>
 	      Formerly specified trusted keys for use with
-              <command>dig +sigchase</command>.  This feature is now
-              obsolete and has been removed; use
-              <command>delv</command> instead.
+	      <command>dig +sigchase</command>.  This feature is now
+	      obsolete and has been removed; use
+	      <command>delv</command> instead.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1274,10 +1305,9 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       <command>dig</command> appropriately converts character encoding of
       domain name before sending a request to DNS server or displaying a
       reply from the server.
-      If you'd like to turn off the IDN support for some reason, defines
-      the <envar>IDN_DISABLE</envar> environment variable.
-      The IDN support is disabled if the variable is set when
-      <command>dig</command> runs.
+      If you'd like to turn off the IDN support for some reason, use
+      parameters <parameter>+noidnin</parameter> and
+      <parameter>+noidnout</parameter>.
     </para>
   </refsection>
 
@@ -1303,7 +1333,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       <citerefentry>
 	<refentrytitle>dnssec-keygen</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
-      <citetitle>RFC1035</citetitle>.
+      <citetitle>RFC 1035</citetitle>.
     </para>
   </refsection>
 

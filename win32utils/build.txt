@@ -1,8 +1,6 @@
-Copyright (C) 2013-2017  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
        BIND 9.10 for Win32 Source Build Instructions.  17-Apr-2015
 
@@ -267,4 +265,4 @@ Step 11: Python package install
   BIND python tools should work with version 2 or 3, 32 or 64 bits.
 
 Please report bugs, whether in the process of building the application
-or in BIND 9 itself, to bind9-bugs@isc.org.
+or in BIND 9 itself, at https://gitlab.isc.org/isc-projects/bind9.

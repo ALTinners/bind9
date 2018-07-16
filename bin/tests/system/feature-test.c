@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2016-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -150,7 +153,7 @@ main(int argc, char **argv) {
 	}
 
 	if (strcmp(argv[1], "--with-idn") == 0) {
-#ifdef WITH_IDN
+#ifdef WITH_LIBIDN2
 		return (0);
 #else
 		return (1);

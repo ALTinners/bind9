@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2002, 2004, 2005, 2007-2009, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -51,7 +54,6 @@ named_paths_init(void) {
 	if (!Initialized)
 		isc_ntpaths_init();
 
-	named_g_conffile = isc_ntpaths_get(NAMED_CONF_PATH);
 	named_g_conffile = isc_ntpaths_get(NAMED_CONF_PATH);
 	named_g_defaultpidfile = isc_ntpaths_get(NAMED_PID_PATH);
 	named_g_defaultlockfile = isc_ntpaths_get(NAMED_LOCK_PATH);

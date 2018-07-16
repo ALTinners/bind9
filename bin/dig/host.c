@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2000-2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -16,7 +19,7 @@
 #include <locale.h>
 #endif
 
-#ifdef WITH_IDN
+#ifdef WITH_IDNKIT
 #include <idn/result.h>
 #include <idn/log.h>
 #include <idn/resconf.h>
@@ -169,7 +172,7 @@ host_shutdown(void) {
 }
 
 static void
-received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
+received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	isc_time_t now;
 	int diff;
 
@@ -456,8 +459,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		dns_name_t *name;
 
 		/* Add AAAA and MX lookups. */
-		dns_fixedname_init(&fixed);
-		name = dns_fixedname_name(&fixed);
+		name = dns_fixedname_initname(&fixed);
 		dns_name_copy(query->lookup->name, name, NULL);
 		chase_cnamechain(msg, name);
 		dns_name_format(name, namestr, sizeof(namestr));
@@ -718,7 +720,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			    lookup->rdtype != dns_rdatatype_axfr)
 				lookup->rdtype = rdtype;
 			lookup->rdtypeset = ISC_TRUE;
-#ifdef WITH_IDN
+#ifdef WITH_IDNKIT
 			idnoptions = 0;
 #endif
 			if (rdtype == dns_rdatatype_axfr) {
@@ -733,7 +735,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			} else if (rdtype == dns_rdatatype_any) {
 				if (!lookup->tcp_mode_set)
 					lookup->tcp_mode = ISC_TRUE;
-#ifdef WITH_IDN
+#ifdef WITH_IDNKIT
 			} else if (rdtype == dns_rdatatype_a ||
 				   rdtype == dns_rdatatype_aaaa ||
 				   rdtype == dns_rdatatype_mx) {
@@ -768,7 +770,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			if (!lookup->rdtypeset ||
 			    lookup->rdtype != dns_rdatatype_axfr)
 				lookup->rdtype = dns_rdatatype_any;
-#ifdef WITH_IDN
+#ifdef WITH_IDNKIT
 			idnoptions = 0;
 #endif
 			list_type = dns_rdatatype_any;
@@ -882,7 +884,7 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(search_list);
 
 	fatalexit = 1;
-#ifdef WITH_IDN
+#ifdef WITH_IDNKIT
 	idnoptions = IDN_ASCCHECK;
 #endif
 

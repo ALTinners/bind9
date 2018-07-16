@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2009, 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -287,8 +290,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 
 		/* Make query name */
 		isc_netaddr_fromsockaddr(&netaddr, (const isc_sockaddr_t *)sa);
-		dns_fixedname_init(&ptrfname);
-		ptrname = dns_fixedname_name(&ptrfname);
+		ptrname = dns_fixedname_initname(&ptrfname);
 		iresult = dns_byaddr_createptrname2(&netaddr, 0, ptrname);
 		if (iresult != ISC_R_SUCCESS)
 			ERR(EAI_FAIL);

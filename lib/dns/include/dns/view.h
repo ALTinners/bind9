@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef DNS_VIEW_H
@@ -122,6 +125,7 @@ struct dns_view {
 	isc_boolean_t			requireservercookie;
 	isc_boolean_t			synthfromdnssec;
 	isc_boolean_t			trust_anchor_telemetry;
+	isc_boolean_t			root_key_sentinel;
 	dns_transfer_format_t		transfer_format;
 	dns_acl_t *			cacheacl;
 	dns_acl_t *			cacheonacl;

@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1997-2010, 2012-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -48,7 +51,7 @@ LIBISC_EXTERNAL_DATA unsigned int isc_mem_defaultflags = ISC_MEMFLAG_DEFAULT;
 #define ALIGNMENT_SIZE		8U		/*%< must be a power of 2 */
 #define NUM_BASIC_BLOCKS	64		/*%< must be > 1 */
 #define TABLE_INCREMENT		1024
-#define DEBUG_TABLE_COUNT	65536
+#define DEBUG_TABLE_COUNT	512U
 
 /*
  * Types.
@@ -397,17 +400,6 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size FLARG) {
 	hash = isc_hash_function(&ptr, sizeof(ptr), ISC_TRUE, NULL);
 	idx = hash % DEBUG_TABLE_COUNT;
 
-	dl = ISC_LIST_TAIL(mctx->debuglist[idx]);
-	if (ISC_LIKELY(dl != NULL && dl->ptr == NULL)) {
-		ISC_LIST_UNLINK(mctx->debuglist[idx], dl, link);
-		dl->ptr = ptr;
-		dl->size = size;
-		dl->file = file;
-		dl->line = line;
-		ISC_LIST_PREPEND(mctx->debuglist[idx], dl, link);
-		return;
-	}
-
 	dl = malloc(sizeof(debuglink_t));
 	INSIST(dl != NULL);
 	mctx->malloced += sizeof(debuglink_t);
@@ -446,14 +438,11 @@ delete_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size,
 	idx = hash % DEBUG_TABLE_COUNT;
 
 	dl = ISC_LIST_HEAD(mctx->debuglist[idx]);
-	while (ISC_LIKELY(dl != NULL && dl->ptr != NULL)) {
+	while (ISC_LIKELY(dl != NULL)) {
 		if (ISC_UNLIKELY(dl->ptr == ptr)) {
 			ISC_LIST_UNLINK(mctx->debuglist[idx], dl, link);
-			dl->ptr = NULL;
-			dl->size = 0;
-			dl->file = NULL;
-			dl->line = 0;
-			ISC_LIST_APPEND(mctx->debuglist[idx], dl, link);
+			mctx->malloced -= sizeof(*dl);
+			free(dl);
 			return;
 		}
 		dl = ISC_LIST_NEXT(dl, link);
@@ -2297,7 +2286,7 @@ print_contexts(FILE *file) {
 	     ctx != NULL;
 	     ctx = ISC_LIST_NEXT(ctx, link))
 	{
-		fprintf(file, "context: %p (%s): %d references\n",
+		fprintf(file, "context: %p (%s): %u references\n",
 			ctx,
 			ctx->name[0] == 0 ? "<unknown>" : ctx->name,
 			ctx->references);

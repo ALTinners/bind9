@@ -1,13 +1,14 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 1999-2005, 2007, 2008, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp $ */
 
 /*! \file */
 
@@ -205,6 +206,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <devpoll.h> header file. */
 #undef HAVE_DEVPOLL_H
 
+/* Define to 1 if you have the `DH_get0_key' function. */
+#undef HAVE_DH_GET0_KEY
+
 /* Define to 1 if you have the `dlclose' function. */
 #undef HAVE_DLCLOSE
 
@@ -219,6 +223,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 to enable dnstap support */
 #undef HAVE_DNSTAP
+
+/* Define to 1 if you have the `DSA_get0_pqg' function. */
+#undef HAVE_DSA_GET0_PQG
+
+/* Define to 1 if you have the `ECDSA_SIG_get0' function. */
+#undef HAVE_ECDSA_SIG_GET0
 
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
@@ -243,6 +253,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define if OpenSSL provides FIPS_mode() */
+#undef HAVE_FIPS_MODE
 
 /* Define to 1 if you have the `fseeko' function. */
 #undef HAVE_FSEEKO
@@ -427,6 +440,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
 
+/* Define to 1 if you have the `RSA_set0_key' function. */
+#undef HAVE_RSA_SET0_KEY
+
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
@@ -447,9 +463,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `setresuid' function. */
 #undef HAVE_SETRESUID
-
-/* Define to 1 if you have the <stdatomic.h> header file. */
-#undef HAVE_STDATOMIC_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -544,8 +557,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* have __attribute__s used in librpz.h */
 #undef LIBRPZ_HAVE_ATTR
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Defined if extern char *optarg is not declared. */
@@ -603,7 +615,16 @@ int sigwait(const unsigned int *set, int *sig);
 #undef WANT_QUERYTRACE
 
 /* define if idnkit support is to be included. */
-#undef WITH_IDN
+#undef WITH_IDNKIT
+
+/* define if IDN output support is to be included. */
+#undef WITH_IDN_OUT_SUPPORT
+
+/* define if IDN input support is to be included. */
+#undef WITH_IDN_SUPPORT
+
+/* define if libidn2 support is to be included. */
+#undef WITH_LIBIDN2
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

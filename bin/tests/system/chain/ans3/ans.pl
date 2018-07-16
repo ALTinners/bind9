@@ -1,10 +1,13 @@
 #!/usr/bin/env perl
 #
-# Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 use strict;
 use warnings;
@@ -22,7 +25,10 @@ $SIG{INT} = \&rmpid;
 $SIG{TERM} = \&rmpid;
 
 my $localaddr = "10.53.0.3";
-my $localport = 5300;
+
+my $localport = int($ENV{'PORT'});
+if (!$localport) { $localport = 5300; }
+
 my $verbose = 0;
 my $ttl = 60;
 my $zone = "example.broken";

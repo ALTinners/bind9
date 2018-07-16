@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef _DNSTAP_H
@@ -116,6 +119,11 @@ struct dns_dtdata {
 isc_result_t
 dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 	      struct fstrm_iothr_options **foptp, dns_dtenv_t **envp);
+
+isc_result_t
+dns_dt_create2(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
+	       struct fstrm_iothr_options **foptp, isc_task_t *reopen_task,
+	       dns_dtenv_t **envp);
 /*%<
  * Create and initialize the dnstap environment.
  *
@@ -135,13 +143,18 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
  *	should also be set.  Other options may be set if desired.
  *	If dns_dt_create succeeds the *foptp is set to NULL.
  *
+ *\li	'reopen_task' needs to be set to the task in the context of which
+ *	dns_dt_reopen() will be called.  This is not an optional parameter:
+ *	using dns_dt_create() (which sets 'reopen_task' to NULL) is only
+ *	allowed in unit tests.
+ *
  * Requires:
  *
  *\li	'mctx' is a valid memory context.
  *
  *\li	'path' is a valid C string.
  *
- *\li	'fopt' is non NULL.
+ *\li	'foptp' is non NULL.
  *
  *\li	envp != NULL && *envp == NULL
  *
@@ -177,7 +190,7 @@ dns_dt_setupfile(dns_dtenv_t *env, isc_uint64_t max_size, int rolls,
 isc_result_t
 dns_dt_reopen(dns_dtenv_t *env, int roll);
 /*%<
- * Reopens files established by dns_dt_create().
+ * Reopens files established by dns_dt_create2().
  *
  * If 'roll' is non-negative and 'env->mode' is dns_dtmode_file,
  * then the file is automatically rolled over before reopening.
@@ -185,7 +198,8 @@ dns_dt_reopen(dns_dtenv_t *env, int roll);
  * keep.  If 'roll' is negative, or if 'env->mode' is dns_dtmode_unix,
  * then the channel is simply reopened.
  *
- * Note: dns_dt_reopen() must be called in task exclusive mode.
+ * Note: dns_dt_reopen() uses task-exclusive mode and must be run in the
+ * context of env->reopen_task.
  *
  * Requires:
  *\li	'env' is a valid dnstap environment.

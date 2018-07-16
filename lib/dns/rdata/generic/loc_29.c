@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 1999-2005, 2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: loc_29.c,v 1.50 2009/12/04 21:09:33 marka Exp $ */
-
-/* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
 /* RFC1876 */
 
@@ -456,7 +455,7 @@ totext_loc(ARGS_TOTEXT) {
 	isc_boolean_t below;
 	isc_region_t sr;
 	char buf[sizeof("89 59 59.999 N 179 59 59.999 E "
-			"42849672.95m 90000000m 90000000m 90000000m")];
+			"-42849672.95m 90000000m 90000000m 90000000m")];
 	char sbuf[sizeof("90000000m")];
 	char hbuf[sizeof("90000000m")];
 	char vbuf[sizeof("90000000m")];
@@ -552,7 +551,7 @@ totext_loc(ARGS_TOTEXT) {
 	}
 
 	snprintf(buf, sizeof(buf),
-		 "%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
+		 "%d %d %d.%03d %s %d %d %d.%03d %s %s%lu.%02lum %s %s %s",
 		 d1, m1, s1, fs1, north ? "N" : "S",
 		 d2, m2, s2, fs2, east ? "E" : "W",
 		 below ? "-" : "", altitude/100, altitude % 100,

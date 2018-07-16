@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -555,7 +555,7 @@
 	    and <code class="option">-f</code>.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional">on|off</span>] </span></dt>
+<dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional"> on | off </span>] </span></dt>
 <dd>
 	  <p>
 	    Enable or disable query logging.  (For backward
@@ -638,22 +638,6 @@
 	     <span class="command"><strong>interface-interval</strong></span> timer.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>serve-stale ( on | off | reset | status) [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
-<dd>
-	  <p>
-	    Enable, disable, or reset the serving of stale answers
-	    as configured in named.conf. Serving of stale answers
-	    will remain disabled across <code class="filename">named.conf</code>
-	    reloads if disabled via rndc until it is reset via rndc.
-	  </p>
-	  <p>
-	    Status will report whether serving of stale answers is
-	    currently enabled, disabled or not configured for a
-	    view.  If serving of stale records is configured then
-	    the values of stale-answer-ttl and max-stale-ttl are
-	    reported.
-	  </p>
-	</dd>
 <dt><span class="term"><strong class="userinput"><code>secroots [<span class="optional">-</span>] [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>]</code></strong></span></dt>
 <dd>
 	  <p>
@@ -678,6 +662,30 @@
 	  </p>
 	  <p>
 	    See also <span class="command"><strong>rndc managed-keys</strong></span>.
+	  </p>
+	</dd>
+<dt><span class="term"><strong class="userinput"><code>serve-stale ( on | off | reset | status ) [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
+<dd>
+	  <p>
+	    Enable, disable, reset, or report the current status
+            of the serving of stale answers as configured in
+            <code class="filename">named.conf</code>.
+	  </p>
+	  <p>
+            If serving of stale answers is disabled by
+            <span class="command"><strong>rndc-serve-stale off</strong></span>, then it
+	    will remain disabled even if <span class="command"><strong>named</strong></span>
+            is reloaded or reconfigured.
+            <span class="command"><strong>rndc serve-stale reset</strong></span> restores
+            the setting as configured in <code class="filename">named.conf</code>.
+	  </p>
+	  <p>
+	    <span class="command"><strong>rndc serve-stale status</strong></span> will report
+            whether serving of stale answers is currently enabled,
+            disabled by the configuration, or disabled by
+            <span class="command"><strong>rndc</strong></span>.  It will also report the
+	    values of <span class="command"><strong>stale-answer-ttl</strong></span> and
+	    <span class="command"><strong>max-stale-ttl</strong></span>.
 	  </p>
 	</dd>
 <dt><span class="term"><strong class="userinput"><code>showzone <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>] </code></strong></span></dt>
@@ -890,7 +898,7 @@
 	    TKEY-negotiated keys.
 	  </p>
 	</dd>
-<dt><span class="term"><strong class="userinput"><code>validation ( on | off | check ) [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>] </code></strong></span></dt>
+<dt><span class="term"><strong class="userinput"><code>validation ( on | off | status ) [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>] </code></strong></span></dt>
 <dd>
 	  <p>
 	    Enable, disable, or check the current status of

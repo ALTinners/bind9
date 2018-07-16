@@ -1,17 +1,22 @@
 /*
- * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
 
 #include <config.h>
 
+#include <limits.h>
+
 #ifdef HAVE_LMDB
-#include <lmdb.h>
+ #include <lmdb.h>
 #endif
 
 #include <isc/file.h>
@@ -237,6 +242,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->requireservercookie = ISC_FALSE;
 	view->synthfromdnssec = ISC_TRUE;
 	view->trust_anchor_telemetry = ISC_TRUE;
+	view->root_key_sentinel = ISC_TRUE;
 	view->new_zone_dir = NULL;
 	view->new_zone_file = NULL;
 	view->new_zone_db = NULL;
@@ -347,28 +353,28 @@ destroy(dns_view_t *view) {
 
 	if (view->dynamickeys != NULL) {
 		isc_result_t result;
-		char template[20];
-		char keyfile[20];
+		char template[PATH_MAX];
+		char keyfile[PATH_MAX];
 		FILE *fp = NULL;
-		int n;
 
-		n = snprintf(keyfile, sizeof(keyfile), "%s.tsigkeys",
-			     view->name);
-		if (n > 0 && (size_t)n < sizeof(keyfile)) {
-			result = isc_file_mktemplate(keyfile, template,
-						     sizeof(template));
-			if (result == ISC_R_SUCCESS)
-				(void)isc_file_openuniqueprivate(template, &fp);
+		result = isc_file_mktemplate(NULL, template, sizeof(template));
+		if (result == ISC_R_SUCCESS) {
+			(void)isc_file_openuniqueprivate(template, &fp);
 		}
-		if (fp == NULL)
+		if (fp == NULL) {
 			dns_tsigkeyring_detach(&view->dynamickeys);
-		else {
-			result = dns_tsigkeyring_dumpanddetach(
-							&view->dynamickeys, fp);
+		} else {
+			result = dns_tsigkeyring_dumpanddetach
+				(&view->dynamickeys, fp);
 			if (result == ISC_R_SUCCESS) {
-				if (fclose(fp) == 0)
-					result = isc_file_rename(template,
-								 keyfile);
+				if (fclose(fp) == 0) {
+					result = isc_file_sanitize
+						(NULL, view->name, "tsigkeys",
+						 keyfile, sizeof(keyfile));
+					if (result == ISC_R_SUCCESS)
+						result = isc_file_rename
+							(template, keyfile);
+				}
 				if (result != ISC_R_SUCCESS)
 					(void)remove(template);
 			} else {
@@ -907,15 +913,15 @@ dns_view_getdynamickeyring(dns_view_t *view, dns_tsig_keyring_t **ringp) {
 void
 dns_view_restorekeyring(dns_view_t *view) {
 	FILE *fp;
-	char keyfile[20];
-	int n;
+	char keyfile[PATH_MAX];
+	isc_result_t result;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
 	if (view->dynamickeys != NULL) {
-		n = snprintf(keyfile, sizeof(keyfile), "%s.tsigkeys",
-			     view->name);
-		if (n > 0 && (size_t)n < sizeof(keyfile)) {
+		result = isc_file_sanitize(NULL, view->name, "tsigkeys",
+					   keyfile, sizeof(keyfile));
+		if (result == ISC_R_SUCCESS) {
 			fp = fopen(keyfile, "r");
 			if (fp != NULL) {
 				dns_keyring_restore(view->dynamickeys, fp);
@@ -1924,8 +1930,7 @@ dns_view_issecuredomain(dns_view_t *view, const dns_name_t *name,
 	if (view->secroots_priv == NULL)
 		return (ISC_R_NOTFOUND);
 
-	dns_fixedname_init(&fn);
-	anchor = dns_fixedname_name(&fn);
+	anchor = dns_fixedname_initname(&fn);
 
 	result = dns_keytable_issecuredomain(view->secroots_priv, name,
 					     anchor, &secure);
@@ -2208,8 +2213,7 @@ dns_view_searchdlz(dns_view_t *view, const dns_name_t *name,
 	REQUIRE(dbp != NULL && *dbp == NULL);
 
 	/* setup a "fixed" dns name */
-	dns_fixedname_init(&fname);
-	zonename = dns_fixedname_name(&fname);
+	zonename = dns_fixedname_initname(&fname);
 
 	/* count the number of labels in the name */
 	namelabels = dns_name_countlabels(name);
@@ -2374,8 +2378,7 @@ dns_view_loadnta(dns_view_t *view) {
 			ntaname = dns_rootname;
 		else {
 			dns_name_t *fname;
-			dns_fixedname_init(&fn);
-			fname = dns_fixedname_name(&fn);
+			fname = dns_fixedname_initname(&fn);
 
 			isc_buffer_init(&b, name, (unsigned int)len);
 			isc_buffer_add(&b, (unsigned int)len);

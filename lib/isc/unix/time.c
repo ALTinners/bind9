@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1998-2001, 2003-2008, 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 /*! \file */
 
@@ -381,6 +383,9 @@ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t) t->seconds;
@@ -406,6 +411,9 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	/*
@@ -429,6 +437,7 @@ isc_time_parsehttptimestamp(char *buf, isc_time_t *t) {
 
 	REQUIRE(buf != NULL);
 	REQUIRE(t != NULL);
+
 	p = isc_tm_strptime(buf, "%a, %d %b %Y %H:%M:%S", &t_tm);
 	if (p == NULL)
 		return (ISC_R_UNEXPECTED);
@@ -447,6 +456,9 @@ isc_time_formatISO8601L(const isc_time_t *t, char *buf, unsigned int len) {
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
@@ -466,6 +478,9 @@ isc_time_formatISO8601Lms(const isc_time_t *t, char *buf, unsigned int len) {
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
@@ -489,6 +504,9 @@ isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
@@ -508,6 +526,9 @@ isc_time_formatISO8601ms(const isc_time_t *t, char *buf, unsigned int len) {
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
@@ -533,6 +554,9 @@ isc_time_formatshorttimestamp(const isc_time_t *t, char *buf, unsigned int len)
 	struct tm tm;
 #endif
 
+	REQUIRE(t != NULL);
+	INSIST(t->nanoseconds < NS_PER_S);
+	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
@@ -543,7 +567,6 @@ isc_time_formatshorttimestamp(const isc_time_t *t, char *buf, unsigned int len)
 #endif
 	INSIST(flen < len);
 	if (flen > 0U && len - flen >= 5) {
-		flen -= 1; /* rewind one character (Z) */
 		snprintf(buf + flen, len - flen, "%03u",
 			 t->nanoseconds / NS_PER_MS);
 	}

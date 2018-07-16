@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -545,9 +548,9 @@ struct dns_resolver {
 #define NEGATIVE(r) (((r)->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
 
 #ifdef ENABLE_AFL
-static isc_boolean_t fuzzing_resolver = ISC_FALSE;
+isc_boolean_t dns_fuzzing_resolver = ISC_FALSE;
 void dns_resolver_setfuzzing() {
-	fuzzing_resolver = ISC_TRUE;
+	dns_fuzzing_resolver = ISC_TRUE;
 }
 #endif
 
@@ -1472,8 +1475,8 @@ fcount_incr(fetchctx_t *fctx, isc_boolean_t force) {
 			counter->logged = 0;
 			counter->allowed = 1;
 			counter->dropped = 0;
-			dns_fixedname_init(&counter->fdname);
-			counter->domain = dns_fixedname_name(&counter->fdname);
+			counter->domain =
+				dns_fixedname_initname(&counter->fdname);
 			dns_name_copy(&fctx->domain, counter->domain, NULL);
 			ISC_LIST_APPEND(dbucket->list, counter, link);
 		}
@@ -1810,8 +1813,12 @@ fctx_setretryinterval(fetchctx_t *fctx, unsigned int rtt) {
 	/*
 	 * Exponential backoff after the first few tries.
 	 */
-	if (fctx->restarts >= fctx->res->nonbackofftries)
-		us <<= (fctx->restarts - fctx->res->nonbackofftries - 1);
+	if (fctx->restarts > fctx->res->nonbackofftries) {
+		int shift = fctx->restarts - fctx->res->nonbackofftries;
+		if (shift > 6)
+			shift = 6;
+		us <<= shift;
+	}
 
 	/*
 	 * Add a fudge factor to the expected rtt based on the current
@@ -2118,7 +2125,7 @@ add_bad_edns(fetchctx_t *fctx, isc_sockaddr_t *address) {
 	isc_sockaddr_t *sa;
 
 #ifdef ENABLE_AFL
-	if (fuzzing_resolver)
+	if (dns_fuzzing_resolver)
 		return;
 #endif
 	if (bad_edns(fctx, address))
@@ -3101,7 +3108,7 @@ mark_bad(fetchctx_t *fctx) {
 	isc_boolean_t all_bad = ISC_TRUE;
 
 #ifdef ENABLE_AFL
-	if (fuzzing_resolver)
+	if (dns_fuzzing_resolver)
 		return ISC_FALSE;
 #endif
 
@@ -3181,7 +3188,7 @@ add_bad(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_result_t reason,
 	isc_sockaddr_t *address = &addrinfo->sockaddr;
 
 #ifdef ENABLE_AFL
-	if (fuzzing_resolver)
+	if (dns_fuzzing_resolver)
 		return;
 #endif
 
@@ -3523,8 +3530,7 @@ fctx_getaddresses(fetchctx_t *fctx, isc_boolean_t badcache) {
 			name = &suffix;
 		}
 
-		dns_fixedname_init(&fixed);
-		domain = dns_fixedname_name(&fixed);
+		domain = dns_fixedname_initname(&fixed);
 		result = dns_fwdtable_find2(res->view->fwdtable, name,
 					    domain, &forwarders);
 		if (result == ISC_R_SUCCESS) {
@@ -3980,10 +3986,7 @@ fctx_try(fetchctx_t *fctx, isc_boolean_t retrying, isc_boolean_t badcache) {
 	if (addrinfo == NULL) {
 		/* We have no more addresses.  Start over. */
 		fctx_cancelqueries(fctx, ISC_TRUE, ISC_FALSE);
-		fctx_cleanupfinds(fctx);
-		fctx_cleanupaltfinds(fctx);
-		fctx_cleanupforwaddrs(fctx);
-		fctx_cleanupaltaddrs(fctx);
+		fctx_cleanupall(fctx);
 		result = fctx_getaddresses(fctx, badcache);
 		if (result == DNS_R_WAIT) {
 			/*
@@ -4607,8 +4610,7 @@ fctx_create(dns_resolver_t *res, const dns_name_t *name, dns_rdatatype_t type,
 		}
 
 		/* Find the forwarder for this name. */
-		dns_fixedname_init(&fixed);
-		fname = dns_fixedname_name(&fixed);
+		fname = dns_fixedname_initname(&fixed);
 		result = dns_fwdtable_find2(fctx->res->view->fwdtable, fwdname,
 					    fname, &forwarders);
 		if (result == ISC_R_SUCCESS)
@@ -5090,8 +5092,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 	 * destroy the fctx if necessary.  Save the wildcard name.
 	 */
 	if (vevent->proofs[DNS_VALIDATOR_NOQNAMEPROOF] != NULL) {
-		dns_fixedname_init(&fwild);
-		wild = dns_fixedname_name(&fwild);
+		wild = dns_fixedname_initname(&fwild);
 		dns_name_copy(dns_fixedname_name(&vevent->validator->wild),
 			      wild, NULL);
 	}
@@ -5551,12 +5552,9 @@ findnoqname(fetchctx_t *fctx, dns_name_t *name, dns_rdatatype_t type,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	dns_fixedname_init(&fzonename);
-	zonename = dns_fixedname_name(&fzonename);
-	dns_fixedname_init(&fclosest);
-	closest = dns_fixedname_name(&fclosest);
-	dns_fixedname_init(&fnearest);
-	nearest = dns_fixedname_name(&fnearest);
+	zonename = dns_fixedname_initname(&fzonename);
+	closest = dns_fixedname_initname(&fclosest);
+	nearest = dns_fixedname_initname(&fnearest);
 
 #define NXND(x) ((x) == ISC_R_SUCCESS)
 
@@ -6593,8 +6591,7 @@ is_answertarget_allowed(fetchctx_t *fctx, dns_name_t *qname, dns_name_t *rname,
 		result = dns_rdata_tostruct(&rdata, &dname, NULL);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		dns_name_init(&prefix, NULL);
-		dns_fixedname_init(&fixed);
-		tname = dns_fixedname_name(&fixed);
+		tname = dns_fixedname_initname(&fixed);
 		nlabels = dns_name_countlabels(qname) -
 			  dns_name_countlabels(rname);
 		dns_name_split(qname, nlabels, &prefix, NULL);
@@ -6825,8 +6822,7 @@ resume_dslookup(isc_task_t *task, isc_event_t *event) {
 		/*
 		 * Retrieve state from fctx->nsfetch before we destroy it.
 		 */
-		dns_fixedname_init(&fixed);
-		domain = dns_fixedname_name(&fixed);
+		domain = dns_fixedname_initname(&fixed);
 		dns_name_copy(&fctx->nsfetch->private->domain, domain, NULL);
 		if (dns_name_equal(&fctx->nsname, domain)) {
 			if (dns_rdataset_isassociated(fevent->rdataset)) {
@@ -8988,8 +8984,7 @@ rctx_nextserver(respctx_t *rctx, dns_adbaddrinfo_t *addrinfo,
 		dns_name_t *name, *fname;
 		unsigned int findoptions = 0;
 
-		dns_fixedname_init(&foundname);
-		fname = dns_fixedname_name(&foundname);
+		fname = dns_fixedname_initname(&foundname);
 
 		if (result != ISC_R_SUCCESS) {
 			fctx_done(fctx, DNS_R_SERVFAIL, __LINE__);
@@ -9038,10 +9033,7 @@ rctx_nextserver(respctx_t *rctx, dns_adbaddrinfo_t *addrinfo,
 		fctx->ns_ttl = fctx->nameservers.ttl;
 		fctx->ns_ttl_ok = ISC_TRUE;
 		fctx_cancelqueries(fctx, ISC_TRUE, ISC_FALSE);
-		fctx_cleanupfinds(fctx);
-		fctx_cleanupaltfinds(fctx);
-		fctx_cleanupforwaddrs(fctx);
-		fctx_cleanupaltaddrs(fctx);
+		fctx_cleanupall(fctx);
 	}
 
 	/*
@@ -9169,7 +9161,7 @@ rctx_done(respctx_t *rctx, isc_result_t result) {
 	}
 
 #ifdef ENABLE_AFL
-	if (fuzzing_resolver &&
+	if (dns_fuzzing_resolver &&
 	    (rctx->next_server || rctx->resend || rctx->nextitem))
 	{
 		if (rctx->nextitem) {
@@ -9358,9 +9350,10 @@ rctx_badserver(respctx_t *rctx, isc_result_t result) {
 		}
 	} else if (fctx->rmessage->rcode == dns_rcode_badvers) {
 		unsigned int version;
-		isc_boolean_t setnocookie = ISC_FALSE;
 #if DNS_EDNS_VERSION > 0
 		unsigned int flags, mask;
+#else
+		isc_boolean_t setnocookie = ISC_FALSE;
 #endif
 
 		/*
@@ -9372,8 +9365,10 @@ rctx_badserver(respctx_t *rctx, isc_result_t result) {
 		 */
 		if (dns_adb_getcookie(fctx->adb, query->addrinfo,
 				      cookie, sizeof(cookie)) == 0U) {
+#if DNS_EDNS_VERSION <= 0
 			if (!NOCOOKIE(query->addrinfo))
 				setnocookie = ISC_TRUE;
+#endif
 			dns_adb_changeflags(fctx->adb, query->addrinfo,
 					    FCTX_ADDRINFO_NOCOOKIE,
 					    FCTX_ADDRINFO_NOCOOKIE);
@@ -9831,7 +9826,11 @@ dns_resolver_create(dns_view_t *view,
 #if USE_MBSLOCK
 	result = isc_rwlock_init(&res->mbslock, 0, 0);
 	if (result != ISC_R_SUCCESS)
+#if USE_ALGLOCK
 		goto cleanup_alglock;
+#else
+		goto cleanup_spillattimer;
+#endif
 #endif
 
 	res->magic = RES_MAGIC;
@@ -9840,12 +9839,11 @@ dns_resolver_create(dns_view_t *view,
 
 	return (ISC_R_SUCCESS);
 
-#if USE_MBSLOCK
+#if USE_ALGLOCK && USE_MBSLOCK
  cleanup_alglock:
-#if USE_ALGLOCK
 	isc_rwlock_destroy(&res->alglock);
 #endif
-#endif
+
 #if USE_ALGLOCK || USE_MBSLOCK
  cleanup_spillattimer:
 	isc_timer_detach(&res->spillattimer);
@@ -10603,7 +10601,7 @@ dns_resolver_addbadcache(dns_resolver_t *resolver, const dns_name_t *name,
 			 dns_rdatatype_t type, isc_time_t *expire)
 {
 #ifdef ENABLE_AFL
-	if (!fuzzing_resolver)
+	if (!dns_fuzzing_resolver)
 #endif
 	{
 		dns_badcache_add(resolver->badcache, name, type,
@@ -11111,7 +11109,7 @@ dns_resolver_dumpfetches(dns_resolver_t *resolver,
 		     fc = ISC_LIST_NEXT(fc, link))
 		{
 			dns_name_print(fc->domain, fp);
-			fprintf(fp, ": %d active (%d spilled, %d allowed)\n",
+			fprintf(fp, ": %u active (%u spilled, %u allowed)\n",
 				fc->count, fc->dropped, fc->allowed);
 		}
 		UNLOCK(&resolver->dbuckets[i].lock);

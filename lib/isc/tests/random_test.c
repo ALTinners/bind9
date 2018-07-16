@@ -1,9 +1,19 @@
 /*
- * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * IMPORTANT NOTE:
+ * These tests work by generating a large number of pseudo-random numbers
+ * and then statistically analyzing them to determine whether they seem
+ * random. The test is expected to fail on occasion by random happenstance.
  */
 
 #include <config.h>
@@ -19,6 +29,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+
+#define REPS 25000
 
 typedef double (pvalue_func_t)(isc_mem_t *mctx,
 			       isc_uint16_t *values, size_t length);
@@ -192,8 +204,8 @@ tables_init(void) {
  * This function destroys (modifies) the data passed in bits.
  */
 static isc_uint32_t
-matrix_binaryrank(isc_uint32_t *bits, ssize_t rows, ssize_t cols) {
-	ssize_t i, j, k;
+matrix_binaryrank(isc_uint32_t *bits, size_t rows, size_t cols) {
+	size_t i, j, k;
 	unsigned int rt = 0;
 	isc_uint32_t rank = 0;
 	isc_uint32_t tmp;
@@ -244,13 +256,14 @@ random_test(pvalue_func_t *func, isc_boolean_t word_sized) {
 	isc_rng_t *rng;
 	isc_uint32_t m;
 	isc_uint32_t j;
-	isc_uint32_t histogram[11];
+	isc_uint32_t histogram[11] = { 0 };
 	isc_uint32_t passed;
 	double proportion;
 	double p_hat;
-	double lower_confidence;
+	double lower_confidence, higher_confidence;
 	double chi_square;
 	double p_value_t;
+	double alpha;
 
 	tables_init();
 
@@ -264,25 +277,24 @@ random_test(pvalue_func_t *func, isc_boolean_t word_sized) {
 	m = 1000;
 	passed = 0;
 
-	for (j = 0; j < 11; j++)
-		histogram[j] = 0;
-
 	for (j = 0; j < m; j++) {
 		isc_uint32_t i;
-		isc_uint16_t values[128000];
+		isc_uint16_t values[REPS];
 		double p_value;
 
 		if (word_sized) {
-			for (i = 0; i < 128000; i++)
+			for (i = 0; i < REPS; i++) {
 				isc_rng_randombytes(rng, &values[i],
 						    sizeof(values[i]));
+			}
 		} else {
 			isc_rng_randombytes(rng, values, sizeof(values));
 		}
 
-		p_value = (*func)(mctx, values, 128000);
-		if (p_value >= 0.01)
+		p_value = (*func)(mctx, values, REPS);
+		if (p_value >= 0.01) {
 			passed++;
+		}
 
 		ATF_REQUIRE(p_value >= 0.0);
 		ATF_REQUIRE(p_value <= 1.0);
@@ -293,31 +305,34 @@ random_test(pvalue_func_t *func, isc_boolean_t word_sized) {
 
 	isc_rng_detach(&rng);
 
-	/* Fold histogram[10] (p_value = 1.0) into histogram[9] for
-	 * interval [0.9, 1.0]
-	 */
-	histogram[9] += histogram[10];
-	histogram[10] = 0;
-
 	/*
 	 * Check proportion of sequences passing a test (see section
 	 * 4.2.1 in NIST SP 800-22).
 	 */
+	alpha = 0.01; /* the significance level */
 	proportion = (double) passed / (double) m;
-	p_hat = 1 - 0.01; /* alpha is 0.01 in the NIST tests */
-	lower_confidence = p_hat - (3.0 * sqrt((p_hat * (1 - p_hat)) / m));
+	p_hat = 1.0 - alpha;
+	lower_confidence = p_hat - (3.0 * sqrt((p_hat * (1.0 - p_hat)) / m));
+	higher_confidence = p_hat + (3.0 * sqrt((p_hat * (1.0 - p_hat)) / m));
 
 	/* Debug message, not displayed when running via atf-run */
 	printf("passed=%u/1000\n", passed);
-	printf("lower_confidence=%f, proportion=%f\n",
-	       lower_confidence, proportion);
+	printf("higher_confidence=%f, lower_confidence=%f, proportion=%f\n",
+	       higher_confidence, lower_confidence, proportion);
 
 	ATF_REQUIRE(proportion >= lower_confidence);
+	ATF_REQUIRE(proportion <= higher_confidence);
 
 	/*
 	 * Check uniform distribution of p-values (see section 4.2.2 in
 	 * NIST SP 800-22).
 	 */
+
+	/* Fold histogram[10] (p_value = 1.0) into histogram[9] for
+	 * interval [0.9, 1.0]
+	 */
+	histogram[9] += histogram[10];
+	histogram[10] = 0;
 
 	/* Pre-requisite that at least 55 sequences are processed. */
 	ATF_REQUIRE(m >= 55);
@@ -399,7 +414,7 @@ runs(isc_mem_t *mctx, isc_uint16_t *values, size_t length) {
 	numbits = length * 16;
 	bcount = 0;
 
-	for (i = 0; i < 128000; i++)
+	for (i = 0; i < REPS; i++)
 		bcount += bitcounts_table[values[i]];
 
 	/* Debug message, not displayed when running via atf-run */
@@ -462,7 +477,6 @@ blockfrequency(isc_mem_t *mctx, isc_uint16_t *values, size_t length) {
 	isc_uint32_t mwords;
 	isc_uint32_t numblocks;
 	double *pi;
-	isc_uint32_t cur_word;
 	double chi_square;
 	double p_value;
 
@@ -484,7 +498,6 @@ blockfrequency(isc_mem_t *mctx, isc_uint16_t *values, size_t length) {
 	pi = isc_mem_get(mctx, numblocks * sizeof(double));
 	ATF_REQUIRE(pi != NULL);
 
-	cur_word = 0;
 	for (i = 0; i < numblocks; i++) {
 		isc_uint32_t j;
 		pi[i] = 0.0;
@@ -493,7 +506,6 @@ blockfrequency(isc_mem_t *mctx, isc_uint16_t *values, size_t length) {
 
 			idx = i * mwords + j;
 			pi[i] += bitcounts_table[values[idx]];
-			cur_word++;
 		}
 		pi[i] /= mbits;
 	}

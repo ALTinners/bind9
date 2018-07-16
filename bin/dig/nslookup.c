@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2000-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -387,7 +390,7 @@ detailsection(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers,
 }
 
 static void
-received(int bytes, isc_sockaddr_t *from, dig_query_t *query)
+received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query)
 {
 	UNUSED(bytes);
 	UNUSED(from);
@@ -472,8 +475,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		dns_name_t *name;
 
 		/* Add AAAA lookup. */
-		dns_fixedname_init(&fixed);
-		name = dns_fixedname_name(&fixed);
+		name = dns_fixedname_initname(&fixed);
 		dns_name_copy(query->lookup->name, name, NULL);
 		chase_cnamechain(msg, name);
 		dns_name_format(name, namestr, sizeof(namestr));
@@ -549,7 +551,7 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 	printf("  %s\t\t%s\n",
 	       usesearch ? "search" : "nosearch",
 	       recurse ? "recurse" : "norecurse");
-	printf("  timeout = %d\t\tretry = %d\tport = %d\tndots = %d\n",
+	printf("  timeout = %u\t\tretry = %d\tport = %u\tndots = %d\n",
 	       timeout, tries, port, ndots);
 	printf("  querytype = %-8s\tclass = %s\n", deftype, defclass);
 	printf("  srchlist = ");
@@ -707,31 +709,31 @@ setoption(char *opt) {
 		usesearch = ISC_TRUE;
 	} else if (CHECKOPT("nodefname", 5)) {
 		usesearch = ISC_FALSE;
-	} else if (CHECKOPT("vc", 2) == 0) {
+	} else if (CHECKOPT("vc", 2)) {
 		tcpmode = ISC_TRUE;
 		tcpmode_set = ISC_TRUE;
-	} else if (CHECKOPT("novc", 4) == 0) {
+	} else if (CHECKOPT("novc", 4)) {
 		tcpmode = ISC_FALSE;
 		tcpmode_set = ISC_TRUE;
-	} else if (CHECKOPT("debug", 3) == 0) {
+	} else if (CHECKOPT("debug", 3)) {
 		short_form = ISC_FALSE;
 		showsearch = ISC_TRUE;
-	} else if (CHECKOPT("nodebug", 5) == 0) {
+	} else if (CHECKOPT("nodebug", 5)) {
 		short_form = ISC_TRUE;
 		showsearch = ISC_FALSE;
-	} else if (CHECKOPT("d2", 2) == 0) {
+	} else if (CHECKOPT("d2", 2)) {
 		debugging = ISC_TRUE;
-	} else if (CHECKOPT("nod2", 4) == 0) {
+	} else if (CHECKOPT("nod2", 4)) {
 		debugging = ISC_FALSE;
-	} else if (CHECKOPT("search", 3) == 0) {
+	} else if (CHECKOPT("search", 3)) {
 		usesearch = ISC_TRUE;
-	} else if (CHECKOPT("nosearch", 5) == 0) {
+	} else if (CHECKOPT("nosearch", 5)) {
 		usesearch = ISC_FALSE;
-	} else if (CHECKOPT("sil", 3) == 0) {
+	} else if (CHECKOPT("sil", 3)) {
 		/* deprecation_msg = ISC_FALSE; */
-	} else if (CHECKOPT("fail", 3) == 0) {
+	} else if (CHECKOPT("fail", 3)) {
 		nofail=ISC_FALSE;
-	} else if (CHECKOPT("nofail", 5) == 0) {
+	} else if (CHECKOPT("nofail", 5)) {
 		nofail=ISC_TRUE;
 	} else if (strncasecmp(opt, "ndots=", 6) == 0) {
 		set_ndots(&opt[6]);

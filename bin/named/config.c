@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2001-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -24,6 +27,7 @@
 
 #include <pk11/site.h>
 
+#include <isccfg/grammar.h>
 #include <isccfg/namedconf.h>
 
 #include <dns/fixedname.h>
@@ -43,6 +47,7 @@
 /*% default configuration */
 static char defaultconf[] = "\
 options {\n\
+	answer-cookie true;\n\
 	automatic-interface-scan yes;\n\
 	bindkeys-file \"" NAMED_SYSCONFDIR "/bind.keys\";\n\
 #	blackhole {none;};\n"
@@ -96,6 +101,7 @@ options {\n\
 	request-nsid false;\n\
 	reserved-sockets 512;\n\
 	resolver-query-timeout 10;\n\
+	rrset-order { order random; };\n\
 	secroots-file \"named.secroots\";\n\
 	send-cookie true;\n\
 #	serial-queries <obsolete>;\n\
@@ -192,6 +198,7 @@ options {\n\
 	resolver-nonbackoff-tries 3;\n\
 	resolver-retry-interval 800; /* in milliseconds */\n\
 #	rfc2308-type1 <obsolete>;\n\
+	root-key-sentinel yes;\n\
 	servfail-ttl 1;\n\
 #	sortlist <none>\n\
 	stale-answer-enable false;\n\
@@ -308,8 +315,9 @@ named_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf) {
 
 	isc_buffer_init(&b, defaultconf, sizeof(defaultconf) - 1);
 	isc_buffer_add(&b, sizeof(defaultconf) - 1);
-	return (cfg_parse_buffer3(parser, &b, __FILE__, 0,
-				  &cfg_type_namedconf, conf));
+	return (cfg_parse_buffer4(parser, &b, __FILE__, 0,
+				  &cfg_type_namedconf,
+				  CFG_PCTX_NODEPRECATED, conf));
 }
 
 isc_result_t

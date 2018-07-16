@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef DNS_ZONE_H
@@ -2008,6 +2011,15 @@ dns_zone_setdialup(dns_zone_t *zone, dns_dialuptype_t dialup);
  * Requires:
  * \li	'zone' to be valid initialised zone.
  *\li	'dialup' to be a valid dialup type.
+ */
+
+void
+dns_zone_logv(dns_zone_t *zone, isc_logcategory_t *category, int level,
+	      const char *prefix, const char *msg, va_list ap);
+/*%<
+ * Log the message 'msg...' at 'level' using log category 'category', including
+ * text that identifies the message as applying to 'zone'.  If the (optional)
+ * 'prefix' is not NULL, it will be placed at the start of the entire log line.
  */
 
 void

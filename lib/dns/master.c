@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 1999-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id$ */
 
 /*! \file */
 
@@ -595,8 +596,7 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 	lctx->include_arg = include_arg;
 	isc_stdtime_get(&lctx->now);
 
-	dns_fixedname_init(&lctx->fixed_top);
-	lctx->top = dns_fixedname_name(&lctx->fixed_top);
+	lctx->top = dns_fixedname_initname(&lctx->fixed_top);
 	dns_name_toregion(top, &r);
 	dns_name_fromregion(lctx->top, &r);
 
@@ -794,8 +794,7 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 
 	ictx = lctx->inc;
 	callbacks = lctx->callbacks;
-	dns_fixedname_init(&ownerfixed);
-	owner = dns_fixedname_name(&ownerfixed);
+	owner = dns_fixedname_initname(&ownerfixed);
 	ISC_LIST_INIT(head);
 
 	target_mem = isc_mem_get(lctx->mctx, target_size);
@@ -830,6 +829,22 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 		(*callbacks->error)(callbacks,
 				   "%s: %s:%lu: unknown RR type '%s'",
 				   "$GENERATE", source, line, gtype);
+		goto insist_cleanup;
+	}
+
+	/*
+	 * RFC2930: TKEY and TSIG are not allowed to be loaded
+	 * from master files.
+	 */
+	if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
+	    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+	    dns_rdatatype_ismeta(type))
+	{
+		(*callbacks->error)(callbacks,
+				   "%s: %s:%lu: meta RR type '%s'",
+				   "$GENERATE",
+				   source, line, gtype);
+		result = DNS_R_METATYPE;
 		goto insist_cleanup;
 	}
 
@@ -992,6 +1007,19 @@ check_wildcard(dns_incctx_t *ictx, const char *source, unsigned long line,
 static isc_result_t
 openfile_text(dns_loadctx_t *lctx, const char *master_file) {
 	return (isc_lex_openfile(lctx->lex, master_file));
+}
+
+static int
+find_free_name(dns_incctx_t *incctx) {
+	int i;
+
+	for (i = 0; i < (NBUFS - 1); i++) {
+		if (!incctx->in_use[i]) {
+			break;
+		}
+	}
+	INSIST(!incctx->in_use[i]);
+	return (i);
 }
 
 static isc_result_t
@@ -1323,8 +1351,9 @@ load_text(dns_loadctx_t *lctx) {
 					if (MANYERRS(lctx, result)) {
 						SETRESULT(lctx, result);
 						lctx->ttl = 0;
-					} else if (result != ISC_R_SUCCESS)
+					} else {
 						goto insist_and_cleanup;
+					}
 				} else if (!explicit_ttl &&
 					   lctx->default_ttl_known) {
 					lctx->ttl = lctx->default_ttl;
@@ -1355,21 +1384,17 @@ load_text(dns_loadctx_t *lctx) {
 				result = DNS_R_SYNTAX;
 				if (MANYERRS(lctx, result)) {
 					SETRESULT(lctx, result);
-				} else if (result != ISC_R_SUCCESS)
+				} else {
 					goto insist_and_cleanup;
+				}
 			}
 
 			/*
 			 * Normal processing resumes.
-			 *
-			 * Find a free name buffer.
 			 */
-			for (new_in_use = 0; new_in_use < NBUFS; new_in_use++)
-				if (!ictx->in_use[new_in_use])
-					break;
-			INSIST(new_in_use < NBUFS);
-			dns_fixedname_init(&ictx->fixed[new_in_use]);
-			new_name = dns_fixedname_name(&ictx->fixed[new_in_use]);
+			new_in_use = find_free_name(ictx);
+			new_name =
+			      dns_fixedname_initname(&ictx->fixed[new_in_use]);
 			isc_buffer_init(&buffer, token.value.as_region.base,
 					token.value.as_region.length);
 			isc_buffer_add(&buffer, token.value.as_region.length);
@@ -1527,8 +1552,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				LOGIT(result);
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		/*
@@ -1567,8 +1593,9 @@ load_text(dns_loadctx_t *lctx) {
 					SETRESULT(lctx, result);
 					read_till_eol = ISC_TRUE;
 					continue;
-				} else if (result != ISC_R_SUCCESS)
+				} else {
 					goto insist_and_cleanup;
+				}
 			}
 
 			if (ictx->origin_changed) {
@@ -1611,8 +1638,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				read_till_eol = ISC_TRUE;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		if (rdclass == 0 &&
@@ -1629,8 +1657,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				read_till_eol = ISC_TRUE;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		result = dns_rdatatype_fromtext(&type,
@@ -1670,8 +1699,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				read_till_eol = ISC_TRUE;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		if (type == dns_rdatatype_ns && ictx->glue == NULL)
@@ -1687,6 +1717,30 @@ load_text(dns_loadctx_t *lctx) {
 			char typename[DNS_RDATATYPE_FORMATSIZE];
 
 			result = DNS_R_OBSOLETE;
+
+			dns_rdatatype_format(type, typename, sizeof(typename));
+			(*callbacks->error)(callbacks,
+					    "%s:%lu: %s '%s': %s",
+					    source, line,
+					    "type", typename,
+					    dns_result_totext(result));
+			if (MANYERRS(lctx, result)) {
+				SETRESULT(lctx, result);
+			} else
+				goto insist_and_cleanup;
+		}
+
+		/*
+		 * RFC2930: TKEY and TSIG are not allowed to be loaded
+		 * from master files.
+		 */
+		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
+		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+		    dns_rdatatype_ismeta(type))
+		{
+			char typename[DNS_RDATATYPE_FORMATSIZE];
+
+			result = DNS_R_METATYPE;
 
 			dns_rdatatype_format(type, typename, sizeof(typename));
 			(*callbacks->error)(callbacks,
@@ -1759,8 +1813,9 @@ load_text(dns_loadctx_t *lctx) {
 							    namebuf, desc);
 					if (MANYERRS(lctx, result)) {
 						SETRESULT(lctx, result);
-					} else if (result != ISC_R_SUCCESS)
+					} else {
 						goto cleanup;
+					}
 				} else {
 					(*callbacks->warn)(callbacks,
 							   "%s:%lu: %s: %s",
@@ -1811,8 +1866,9 @@ load_text(dns_loadctx_t *lctx) {
 				read_till_eol = ISC_TRUE;
 				target = target_ft;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		if (type == dns_rdatatype_rrsig ||
@@ -2040,7 +2096,6 @@ pushfile(const char *master_file, dns_name_t *origin, dns_loadctx_t *lctx) {
 	dns_incctx_t *ictx;
 	dns_incctx_t *newctx = NULL;
 	isc_region_t r;
-	int new_in_use;
 
 	REQUIRE(master_file != NULL);
 	REQUIRE(DNS_LCTX_VALID(lctx));
@@ -2059,11 +2114,7 @@ pushfile(const char *master_file, dns_name_t *origin, dns_loadctx_t *lctx) {
 
 	/* Set current domain. */
 	if (ictx->glue != NULL || ictx->current != NULL) {
-		for (new_in_use = 0; new_in_use < NBUFS; new_in_use++)
-			if (!newctx->in_use[new_in_use])
-				break;
-		INSIST(new_in_use < NBUFS);
-		newctx->current_in_use = new_in_use;
+		newctx->current_in_use = find_free_name(newctx);
 		newctx->current =
 			dns_fixedname_name(&newctx->fixed[newctx->current_in_use]);
 		newctx->in_use[newctx->current_in_use] = ISC_TRUE;
@@ -2290,8 +2341,7 @@ load_raw(dns_loadctx_t *lctx) {
 	}
 	isc_buffer_init(&target, target_mem, target_size);
 
-	dns_fixedname_init(&fixed);
-	name = dns_fixedname_name(&fixed);
+	name = dns_fixedname_initname(&fixed);
 
 	/*
 	 * In the following loop, we regard any error fatal regardless of

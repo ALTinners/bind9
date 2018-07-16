@@ -1,15 +1,20 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
-echo "I:dlv/ns6/sign.sh"
+SYSTESTDIR=dlv
+
+echo_i "dlv/ns6/sign.sh"
 
 zone=grand.child1.utld.
 infile=child.db.in
@@ -22,7 +27,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child3.utld.
@@ -37,7 +42,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child4.utld.
@@ -52,7 +57,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child5.utld.
@@ -67,7 +72,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child7.utld.
@@ -82,7 +87,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child8.utld.
@@ -97,7 +102,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child9.utld.
@@ -112,7 +117,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 zone=grand.child10.utld.
 infile=child.db.in
@@ -126,7 +131,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 zone=grand.child1.druz.
 infile=child.db.in
@@ -139,7 +144,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child3.druz.
@@ -154,7 +159,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child4.druz.
@@ -169,7 +174,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child5.druz.
@@ -184,7 +189,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child7.druz.
@@ -199,7 +204,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child8.druz.
@@ -214,7 +219,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 
 zone=grand.child9.druz.
@@ -229,7 +234,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"
 
 zone=grand.child10.druz.
 infile=child.db.in
@@ -243,4 +248,4 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
-echo "I: signed $zone"
+echo_i "signed $zone"

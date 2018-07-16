@@ -1,9 +1,12 @@
 <!--
- - Copyright (C) 2000-2017  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
@@ -30,6 +33,7 @@
       <year>2015</year>
       <year>2016</year>
       <year>2017</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <!-- insert copyright end -->
@@ -76,13 +80,11 @@
 	section is followed by
 	<emphasis>Chapter 4</emphasis>, which contains more advanced
 	concepts that the system administrator may need for implementing
-	certain options. <emphasis>Chapter 5</emphasis>
-	describes the <acronym>BIND</acronym> 9 lightweight
-	resolver.  The contents of <emphasis>Chapter 6</emphasis> are
+	certain options. The contents of <emphasis>Chapter 5</emphasis> are
 	organized as in a reference manual to aid in the ongoing
-	maintenance of the software. <emphasis>Chapter 7</emphasis> addresses
+	maintenance of the software. <emphasis>Chapter 6</emphasis> addresses
 	security considerations, and
-	<emphasis>Chapter 8</emphasis> contains troubleshooting help. The
+	<emphasis>Chapter 7</emphasis> contains troubleshooting help. The
 	main body of the document is followed by several
 	<emphasis>appendices</emphasis> which contain useful reference
 	information, such as a <emphasis>bibliography</emphasis> and
@@ -2456,34 +2458,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
     </section>
   </chapter>
 
-  <chapter xml:id="Bv9ARM.ch05"><info><title>The <acronym>BIND</acronym> 9 Lightweight Resolver</title></info>
-
-    <section xml:id="lightweight_resolver"><info><title>The Lightweight Resolver Library</title></info>
-
-      <para>
-	Traditionally applications have been linked with a stub resolver
-	library that sends recursive DNS queries to a local caching name
-	server.
-      </para>
-      <para>
-	IPv6 once introduced new complexity into the resolution process,
-	such as following A6 chains and DNAME records, and simultaneous
-	lookup of IPv4 and IPv6 addresses.  Though most of the complexity was
-	then removed, these are hard or impossible
-	to implement in a traditional stub resolver.
-      </para>
-      <para>
-	<acronym>BIND</acronym> 9 therefore can also provide resolution
-	services to local clients
-	using a combination of a lightweight resolver library and a resolver
-	daemon process running on the local host.  These communicate using
-	a simple UDP-based protocol, the "lightweight resolver protocol"
-	that is distinct from and simpler than the full DNS protocol.
-      </para>
-    </section>
-  </chapter>
-
-  <chapter xml:id="Bv9ARM.ch06"><info><title><acronym>BIND</acronym> 9 Configuration Reference</title></info>
+  <chapter xml:id="Bv9ARM.ch05"><info><title><acronym>BIND</acronym> 9 Configuration Reference</title></info>
 
     <para>
       <acronym>BIND</acronym> 9 configuration is broadly similar
@@ -2749,8 +2724,25 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 		<para>
 		  A non-negative 32-bit integer
 		  (i.e., a number between 0 and 4294967295, inclusive).
-		  Its acceptable value might further
-		  be limited by the context in which it is used.
+		  Its acceptable value might be further
+		  limited by the context in which it is used.
+		</para>
+	      </entry>
+	    </row>
+	    <row rowsep="0">
+	      <entry colname="1">
+		<para>
+		  <varname>fixedpoint</varname>
+		</para>
+	      </entry>
+	      <entry colname="2">
+		<para>
+		  A non-negative real number that can be specified to
+		  the nearest one hundredth.  Up to five digits can be
+		  specified before a decimal point, and up to two
+		  digits after, so the maximum value is 99999.99.
+		  Acceptable values might be further limited by the
+		  context in which it is used.
 		</para>
 	      </entry>
 	    </row>
@@ -3271,12 +3263,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
       </para>
 
       <section xml:id="acl_grammar"><info><title><command>acl</command> Statement Grammar</title></info>
-
-<programlisting><command>acl</command> <replaceable>acl-name</replaceable> <command>{</command>
-    <replaceable>address_match_list</replaceable>
-<command>};</command>
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="acl.grammar.xml"/>
       </section>
       <section xml:id="acl"><info><title><command>acl</command> Statement Definition and
 	  Usage</title></info>
@@ -3354,18 +3341,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	</informaltable>
       </section>
       <section xml:id="controls_grammar"><info><title><command>controls</command> Statement Grammar</title></info>
-
-<programlisting><command>controls {</command>
-  [ <command>inet</command> ( <replaceable>ip_addr</replaceable> | <command>*</command> ) [ <command>port</command> <replaceable>ip_port</replaceable> ] <command>allow {</command> <replaceable>address_match_list</replaceable> <command>}</command>
-      [ <command>keys {</command> <replaceable>key_list</replaceable> <command>}</command> ]
-      [ <command>read-only</command> <replaceable>yes_or_no</replaceable> ] <command>;</command> ]
-  [ <command>unix</command> <replaceable>path</replaceable> <command>perm</command> <replaceable>number</replaceable> <command>owner</command> <replaceable>number</replaceable> <command>group</command> <replaceable>number</replaceable>
-      [ <command>keys {</command> <replaceable>key_list</replaceable> <command>}</command> ]
-      [ <command>read-only</command> <replaceable>yes_or_no</replaceable> ] <command>;</command> ]
-   [ ...; ]
-<command>};</command>
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="controls.grammar.xml"/>
       </section>
 
       <section xml:id="controls_statement_definition_and_usage"><info><title><command>controls</command> Statement Definition and
@@ -3517,13 +3493,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 
       </section>
       <section xml:id="key_grammar"><info><title><command>key</command> Statement Grammar</title></info>
-
-<programlisting><command>key</command> <replaceable>key_id</replaceable> <command>{</command>
-    <command>algorithm</command> <replaceable>algorithm_id</replaceable><command>;</command>
-    <command>secret</command> <replaceable>secret_string</replaceable><command>;</command>
-<command>};</command>
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="key.grammar.xml"/>
       </section>
 
       <section xml:id="key_statement"><info><title><command>key</command> Statement Definition and Usage</title></info>
@@ -3573,30 +3543,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 
       </section>
       <section xml:id="logging_grammar"><info><title><command>logging</command> Statement Grammar</title></info>
-
-<programlisting><command>logging {</command>
-  [ <command>channel</command> <replaceable>channel_name</replaceable> <command>{</command>
-    ( ( <command>file</command> <replaceable>path_name</replaceable>
-	  [ <command>versions</command> ( <replaceable>number</replaceable> | <option>unlimited</option> ) ]
-	  [ <command>size</command> <replaceable>size_spec</replaceable> ]
-	  [ <command>suffix</command> ( <option>increment</option> | <option>timestamp</option> ) )
-      | <command>syslog</command> <replaceable>syslog_facility</replaceable>
-      | <command>stderr</command>
-      | <command>null</command> ) <command>;</command>
-      [ <command>severity</command> ( <option>critical</option> | <option>error</option> | <option>warning</option> | <option>notice</option> |
-		   <option>info</option> | <option>debug</option> [ <replaceable>level</replaceable> ] | <option>dynamic</option> ) <command>;</command> ]
-      [ <command>print-category</command> <replaceable>yes_or_no</replaceable> <command>;</command> ]
-      [ <command>print-severity</command> <replaceable>yes_or_no</replaceable> <command>;</command> ]
-      [ <command>print-time</command> ( <option>yes</option> | <option>no</option> | <option>local</option> | <option>iso8601</option> | <option>iso8601-utc</option> ) ;
-      [ <command>buffered</command> <replaceable>yes_or_no</replaceable> <command>;</command> ]
-    <command>};</command> ]
-  [ <command>category</command> <replaceable>category_name</replaceable> <command>{</command>
-     <replaceable>channel_name</replaceable> <command>;</command> ...
-    <command>};</command> ]
-    ...
-<command>};</command>
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.grammar.xml"/>
       </section>
 
       <section xml:id="logging_statement"><info><title><command>logging</command> Statement Definition and Usage</title></info>
@@ -3840,7 +3787,7 @@ notrace</command>. All debugging messages in the server have a debug
 	    logged in ISO8601 format.  If set to
 	    <userinput>iso8601-utc</userinput>, then the date and time
 	    are logged in ISO8601 format, with time zone set to
-	    UTC. The default is <userinput>local</userinput>.
+	    UTC. The default is <userinput>no</userinput>.
 	  </para>
 	  <para>
 	    <command>print-time</command> may
@@ -3886,6 +3833,7 @@ notrace</command>. All debugging messages in the server have a debug
     syslog daemon;
     // only send priority info and higher
     severity info;
+};
 
 channel default_debug {
     // write to named.run in the working directory
@@ -4229,15 +4177,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
       </section>
 
       <section xml:id="masters_grammar"><info><title><command>masters</command> Statement Grammar</title></info>
-
-<programlisting>
-<command>masters</command> <replaceable>name</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-  ( <replaceable>masters_list</replaceable> <command>;</command> ) |
-  ( <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>key</command> <replaceable>key</replaceable> ] <command>;</command> )
-    ...
-<command>};</command>
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="masters.grammar.xml"/>
       </section>
 
       <section xml:id="masters_statement"><info><title><command>masters</command> Statement Definition and
@@ -4256,318 +4196,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	  This is the grammar of the <command>options</command>
 	  statement in the <filename>named.conf</filename> file:
 	</para>
-
-<programlisting><command>options {</command>
-  [ <command>attach-cache</command> <replaceable>cache_name</replaceable> ; ]
-  [ <command>version</command> <replaceable>version_string</replaceable> ; ]
-  [ <command>hostname</command> <replaceable>hostname_string</replaceable> ; ]
-  [ <command>server-id</command> <replaceable>server_id_string</replaceable> ; ]
-  [ <command>directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>dnstap {</command> <replaceable>message_type</replaceable> ; ... <command>}</command> ; ]
-  [ <command>dnstap-output</command> ( <option>file</option> | <option>unix</option> ) <replaceable>path_name</replaceable> [ <command>size</command> <replaceable>size_spec</replaceable> ] [ <command>versions</command> ( <replaceable>number</replaceable> | <option>unlimited</option> ) ] ; ]
-  [ <command>dnstap-identity</command> ( <replaceable>string</replaceable> | <option>hostname</option> | <option>none</option> ) ; ]
-  [ <command>dnstap-version</command> ( <replaceable>string</replaceable> | <option>none</option> ) ; ]
-  [ <command>fstrm-set-buffer-hint</command> <replaceable>number</replaceable> ; ]
-  [ <command>fstrm-set-flush-timeout</command> <replaceable>number</replaceable> ; ]
-  [ <command>fstrm-set-input-queue-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>fstrm-set-output-notify-threshold</command> <replaceable>number</replaceable> ; ]
-  [ <command>fstrm-set-output-queue-model</command> ( <option>mpsc</option> | <option>spsc</option> ) ; ]
-  [ <command>fstrm-set-output-queue-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>fstrm-set-reopen-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>geoip-directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>key-directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>managed-keys-directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>new-zones-directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>named-xfer</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>tkey-gssapi-keytab</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>tkey-gssapi-credential</command> <replaceable>principal</replaceable> ; ]
-  [ <command>tkey-domain</command> <replaceable>domain_name</replaceable> ; ]
-  [ <command>tkey-dhkey</command> <replaceable>key_name</replaceable> <replaceable>key_tag</replaceable> ; ]
-  [ <command>cache-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>dump-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>bindkeys-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>lock-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>secroots-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>session-keyfile</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>session-keyname</command> <replaceable>key_name</replaceable> ; ]
-  [ <command>session-keyalg</command> <replaceable>algorithm_id</replaceable> ; ]
-  [ <command>memstatistics</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>memstatistics-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>pid-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>recursing-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>statistics-file</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>zone-statistics</command> ( <option>full</option> | <option>terse</option> | <option>none</option> ) ; ]
-  [ <command>auth-nxdomain</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>nxdomain-redirect</command> <replaceable>string</replaceable> ; ]
-  [ <command>deallocate-on-exit</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dialup</command> <replaceable>dialup_option</replaceable> ; ]
-  [ <command>fake-iquery</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>fetch-glue</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>flush-zones-on-shutdown</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>has-old-clients</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>host-statistics</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>host-statistics-max</command> <replaceable>number</replaceable> ; ]
-  [ <command>glue-cache</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>minimal-any</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>minimal-responses</command> ( <replaceable>yes_or_no</replaceable> | <option>no-auth</option> | <option>no-auth-recursive</option> ) ; ]
-  [ <command>multiple-cnames</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>notify</command> ( <replaceable>yes_or_no</replaceable> | <option>explicit</option> | <option>master-only</option> ) ; ]
-  [ <command>recursion</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>send-cookie</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>require-server-cookie</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>cookie-algorithm</command> <replaceable>algorithm_id</replaceable> ; ]
-  [ <command>cookie-secret</command> <replaceable>secret_string</replaceable> ; ]
-  [ <command>nocookie-udp-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>request-nsid</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>rfc2308-type1</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>use-id-pool</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>maintain-ixfr-base</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>ixfr-from-differences</command> ( <replaceable>yes_or_no</replaceable> | <option>master</option> | <option>slave</option> ) ; ]
-  [ <command>auto-dnssec</command> ( <option>allow</option> | <option>maintain</option> | <option>off</option> ) ; ]
-  [ <command>inline-signing</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-enable</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-validation</command> ( <replaceable>yes_or_no</replaceable> | <option>auto</option> ) ; ]
-  [ <command>dnssec-lookaside</command> ( <option>auto</option> | <option>no</option> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> ) ; ]
-  [ <command>dnssec-must-be-secure</command> <replaceable>domain yes_or_no</replaceable> ; ]
-  [ <command>dnssec-accept-expired</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>forward</command> ( <option>only</option> | <option>first</option> ) ; ]
-  [ <command>forwarders {</command>
-      ( <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; )
-	...
-    <command>}</command> ; ]
-  [ <command>dual-stack-servers</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-      ( ( <replaceable>domain_name</replaceable> | <replaceable>ip_addr</replaceable> ) [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; )
-	...
-    <command>}</command> ; ]
-  [ <command>check-names</command> ( <option>master</option> | <option>slave</option> | <option>response</option> )
-		( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-dup-records</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-mx</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-wildcard</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>check-integrity</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>check-mx-cname</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-srv-cname</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-sibling</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>check-spf</command> ( <option>warn</option> | <option>ignore</option> ) ; ]
-  [ <command>allow-new-zones</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>allow-notify {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query-on {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query-cache {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query-cache-on {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-transfer {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-recursion {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-recursion-on {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-update {</command> <replaceable>address_match_list</replaceable> <command>}</command> ]
-  [ <command>allow-update-forwarding {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>automatic-interface-scan</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>geoip-use-ecs</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>update-check-ksk</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-update-mode</command> ( <option>maintain</option> | <option>no-resign</option> ) ; ]
-  [ <command>dnssec-dnskey-kskonly</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-loadkeys-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>dnssec-secure-to-insecure</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>try-tcp-refresh</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>allow-v6-synthesis {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>blackhole {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>keep-response-order {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>no-case-compress {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>message-compression</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>use-v4-udp-ports {</command> <replaceable>port_list</replaceable> <command>}</command> ; ]
-  [ <command>avoid-v4-udp-ports {</command> <replaceable>port_list</replaceable> <command>}</command> ; ]
-  [ <command>use-v6-udp-ports {</command> <replaceable>port_list</replaceable> <command>}</command> ; ]
-  [ <command>avoid-v6-udp-ports {</command> <replaceable>port_list</replaceable> <command>}</command> ; ]
-  [ <command>listen-on</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>listen-on-v6</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>query-source</command> ( [ <command>address</command> ] ( <replaceable>ip4_addr</replaceable> | <option>*</option> ) )
-      [ <command>port</command> ( <replaceable>ip_port</replaceable> | <option>*</option> ) ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ] ;
-  [ <command>query-source-v6</command> ( [ <command>address</command> ] ( <replaceable>ip6_addr</replaceable> | <option>*</option> ) )
-      [ <command>port</command> ( <replaceable>ip_port</replaceable> | <option>*</option> ) ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ] ;
-  [ <command>use-queryport-pool</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>queryport-pool-ports</command> <replaceable>number</replaceable> ; ]
-  [ <command>queryport-pool-updateinterval</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-records</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-time-in</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-time-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-idle-in</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-idle-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>reserved-sockets</command> <replaceable>number</replaceable> ; ]
-  [ <command>recursive-clients</command> <replaceable>number</replaceable> ; ]
-  [ <command>tcp-clients</command> <replaceable>number</replaceable> ; ]
-  [ <command>clients-per-query</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-clients-per-query</command> <replaceable>number</replaceable> ; ]
-  [ <command>fetches-per-server</command> <replaceable>number</replaceable> [ ( <option>drop</option> | <option>fail</option> ) ] ; ]
-  [ <command>fetches-per-zone</command> <replaceable>number</replaceable> [ ( <option>drop</option> | <option>fail</option> ) ] ; ]
-  [ <command>fetch-quota-params</command> <replaceable>number fixedpoint fixedpoint fixedpoint</replaceable> ; ]
-  [ <command>notify-rate</command> <replaceable>number</replaceable> ; ]
-  [ <command>startup-notify-rate</command> <replaceable>number</replaceable> ; ]
-  [ <command>serial-query-rate</command> <replaceable>number</replaceable> ; ]
-  [ <command>serial-queries</command> <replaceable>number</replaceable> ; ]
-  [ <command>tcp-listen-queue</command> <replaceable>number</replaceable> ; ]
-  [ <command>tcp-initial-timeout</command> <replaceable>number</replaceable>; ]
-  [ <command>tcp-idle-timeout</command> <replaceable>number</replaceable>; ]
-  [ <command>tcp-keepalive-timeout</command> <replaceable>number</replaceable>; ]
-  [ <command>tcp-advertised-timeout</command> <replaceable>number</replaceable>; ]
-  [ <command>transfer-format</command> ( <option>one-answer</option> | <option>many-answers</option> ) ; ]
-  [ <command>transfer-message-size</command>  <replaceable>number</replaceable> ; ]
-  [ <command>transfers-in</command>  <replaceable>number</replaceable> ; ]
-  [ <command>transfers-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>transfers-per-ns</command> <replaceable>number</replaceable> ; ]
-  [ <command>transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <option>*</option> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <option>*</option> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>alt-transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <option>*</option> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>alt-transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <option>*</option> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>use-alt-transfer-source</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>notify-delay</command> <replaceable>seconds</replaceable> ; ]
-  [ <command>notify-source</command> ( <replaceable>ip4_addr</replaceable> | <option>*</option> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>notify-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <option>*</option> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>notify-to-soa</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>also-notify</command> [ <command>port</command> <replaceable>ip_port</replaceable>] [ <command>dscp</command> <replaceable>ip_dscp</replaceable>] <command>{</command>
-      ( <replaceable>masters</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>max-ixfr-log-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-journal-size</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>coresize</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>datasize</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>files</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>stacksize</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>cleaning-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>heartbeat-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>interface-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>statistics-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>topology {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>sortlist {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>rrset-order {</command> <replaceable>order_spec</replaceable> ; ... <command>}</command> ; ]
-  [ <command>lame-ttl</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-ncache-ttl</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-cache-ttl</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-stale-ttl</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-zone-ttl</command> ( <option>unlimited</option> | <replaceable>number</replaceable> ) ; ]
-  [ <command>stale-answer-enable</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>stale-answer-ttl</command> <replaceable>number</replaceable> ; ]
-  [ <command>serial-update-method</command> ( <option>increment</option> | <option>unixtime</option> | <option>date</option> ) ; ]
-  [ <command>servfail-ttl</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-validity-interval</command> <replaceable>number</replaceable> [<replaceable>number</replaceable>] ; ]
-  [ <command>sig-signing-nodes</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-signing-signatures</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-signing-type</command> <replaceable>number</replaceable> ; ]
-  [ <command>min-roots</command> <replaceable>number</replaceable> ; ]
-  [ <command>use-ixfr</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>provide-ixfr</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>request-ixfr</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>request-expire</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>treat-cr-as-space</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>min-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>min-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>nta-lifetime</command> <replaceable>duration</replaceable> ; ]
-  [ <command>nta-recheck</command> <replaceable>duration</replaceable> ; ]
-  [ <command>port</command> <replaceable>ip_port</replaceable> ; ]
-  [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ; ]
-  [ <command>random-device</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>max-cache-size</command> <replaceable>size_or_percent</replaceable> ; ]
-  [ <command>match-mapped-addresses</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>filter-aaaa-on-v4</command> ( <replaceable>yes_or_no</replaceable> | <option>break-dnssec</option> ) ; ]
-  [ <command>filter-aaaa-on-v6</command> ( <replaceable>yes_or_no</replaceable> | <option>break-dnssec</option> ) ; ]
-  [ <command>filter-aaaa {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>dns64</command> <replaceable>ipv6-prefix</replaceable> <command>{</command>
-      [ <command>clients {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-      [ <command>mapped {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-      [ <command>exclude {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-      [ <command>suffix</command> <replaceable>ip6-address</replaceable> ; ]
-      [ <command>recursive-only</command> <replaceable>yes_or_no</replaceable> ; ]
-      [ <command>break-dnssec</command> <replaceable>yes_or_no</replaceable> ; ]
-    <command>}</command> ; ]
-  [ <command>dns64-server</command> <replaceable>name</replaceable> ]
-  [ <command>dns64-contact</command> <replaceable>name</replaceable> ]
-  [ <command>preferred-glue</command> ( <option>A</option> | <option>AAAA</option> | <option>none</option> ); ]
-  [ <command>edns-udp-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-udp-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>response-padding</command> { <replaceable>address_match_list</replaceable> } block-size <replaceable>number</replaceable> ; ]
-  [ <command>max-rsa-exponent-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>root-delegation-only</command> [ <command>exclude {</command> <replaceable>namelist</replaceable> <command>}</command> ] ; ]
-  [ <command>querylog</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>disable-algorithms</command> <replaceable>domain</replaceable> <command>{</command> <replaceable>algorithm</replaceable> ; ... <command>}</command> ; ]
-  [ <command>disable-ds-digests</command> <replaceable>domain</replaceable> <command>{</command> <replaceable>digest_type</replaceable> ; ... <command>}</command> ; ]
-  [ <command>max-recursion-depth</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-recursion-queries</command> <replaceable>number</replaceable> ; ]
-  [ <command>masterfile-format</command> ( <option>text</option> | <option>raw</option> | <option>map</option> ) ; ]
-  [ <command>masterfile-style</command> ( <option>relative</option> | <option>full</option> ) ; ]
-  [ <command>empty-server</command> <replaceable>name</replaceable> ; ]
-  [ <command>empty-contact</command> <replaceable>name</replaceable> ; ]
-  [ <command>empty-zones-enable</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>disable-empty-zone</command> <replaceable>zone_name</replaceable> ; ]
-  [ <command>zero-no-soa-ttl</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>zero-no-soa-ttl-cache</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>resolver-query-timeout</command> <replaceable>number</replaceable> ; ]
-  [ <command>deny-answer-addresses {</command> <replaceable>address_match_list</replaceable> <command>}</command>
-      [ <command>except-from {</command> <replaceable>namelist</replaceable> <command>}</command> ] ; ]
-  [ <command>deny-answer-aliases {</command> <replaceable>namelist</replaceable> <command>}</command>
-      [ <command>except-from {</command> <replaceable>namelist</replaceable> <command>}</command> ] ; ]
-  [ <command>prefetch</command> <replaceable>number</replaceable> [ <replaceable>number</replaceable> ] ; ]
-  [ <command>rate-limit {</command>
-      [ <command>responses-per-second</command> <replaceable>number</replaceable> ; ]
-      [ <command>referrals-per-second</command> <replaceable>number</replaceable> ; ]
-      [ <command>nodata-per-second</command> <replaceable>number</replaceable> ; ]
-      [ <command>nxdomains-per-second</command> <replaceable>number</replaceable> ; ]
-      [ <command>errors-per-second</command> <replaceable>number</replaceable> ; ]
-      [ <command>all-per-second</command> <replaceable>number</replaceable> ; ]
-      [ <command>window</command> <replaceable>number</replaceable> ; ]
-      [ <command>log-only</command> <replaceable>yes_or_no</replaceable> ; ]
-      [ <command>qps-scale</command> <replaceable>number</replaceable> ; ]
-      [ <command>ipv4-prefix-length</command> <replaceable>number</replaceable> ; ]
-      [ <command>ipv6-prefix-length</command> <replaceable>number</replaceable> ; ]
-      [ <command>slip</command> <replaceable>number</replaceable> ; ]
-      [ <command>exempt-clients {</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-      [ <command>max-table-size</command> <replaceable>number</replaceable> ; ]
-      [ <command>min-table-size</command> <replaceable>number</replaceable> ; ]
-    <command>}</command> ; ]
-  [ <command>response-policy {</command>
-	<command>zone</command> <replaceable>zone_name</replaceable>
-      [ <command>policy</command> ( given | disabled | passthru | drop |
-		 tcp-only | nxdomain | nodata | cname <replaceable>domain</replaceable> ) ]
-      [ <command>recursive-only</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>log</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>max-policy-ttl</command> <replaceable>number</replaceable> ]
-      [ <command>min-update-interval</command> <replaceable>number</replaceable> ]
-      [ <command>nsip-enable</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>nsdname-enable</command> <replaceable>yes_or_no</replaceable> ] ;
-	 ...
-    <command>}</command> [ <command>recursive-only</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>max-policy-ttl</command> <replaceable>number</replaceable> ]
-      [ <command>min-update-interval</command> <replaceable>number</replaceable> ]
-      [ <command>break-dnssec</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>min-ns-dots</command> <replaceable>number</replaceable> ]
-      [ <command>nsip-wait-recurse</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>qname-wait-recurse</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>nsip-enable</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>nsdname-enable</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>dnsrps-enable</command> <replaceable>yes_or_no</replaceable> ]
-      [ <command>dnsrps-options</command> { <replaceable>parameters</replaceable> } ] ; ]
-  [ <command>catalog-zones {</command>
-	<command>zone</command> <replaceable>quoted_string</replaceable>
-	  [ <option>default-masters</option> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-	      ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [<command>port</command> <replaceable>ip_port</replaceable>] [ <command>key</command> <replaceable>key_name</replaceable>] ) ;
-		...
-	    <command>}</command> ]
-	  [ <command>zone-directory</command> <replaceable>path_name</replaceable> ]
-	  [ <command>in-memory</command> <replaceable>yes_or_no</replaceable> ]
-	  [ <command>min-update-interval</command> <replaceable>interval</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>v6-bias</command> <replaceable>number</replaceable> ; ]
-  [ <command>trust-anchor-telemetry</command> <replaceable>yes_or_no</replaceable> ; ]
-<command>}</command> ; ]
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="options.grammar.xml"/>
       </section>
 
       <section xml:id="options"><info><title><command>options</command> Statement Definition and
@@ -5732,12 +5361,13 @@ options {
 		Specifies the TTL to be returned on stale answers.
 		The default is 1 second. The minimum allowed is
 		also 1 second; a value of 0 will be updated silently
-		to 1 second.  For stale answers to be returned,
-		they must be enabled (either in the configuration file
-		using <command>stale-answer-enable</command> or via
-		<command>rndc</command>), and
-		<option>max-stale-ttl</option> must be set to a
-		nonzero value.
+		to 1 second.
+	      </para>
+	      <para>
+		For stale answers to be returned, they must be enabled,
+		either in the configuration file using
+		<command>stale-answer-enable</command> or via
+		<command>rndc serve-stale on</command>.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -6216,6 +5846,17 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
+	      <term><command>root-key-sentinel</command></term>
+	      <listitem>
+		<para>
+		  Respond to root key sentinel probes as described in
+		  draft-ietf-dnsop-kskroll-sentinel-08. The default is
+		  <userinput>yes</userinput>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
 	      <term><command>maintain-ixfr-base</command></term>
 	      <listitem>
 		<para>
@@ -6447,6 +6088,32 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
+	      <term><command>answer-cookie</command></term>
+	      <listitem>
+		<para>
+		  When set to the default value of <userinput>yes</userinput>,
+		  COOKIE EDNS options will be sent when applicable in
+		  replies to client queries. If set to
+		  <userinput>no</userinput>, COOKIE EDNS options will not
+		  be sent in replies.  This can only be set at the global
+		  options level, not per-view.
+		</para>
+		<para>
+		  <command>answer-cookie no</command> is only intended as a
+		  temporary measure, for use when <command>named</command>
+		  shares an IP address with other servers that do not yet
+		  support DNS COOKIE.  A mismatch between servers on the
+		  same address is not expected to cause operational
+		  problems, but the option to disable COOKIE responses so
+		  that all servers have the same behavior is provided out
+		  of an abundance of caution. DNS COOKIE is an important
+		  security mechanism, and should not be disabled unless
+		  absolutely necessary.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
 	      <term><command>send-cookie</command></term>
 	      <listitem>
 		<para>
@@ -6473,18 +6140,28 @@ options {
 	      <term><command>stale-answer-enable</command></term>
 	      <listitem>
 		<para>
-		  Enable the returning of stale answers when the
-		  nameservers for the zone are not answering.  This
-		  is off by default, but can be enabled/disabled via
-		  <command>rndc serve-stale on</command> and
-		  <command>rndc serve-stale off</command>, which
-		  override the <filename>named.conf</filename>
-		  setting.  <command>rndc serve-stale reset</command>
+		  Enable the returning of "stale" cached answers when
+		  the nameservers for a zone are not answering.  The
+		  default is not to return stale answers.
+		</para>
+		<para>
+		  Stale answers can also be enabled or disabled at
+		  runtime via <command>rndc serve-stale on</command> or
+		  <command>rndc serve-stale off</command>; these
+		  override the configured setting.
+		  <command>rndc serve-stale reset</command>
 		  restores the setting to the one specified in
-		  <filename>named.conf</filename>.  Note that
-		  reloading or reconfiguring <command>named</command>
-		  will not re-enable serving of stale records if they
-		  have been disabled via <command>rndc</command>.
+		  <filename>named.conf</filename>.  Note that if
+		  stale answers have been disabled by <command>rndc</command>,
+		  then they cannot be re-enabled by reloading or
+		  reconfiguring <command>named</command>;
+		  they must be re-enabled with
+		  <command>rndc serve-stale on</command>,
+		  or the server must be restarted.
+		</para>
+		<para>
+		  Information about stale answers is logged under
+		  the <command>serve-stale</command> log category.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -9272,19 +8949,21 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <term><command>max-stale-ttl</command></term>
 	      <listitem>
 		<para>
-		  Sets the maximum time for which the server will
+		  If stale answers are enabled,
+		  <command>max-stale-ttl</command>
+		  sets the maximum time for which the server will
 		  retain records past their normal expiry to
 		  return them as stale records when the servers
-		  for those records are not reachable.  The default
-		  is to not retain the record.
+		  for those records are not reachable.
+		  The default is 1 week. The minimum allowed is
+		  1 second; a value of 0 will be updated silently
+		  to 1 second.
 		</para>
 		<para>
-		  <command>rndc serve-stale</command> can be used
-		  to disable and re-enable the serving of stale
-		  records at runtime.  Reloading or reconfiguring
-		  <command>named</command> will not re-enable serving
-		  of stale records if they have been disabled via
-		  <command>rndc</command>.
+		  For stale answers to be returned, they must be enabled,
+		  either in the configuration file using
+		  <command>stale-answer-enable</command> or via
+		  <command>rndc serve-stale on</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -9886,6 +9565,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>9.E.F.IP6.ARPA</listitem>
 	      <listitem>A.E.F.IP6.ARPA</listitem>
 	      <listitem>B.E.F.IP6.ARPA</listitem>
+	      <listitem>EMPTY.AS112.ARPA</listitem>
+	      <listitem>HOME.ARPA</listitem>
 	    </itemizedlist>
 	  </para>
 	  <para>
@@ -10621,7 +10302,7 @@ example.com                 CNAME   rpz-tcp-only.
 	    If an update to a RPZ zone (for example, via IXFR) happens less
 	    than <option>min-update-interval</option> seconds after the most
 	    recent update, then the changes will not be carried out until this
-	    interval has elapsed.  The default is <literal>5</literal> seconds.
+	    interval has elapsed.  The default is <literal>60</literal> seconds.
 	  </para>
 	</section>
 
@@ -10911,42 +10592,7 @@ example.com                 CNAME   rpz-tcp-only.
       </section>
 
       <section xml:id="server_statement_grammar"><info><title><command>server</command> Statement Grammar</title></info>
-
-<programlisting><command>server</command> ( <replaceable>ip_addr</replaceable> | <replaceable>ip_prefix</replaceable> ) <command>{</command>
-  [ <command>bogus</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>provide-ixfr</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>request-ixfr</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>request-expire</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>request-nsid</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>send-cookie</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>edns</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>edns-udp-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>edns-version</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-udp-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>padding</command> <replaceable>number</replaceable> ; ]
-  [ <command>tcp-only</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>tcp-keepalive</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>transfers</command> <replaceable>number</replaceable> ; ]
-  [ <command>transfer-format</command> ( one-answer | many-answers ) ; ]
-  [ <command>keys</command> <command>{</command> <replaceable>key_id</replaceable> <command>}</command> ; ]
-  [ <command>transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>notify-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>notify-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>query-source</command> ( [ <command>address</command> ] ( <replaceable>ip_addr</replaceable> | <constant>*</constant> ) )
-      [ <command>port</command> ( <replaceable>ip_port</replaceable> | <constant>*</constant> ) ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>query-source-v6</command> ( [ <command>address</command> ] ( <replaceable>ip_addr</replaceable> | <constant>*</constant> ) )
-      [ <command>port</command> ( <replaceable>ip_port</replaceable> | <constant>*</constant> ) ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>use-queryport-pool</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>queryport-pool-ports</command> <replaceable>number</replaceable> ; ]
-  [ <command>queryport-pool-updateinterval</command> <replaceable>number</replaceable> ; ]
-<command>}</command> ;
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="server.grammar.xml"/>
 	</section>
 
 	<section xml:id="server_statement_definition_and_usage"><info><title><command>server</command> Statement Definition and
@@ -11213,13 +10859,7 @@ example.com                 CNAME   rpz-tcp-only.
 	</section>
 
       <section xml:id="statschannels"><info><title><command>statistics-channels</command> Statement Grammar</title></info>
-
-<programlisting><command>statistics-channels {</command>
-  [ <command>inet</command> ( <replaceable>ip_addr</replaceable> | <constant>*</constant> ) [ <command>port</command> <replaceable>ip_port</replaceable> ]
-      [ <command>allow { </command><replaceable> address_match_list </replaceable> <command>}</command> ] ; ]
-    ...
-<command>}</command>;
-</programlisting>
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="statistics-channels.grammar.xml"/>
       </section>
 
       <section xml:id="statistics_channels"><info><title><command>statistics-channels</command> Statement Definition and
@@ -11343,13 +10983,7 @@ example.com                 CNAME   rpz-tcp-only.
       </section>
 
 	<section xml:id="trusted-keys"><info><title><command>trusted-keys</command> Statement Grammar</title></info>
-
-<programlisting><command>trusted-keys {</command>
-  ( <replaceable>domain_name</replaceable> <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key_data</replaceable> ; )
-    ...
-<command>}</command> ;
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="trusted-keys.grammar.xml"/>
 	</section>
 	<section xml:id="trusted_keys"><info><title><command>trusted-keys</command> Statement Definition
 	    and Usage</title></info>
@@ -11396,13 +11030,7 @@ example.com                 CNAME   rpz-tcp-only.
 	</section>
 
 	<section xml:id="managed_keys"><info><title><command>managed-keys</command> Statement Grammar</title></info>
-
-<programlisting><command>managed-keys {</command>
-  ( <replaceable>domain_name</replaceable> <replaceable>initial_key</replaceable> <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key_data</replaceable> ; )
-    ...
-<command>}</command> ;
-</programlisting>
-
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="managed-keys.grammar.xml"/>
 	</section>
 	<section xml:id="managed-keys"><info><title><command>managed-keys</command> Statement Definition
 	    and Usage</title></info>
@@ -11668,217 +11296,15 @@ view "external" {
 	<section xml:id="zone_statement_grammar"><info><title><command>zone</command>
 	    Statement Grammar</title></info>
 
-<programlisting><command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> master ;
-  [ <command>allow-query</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query-on</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-transfer</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-update</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>update-check-ksk</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-dnskey-kskonly</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-loadkeys-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>update-policy</command> <option>local</option> | <command>{</command> <replaceable>update_policy_rule</replaceable> ; ...  <command>}</command> ; ]
-  [ <command>also-notify</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-      ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>check-names</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-mx</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>check-wildcard</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>check-spf</command> ( <option>warn</option> | <option>ignore</option> ); ]
-  [ <command>check-integrity</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dialup</command> <replaceable>dialup_option</replaceable> ; ]
-  [ <command>file</command> <replaceable>string</replaceable> ; ]
-  [ <command>masterfile-format</command> ( <option>text</option> | <option>raw</option> | <option>map</option> ) ; ]
-  [ <command>journal</command> <replaceable>string</replaceable> ; ]
-  [ <command>max-journal-size</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>forward</command> ( <option>only</option> | <option>first</option> ) ; ]
-  [ <command>forwarders</command> <command>{</command> [ <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ... ] <command>}</command> ; ]
-  [ <command>ixfr-base</command> <replaceable>string</replaceable> ; ]
-  [ <command>ixfr-from-differences</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>ixfr-tmp-file</command> <replaceable>string</replaceable> ; ]
-  [ <command>maintain-ixfr-base</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>max-ixfr-log-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-idle-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-time-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>notify</command> <replaceable>yes_or_no</replaceable> | <option>explicit</option> | <option>master-only</option> ; ]
-  [ <command>notify-delay</command> <replaceable>seconds</replaceable> ; ]
-  [ <command>notify-to-soa</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>pubkey</command> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ; ]
-  [ <command>notify-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>notify-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>zone-statistics</command> ( <option>full</option> | <option>terse</option> | <option>none</option> ) ; ]
-  [ <command>sig-validity-interval</command> <replaceable>number</replaceable> [ <replaceable>number</replaceable> ] ; ]
-  [ <command>sig-signing-nodes</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-signing-signatures</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-signing-type</command> <replaceable>number</replaceable> ; ]
-  [ <command>database</command> <replaceable>string</replaceable> ; ]
-  [ <command>min-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>min-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command></command><command>key-directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>auto-dnssec</command> ( <option>allow</option> | <option>maintain</option> | <option>off</option> ) ; ]
-  [ <command>inline-signing</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>zero-no-soa-ttl</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>serial-update-method</command> ( <option>increment</option> | <option>unixtime</option> | <option>date</option> ) ; ]
-  [ <command>max-zone-ttl</command> <replaceable>number</replaceable> ; ]
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> slave ;
-  [ <command>allow-notify</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query-on</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-transfer</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-update-forwarding</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>dnssec-update-mode</command> ( <option>maintain</option> | <option>no-resign</option> ); ]
-  [ <command>update-check-ksk</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-dnskey-kskonly</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>dnssec-loadkeys-interval</command> <replaceable>number</replaceable> ; ]
-  [ <command>dnssec-secure-to-insecure</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>try-tcp-refresh</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>also-notify</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-      ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>check-names</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>dialup</command> <replaceable>dialup_option</replaceable> ; ]
-  [ <command>file</command> <replaceable>string</replaceable> ; ]
-  [ <command>masterfile-format</command> ( <option>text</option> | <option>raw</option> | <option>map</option> ) ; ]
-  [ <command>journal</command> <replaceable>string</replaceable> ; ]
-  [ <command>max-journal-size</command> <replaceable>size_spec</replaceable> ; ]
-  [ <command>forward</command> ( <option>only</option> | <option>first</option> ) ; ]
-  [ <command>forwarders</command> <command>{</command> [ <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ... <command>}</command> ; ]
-  [ <command>ixfr-base</command> <replaceable>string</replaceable> ; ]
-  [ <command>ixfr-from-differences</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>ixfr-tmp-file</command> <replaceable>string</replaceable> ; ]
-  [ <command>request-ixfr</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>maintain-ixfr-base</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>masters</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-      ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>max-ixfr-log-size</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-idle-in</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-idle-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-time-in</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-time-out</command> <replaceable>number</replaceable> ; ]
-  [ <command>notify</command> ( <replaceable>yes_or_no</replaceable> | <option>explicit</option> | <option>master-only</option> ) ; ]
-  [ <command>notify-delay</command> <replaceable>seconds</replaceable> ; ]
-  [ <command>notify-to-soa</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>pubkey</command> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ; ]
-  [ <command>transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>alt-transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>alt-transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>use-alt-transfer-source</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>notify-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>notify-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>zone-statistics</command> ( <option>full</option> | <option>terse</option> | <option>none</option> ) ; ]
-  [ <command>sig-validity-interval</command> <replaceable>number</replaceable> [ <replaceable>number</replaceable> ] ; ]
-  [ <command>sig-signing-nodes</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-signing-signatures</command> <replaceable>number</replaceable> ; ]
-  [ <command>sig-signing-type</command> <replaceable>number</replaceable> ; ]
-  [ <command>database</command> <replaceable>string</replaceable> ; ]
-  [ <command>min-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>min-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command></command><command>key-directory</command> <replaceable>path_name</replaceable> ; ]
-  [ <command>auto-dnssec</command> ( <option>allow</option> | <option>maintain</option> | <option>off</option> ) ; ]
-  [ <command>inline-signing</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>multi-master</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>zero-no-soa-ttl</command> <replaceable>yes_or_no</replaceable> ; ]
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> hint;
-    <command>file</command> <replaceable>string</replaceable> ;
-  [ <command>delegation-only</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>check-names</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ] // Not Implemented.
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> stub;
-  [ <command>allow-query</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>allow-query-on</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>check-names</command> ( <option>warn</option> | <option>fail</option> | <option>ignore</option> ) ; ]
-  [ <command>dialup</command> <replaceable>dialup_option</replaceable> ; ]
-  [ <command>delegation-only</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>file</command> <replaceable>string</replaceable> ; ]
-  [ <command>masterfile-format</command> ( <option>text</option> | <option>raw</option> | <option>map</option> ) ; ]
-  [ <command>forward</command> ( <option>only</option> | <option>first</option> ) ; ]
-  [ <command>forwarders</command> <command>{</command> [ <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ... ] <command>}</command> ; ]
-  [ <command>masters</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-      ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>max-transfer-idle-in</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-transfer-time-in</command> <replaceable>number</replaceable> ; ]
-  [ <command>pubkey</command> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ; ]
-  [ <command>transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>alt-transfer-source</command> ( <replaceable>ip4_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>alt-transfer-source-v6</command> ( <replaceable>ip6_addr</replaceable> | <constant>*</constant> )
-      [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ]
-  [ <command>use-alt-transfer-source</command> <replaceable>yes_or_no</replaceable> ; ]
-  [ <command>zone-statistics</command> ( <option>full</option> | <option>terse</option> | <option>none</option> ) ; ]
-  [ <command>database</command> <replaceable>string</replaceable> ; ]
-  [ <command>min-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-refresh-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>min-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>max-retry-time</command> <replaceable>number</replaceable> ; ]
-  [ <command>multi-master</command> <replaceable>yes_or_no</replaceable> ; ]
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> static-stub;
-  [ <command>allow-query</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>server-addresses</command> <command>{</command> [ <replaceable>ip_addr</replaceable> ; ... <command>}</command> ; ]
-  [ <command>server-names</command> <command>{</command> [ <replaceable>namelist</replaceable> ] <command>}</command> ; ]
-  [ <command>zone-statistics</command> ( <option>full</option> | <option>terse</option> | <option>none</option> ) ; ]
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> forward;
-  [ <command>forward</command> ( <option>only</option> | <option>first</option> ) ; ]
-  [ <command>forwarders</command> <command>{</command> [ <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] ; ... <command>}</command> ; ]
-  [ <command>delegation-only</command> <replaceable>yes_or_no</replaceable> ; ]
-<command>}</command> ;
-
-<command>zone</command> <replaceable>"."</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> redirect;
-  [ <command>file</command> <replaceable>string</replaceable> ; ]
-  [ <command>masters</command> [ <command>port</command> <replaceable>ip_port</replaceable> ] [ <command>dscp</command> <replaceable>ip_dscp</replaceable> ] <command>{</command>
-      ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable> [ <command>port</command> <replaceable>ip_port</replaceable> ] ) [ <command>key</command> <replaceable>key_name</replaceable> ] ;
-	...
-    <command>}</command> ; ]
-  [ <command>masterfile-format</command> ( <option>text</option> | <option>raw</option> | <option>map</option> ) ; ]
-  [ <command>allow-query</command> <command>{</command> <replaceable>address_match_list</replaceable> <command>}</command> ; ]
-  [ <command>max-zone-ttl</command> <replaceable>number</replaceable> ; ]
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-    <command>type</command> delegation-only;
-<command>}</command> ;
-
-<command>zone</command> <replaceable>zone_name</replaceable> [ <replaceable>class</replaceable> ] <command>{</command>
-  [ <command>in-view</command> <replaceable>string</replaceable> ; ]
-<command>}</command> ;
-
-</programlisting>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="master.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="slave.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hint.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="stub.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="static-stub.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="forward.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="redirect.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="delegation-only.zoneopt.xml"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="in-view.zoneopt.xml"/>
 
 	</section>
 	<section xml:id="zone_statement"><info><title><command>zone</command> Statement Definition and Usage</title></info>
@@ -13032,69 +12458,68 @@ example.com. NS ns2.example.net.
 	      <command>update-policy</command> option, respectively.
 	    </para>
 	    <para>
-	      The <command>allow-update</command> clause works the
-	      same way as in previous versions of <acronym>BIND</acronym>.
-	      It grants given clients the permission to update any
-	      record of any name in the zone.
+	      The <command>allow-update</command> clause is a simple
+	      access control list.  Any client that matches
+	      the ACL is granted permission to update any record
+	      in the zone.
 	    </para>
 	    <para>
 	      The <command>update-policy</command> clause
 	      allows more fine-grained control over what updates are
-	      allowed.  A set of rules is specified, where each rule
-	      either grants or denies permissions for one or more
-	      names to be updated by one or more identities.  If
-	      the dynamic update request message is signed (that is,
-	      it includes either a TSIG or SIG(0) record), the
-	      identity of the signer can be determined.
+	      allowed.  It specifies a set of rules, in which each rule
+	      either grants or denies permission for one or more
+	      names in the zone to be updated by one or more
+	      identities. Identity is determined by the key that
+	      signed the update request using either TSIG or SIG(0).
+	      In most cases, <command>update-policy</command> rules
+	      only apply to key-based identities.  There is no way
+	      to specify update permissions based on client source
+	      address.
 	    </para>
 	    <para>
-	      Rules are specified in the <command>update-policy</command>
-	      zone option, and are only meaningful for master zones.
-	      When the <command>update-policy</command> statement
-	      is present, it is a configuration error for the
-	      <command>allow-update</command> statement to be
-	      present.  The <command>update-policy</command> statement
-	      (except when set to <literal>local</literal>) only
-	      examines the signer of a message; the source
-	      address is not relevant.
+	      <command>update-policy</command> rules are only meaningful
+	      for zones of type <command>master</command>, and are
+	      not allowed in any other zone type.
+	      It is a configuration error to specify both
+	      <command>allow-update</command> and
+	      <command>update-policy</command> at the same time.
 	    </para>
 	    <para>
 	      A pre-defined <command>update-policy</command> rule can be
 	      switched on with the command
 	      <command>update-policy local;</command>.
-	      Switching on this rule in a zone causes
-	      <command>named</command> to generate a TSIG session key and
-	      place it in a file. That key will then be allowed to update
-	      the zone, if the update request is sent from localhost.
+	      Using this in a zone causes
+	      <command>named</command> to generate a TSIG session key
+	      when starting up and store it in a file; this key can then
+	      be used by local clients to update the zone while
+	      <command>named</command> is running.
 	      By default, the session key is stored in the file
-	      <filename>/var/run/named/session.key</filename>; the key name
-	      is "local-ddns" and the key algorithm is HMAC-SHA256.
+	      <filename>/var/run/named/session.key</filename>, the key name
+	      is "local-ddns", and the key algorithm is HMAC-SHA256.
 	      These values are configurable with the
 	      <command>session-keyfile</command>,
 	      <command>session-keyname</command> and
-	      <command>session-keyalg</command> options, respectively).
-	    </para>
-	    <para>
-	      A client on the local system, if it is run with appropriate
+	      <command>session-keyalg</command> options, respectively.
+	      A client running on the local system, if run with appropriate
 	      permissions, may read the session key from the key file and
-	      use the key to sign update requests.  The zone's update
+	      use it to sign update requests.  The zone's update
 	      policy will be set to allow that key to change any record
 	      within the zone.  Assuming the key name is "local-ddns",
-	      this policy is:
+	      this policy is equivalent to:
 	    </para>
 
 	    <programlisting>update-policy { grant local-ddns zonesub any; };
 	    </programlisting>
 
 	    <para>
-	      ...with an additional restriction that only clients
+	      ...with the additional restriction that only clients
 	      connecting from the local system will be permitted to send
 	      updates.
 	    </para>
 	    <para>
-	      Note that only one session key is generated; all zones
-	      configured to use <command>update-policy local</command>
-	      will accept the same key.
+	      Note that only one session key is generated by
+	      <command>named</command>; all zones configured to use
+	      <command>update-policy local</command> will accept the same key.
 	    </para>
 	    <para>
 	      The command <command>nsupdate -l</command> implements this
@@ -13107,50 +12532,60 @@ example.com. NS ns2.example.net.
 	    </para>
 
 <programlisting>
-( <command>grant</command> | <command>deny</command> ) <replaceable>identity</replaceable> <replaceable>nametype</replaceable> <optional> <replaceable>name</replaceable> </optional> <optional> <replaceable>types</replaceable> </optional>
+( <command>grant</command> | <command>deny</command> ) <replaceable>identity</replaceable> <replaceable>ruletype</replaceable> <optional> <replaceable>name</replaceable> </optional> <optional> <replaceable>types</replaceable> </optional>
 </programlisting>
 
 	    <para>
-	      Each rule grants or denies privileges.  Once a message has
-	      successfully matched a rule, the operation is immediately
-	      granted or denied and no further rules are examined.  A rule
-	      is matched when the signer matches the identity field, the
-	      name matches the name field in accordance with the nametype
-	      field, and the type matches the types specified in the type
-	      field.
+	      Each rule grants or denies privileges.  Rules are checked
+	      in the order in which they are specified in the
+	      <command>update-policy</command> statement. Once a message
+	      has successfully matched a rule, the operation is immediately
+	      granted or denied, and no further rules are examined.  There
+	      are 13 types of rules; the rule type is specified by the
+	      <command>ruletype</command> field, and the interpretation
+	      of other fields varies depending on the rule type.
 	    </para>
 	    <para>
-	      No signer is required for <replaceable>tcp-self</replaceable>
-	      or <replaceable>6to4-self</replaceable> however the standard
-	      reverse mapping / prefix conversion must match the identity
-	      field.
+	      In general, a rule is matched when the
+	      key that signed an update request matches the
+	      <command>identity</command> field, the name of the record
+	      to be updated matches the <command>name</command> field
+	      (in the manner specified by the <command>ruletype</command>
+	      field), and the type of the record to be updated matches the
+	      <command>types</command> field. Details for each rule type
+	      are described below.
 	    </para>
 	    <para>
-	      The identity field specifies a name or a wildcard
-	      name.  Normally, this is the name of the TSIG or
-	      SIG(0) key used to sign the update request.  When a
-	      TKEY exchange has been used to create a shared secret,
-	      the identity of the shared secret is the same as the
-	      identity of the key used to authenticate the TKEY
-	      exchange.  TKEY is also the negotiation method used
-	      by GSS-TSIG, which establishes an identity that is
-	      the Kerberos principal of the client, such as
-	      <userinput>"user@host.domain"</userinput>.  When the
-	      <replaceable>identity</replaceable> field specifies
-	      a wildcard name, it is subject to DNS wildcard
-	      expansion, so the rule will apply to multiple identities.
-	      The <replaceable>identity</replaceable> field must
-	      contain a fully-qualified domain name.
+	      The <command>identity</command> field must be set to
+	      a fully-qualified domain name.  In most cases, this
+	      represensts the name of the TSIG or SIG(0) key that must be
+	      used to sign the update request.  If the specified name is a
+	      wildcard, it is subject to DNS wildcard expansion, and the
+	      rule may apply to multiple identities.  When a TKEY exchange
+	      has been used to create a shared secret, the identity of
+	      the key used to authenticate the TKEY exchange will be
+	      used as the identity of the shared secret.  Some rule types
+	      use indentities matching the client's Kerberos principal
+	      (e.g, <userinput>"host/machine@REALM"</userinput>) or
+	      Windows realm (<userinput>machine$@REALM</userinput>).
 	    </para>
 	    <para>
-	      For nametypes <varname>krb5-self</varname>,
-	      <varname>ms-self</varname>, <varname>krb5-subdomain</varname>,
-	      and <varname>ms-subdomain</varname> the
-	      <replaceable>identity</replaceable> field specifies
-	      the Windows or Kerberos realm of the machine belongs to.
+	      The <replaceable>name</replaceable> field also specifies
+	      a fully-qualified domain name. This often
+	      represents the name of the record to be updated.
+	      Interpretation of this field is dependent on rule type.
 	    </para>
 	    <para>
-	      The <replaceable>nametype</replaceable> field has 13
+	      If no <command>types</command> are explicitly specified,
+	      then a rule matches all types except RRSIG, NS, SOA, NSEC
+	      and NSEC3. Types may be specified by name, including
+	      "ANY" (ANY matches all types except NSEC and NSEC3,
+	      which can never be updated).  Note that when an attempt
+	      is made to delete all records associated with a name,
+	      the rules are checked for each existing record type.
+	    </para>
+	    <para>
+	      The <replaceable>ruletype</replaceable> field has 13
 	      values:
 	      <varname>name</varname>, <varname>subdomain</varname>,
 	      <varname>wildcard</varname>, <varname>self</varname>,
@@ -13238,19 +12673,23 @@ example.com. NS ns2.example.net.
 		    </entry>
 		    <entry colname="2">
 		      <para>
-			This rule matches when the name being updated
-			matches the contents of the
+			This rule matches when the name of the record
+			being updated matches the contents of the
 			<replaceable>identity</replaceable> field.
 			The <replaceable>name</replaceable> field
-			is ignored, but should be the same as the
-			<replaceable>identity</replaceable> field.
-			The <varname>self</varname> nametype is
-			most useful when allowing using one key per
+			is ignored. To avoid confusion, it is recommended
+			that this field be set to the same value as the
+			<replaceable>identity</replaceable> field or to
+			"."
+		      </para>
+		      <para>
+			The <varname>self</varname> rule type is
+			most useful when allowing one key per
 			name to update, where the key has the same
-			name as the name to be updated.  The
-			<replaceable>identity</replaceable> would
-			be specified as <constant>*</constant> (an asterisk) in
-			this case.
+			name as the record to be updated.  In this case,
+			the <replaceable>identity</replaceable> field
+			can be specified as <constant>*</constant>
+			(an asterisk).
 		      </para>
 		    </entry>
 		  </row>
@@ -13292,7 +12731,7 @@ example.com. NS ns2.example.net.
 			and converts it machine.realm allowing the machine
 			to update machine.realm.  The REALM to be matched
 			is specified in the <replaceable>identity</replaceable>
-			field.
+			field.  The name field should be set to "."
 		      </para>
 		    </entry>
 		  </row>
@@ -13324,7 +12763,7 @@ example.com. NS ns2.example.net.
 			and converts it machine.realm allowing the machine
 			to update machine.realm.  The REALM to be matched
 			is specified in the <replaceable>identity</replaceable>
-			field.
+			field. The name field should be set to "."
 		      </para>
 		    </entry>
 		  </row>
@@ -13340,7 +12779,8 @@ example.com. NS ns2.example.net.
 			converts it to machine.realm allowing the machine
 			to update subdomains of machine.realm.  The REALM
 			to be matched is specified in the
-			<replaceable>identity</replaceable> field.
+			<replaceable>identity</replaceable> field. The
+			name field should be set to "."
 		      </para>
 		    </entry>
 		  </row>
@@ -13351,10 +12791,18 @@ example.com. NS ns2.example.net.
 		      </para>
 		    </entry> <entry colname="2">
 		      <para>
-			Allow updates that have been sent via TCP and
-			for which the standard mapping from the initiating
-			IP address into the IN-ADDR.ARPA and IP6.ARPA
+			This rule allows updates that have been sent via
+			TCP and for which the standard mapping from the
+			client's IP address into the
+			<literal>in-addr.arpa</literal> and
+			<literal>ip6.arpa</literal>
 			namespaces match the name to be updated.
+			The <command>identity</command> field must match
+			that name.  The <command>name</command> field
+			should be set to ".".
+			Note that, since identity is based on the client's
+			IP address, it is not necessary for update request
+			messages to be signed.
 		      </para>
 		      <note>
 			It is theoretically possible to spoof these TCP
@@ -13369,11 +12817,30 @@ example.com. NS ns2.example.net.
 		      </para>
 		    </entry> <entry colname="2">
 		      <para>
-			Allow the 6to4 prefix to be update by any TCP
-			connection from the 6to4 network or from the
-			corresponding IPv4 address.  This is intended
-			to allow NS or DNAME RRsets to be added to the
-			reverse tree.
+			This allows the name matching a 6to4 IPv6 prefix,
+			as specified in RFC 3056, to be updated by any
+			TCP connection from either the 6to4 network or
+			from the corresponding IPv4 address.  This is
+			intended to allow NS or DNAME RRsets to be added
+			to the <literal>ip6.arpa</literal> reverse tree.
+		      </para>
+		      <para>
+			The <command>identity</command> field must match
+			the 6to4 prefix in <literal>ip6.arpa</literal>.
+			The <command>name</command> field should
+			be set to ".".
+			Note that, since identity is based on the client's
+			IP address, it is not necessary for update request
+			messages to be signed.
+		      </para>
+		      <para>
+			In addition, if specified for an
+			<literal>ip6.arpa</literal> name outside of the
+			<literal>2.0.0.2.ip6.arpa</literal> namespace,
+			the corresponding /48 reverse name can be updated.
+			For example, TCP/IPv6 connections
+			from 2001:DB8:ED0C::/48 can update records at
+			<literal>C.0.D.E.8.B.D.0.1.0.0.2.ip6.arpa</literal>.
 		      </para>
 		      <note>
 			It is theoretically possible to spoof these TCP
@@ -13427,21 +12894,6 @@ example.com. NS ns2.example.net.
 		</tbody>
 	      </tgroup>
 	    </informaltable>
-
-	    <para>
-	      In all cases, the <replaceable>name</replaceable>
-	      field must specify a fully-qualified domain name.
-	    </para>
-
-	    <para>
-	      If no types are explicitly specified, this rule matches
-	      all types except RRSIG, NS, SOA, NSEC and NSEC3. Types
-	      may be specified by name, including "ANY" (ANY matches
-	      all types except NSEC and NSEC3, which can never be
-	      updated).  Note that when an attempt is made to delete
-	      all records associated with a name, the rules are
-	      checked for each existing record type.
-	    </para>
 	  </section>
 
 	  <section xml:id="multiple_views"><info><title>Multiple views</title></info>
@@ -17202,7 +16654,7 @@ HOST-127.EXAMPLE. MX 0 .
       </section>
 
     </chapter>
-    <chapter xml:id="Bv9ARM.ch07"><info><title><acronym>BIND</acronym> 9 Security Considerations</title></info>
+    <chapter xml:id="Bv9ARM.ch06"><info><title><acronym>BIND</acronym> 9 Security Considerations</title></info>
 
       <section xml:id="Access_Control_Lists"><info><title>Access Control Lists</title></info>
 
@@ -17526,7 +16978,7 @@ allow-query { !{ !10/8; any; }; key example; };
       </section>
     </chapter>
 
-    <chapter xml:id="Bv9ARM.ch08"><info><title>Troubleshooting</title></info>
+    <chapter xml:id="Bv9ARM.ch07"><info><title>Troubleshooting</title></info>
 
       <section xml:id="common_problems"><info><title>Common Problems</title></info>
 
@@ -17597,11 +17049,11 @@ allow-query { !{ !10/8; any; }; key example; };
       </section>
     </chapter>
 
-    <appendix xml:id="Bv9ARM.ch09"><info><title>Release Notes</title></info>
+    <appendix xml:id="Bv9ARM.ch08"><info><title>Release Notes</title></info>
       <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes.xml"/>
     </appendix>
 
-    <appendix xml:id="Bv9ARM.ch10"><info><title>A Brief History of the <acronym>DNS</acronym> and <acronym>BIND</acronym></title></info>
+    <appendix xml:id="Bv9ARM.ch09"><info><title>A Brief History of the <acronym>DNS</acronym> and <acronym>BIND</acronym></title></info>
       <para xml:id="historical_dns_information">
 	Although the "official" beginning of the Domain Name
 	System occurred in 1984 with the publication of RFC 920, the
@@ -17699,7 +17151,7 @@ allow-query { !{ !10/8; any; }; key example; };
       </para>
     </appendix>
 
-    <appendix xml:id="Bv9ARM.ch11"><info><title>General <acronym>DNS</acronym> Reference Information</title></info>
+    <appendix xml:id="Bv9ARM.ch10"><info><title>General <acronym>DNS</acronym> Reference Information</title></info>
 
       <section xml:id="ipv6addresses"><info><title>IPv6 addresses (AAAA)</title></info>
 
@@ -18548,11 +18000,11 @@ allow-query { !{ !10/8; any; }; key example; };
       </section>
     </appendix>
 
-    <appendix xml:id="Bv9ARM.ch12"><info><title>BIND 9 DNS Library Support</title></info>
+    <appendix xml:id="Bv9ARM.ch11"><info><title>BIND 9 DNS Library Support</title></info>
       <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdns.xml"/>
     </appendix>
 
-    <reference xml:id="Bv9ARM.ch13"><info><title>Manual pages</title></info>
+    <reference xml:id="Bv9ARM.ch12"><info><title>Manual pages</title></info>
       <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../bin/tools/arpaname.docbook"/>
       <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../bin/confgen/ddns-confgen.docbook"/>
       <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../bin/delv/delv.docbook"/>

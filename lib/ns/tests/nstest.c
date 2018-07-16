@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -86,12 +89,13 @@ static isc_logcategory_t categories[] = {
 
 static isc_result_t
 matchview(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
-	  dns_message_t *message, dns_ecs_t *ecs,
+	  dns_message_t *message, dns_aclenv_t *env, dns_ecs_t *ecs,
 	  isc_result_t *sigresultp, dns_view_t **viewp)
 {
 	UNUSED(srcaddr);
 	UNUSED(destaddr);
 	UNUSED(message);
+	UNUSED(env);
 	UNUSED(ecs);
 	UNUSED(sigresultp);
 	UNUSED(viewp);
@@ -378,8 +382,7 @@ ns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
 
 	isc_buffer_constinit(&buffer, name, strlen(name));
 	isc_buffer_add(&buffer, strlen(name));
-	dns_fixedname_init(&fixorigin);
-	origin = dns_fixedname_name(&fixorigin);
+	origin = dns_fixedname_initname(&fixorigin);
 	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname, 0, NULL));
 	CHECK(dns_zone_setorigin(zone, origin));
 	dns_zone_setview(zone, view);
@@ -680,7 +683,7 @@ extract_qctx(void *hook_data, void *callback_data, isc_result_t *resultp) {
 static isc_result_t
 create_qctx_for_client(ns_client_t *client, query_ctx_t **qctxp) {
 	ns_hook_t *saved_hook_table;
-	ns_hook_t query_hooks[NS_QUERY_HOOKS_COUNT] = {
+	ns_hook_t query_hooks[NS_QUERY_HOOKS_COUNT + 1] = {
 		[NS_QUERY_SETUP_QCTX_INITIALIZED] = {
 			.callback = extract_qctx,
 			.callback_data = qctxp,
@@ -845,8 +848,7 @@ ns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
 	dns_fixedname_t		fixed;
 	dns_name_t		*name;
 
-	dns_fixedname_init(&fixed);
-	name = dns_fixedname_name(&fixed);
+	name = dns_fixedname_initname(&fixed);
 
 	result = dns_name_fromstring(name, origin, 0, NULL);
 	if (result != ISC_R_SUCCESS)
