@@ -1,3 +1,10 @@
+bind9 (1:9.11.4+dfsg-2) unstable; urgency=medium
+
+  * Enable dnstap support (Courtesy of Richard James Salts) (Closes: #890483)
+  * Remove auth-nxdomain no; from named.conf.options (Closes: #896889)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 16 Jul 2018 18:49:50 +0000
+
 bind9 (1:9.11.4+dfsg-1) unstable; urgency=medium
 
   [ Bernhard Schmidt ]
