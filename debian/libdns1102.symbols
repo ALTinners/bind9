@@ -358,6 +358,21 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_dsdigest_format@Base 1:9.11.3+dfsg
  dns_dsdigest_fromtext@Base 1:9.11.3+dfsg
  dns_dsdigest_totext@Base 1:9.11.3+dfsg
+ dns_dt_attach@Base 1:9.11.4+dfsg-2
+ dns_dt_close@Base 1:9.11.4+dfsg-2
+ dns_dt_create@Base 1:9.11.4+dfsg-2
+ dns_dt_datatotext@Base 1:9.11.4+dfsg-2
+ dns_dt_detach@Base 1:9.11.4+dfsg-2
+ dns_dt_getframe@Base 1:9.11.4+dfsg-2
+ dns_dt_getstats@Base 1:9.11.4+dfsg-2
+ dns_dt_open@Base 1:9.11.4+dfsg-2
+ dns_dt_parse@Base 1:9.11.4+dfsg-2
+ dns_dt_reopen@Base 1:9.11.4+dfsg-2
+ dns_dt_send@Base 1:9.11.4+dfsg-2
+ dns_dt_setidentity@Base 1:9.11.4+dfsg-2
+ dns_dt_setversion@Base 1:9.11.4+dfsg-2
+ dns_dt_shutdown@Base 1:9.11.4+dfsg-2
+ dns_dtdata_free@Base 1:9.11.4+dfsg-2
  dns_dumpctx_attach@Base 1:9.11.3+dfsg
  dns_dumpctx_cancel@Base 1:9.11.3+dfsg
  dns_dumpctx_db@Base 1:9.11.3+dfsg
@@ -1425,6 +1440,24 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_zt_setviewcommit@Base 1:9.11.3+dfsg
  dns_zt_setviewrevert@Base 1:9.11.3+dfsg
  dns_zt_unmount@Base 1:9.11.3+dfsg
+ dnstap__dnstap__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__free_unpacked@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__get_packed_size@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__init@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__pack@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__pack_to_buffer@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__type__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__unpack@Base 1:9.11.4+dfsg-2
+ dnstap__message__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__message__free_unpacked@Base 1:9.11.4+dfsg-2
+ dnstap__message__get_packed_size@Base 1:9.11.4+dfsg-2
+ dnstap__message__init@Base 1:9.11.4+dfsg-2
+ dnstap__message__pack@Base 1:9.11.4+dfsg-2
+ dnstap__message__pack_to_buffer@Base 1:9.11.4+dfsg-2
+ dnstap__message__type__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__message__unpack@Base 1:9.11.4+dfsg-2
+ dnstap__socket_family__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__socket_protocol__descriptor@Base 1:9.11.4+dfsg-2
  dst__entropy_getdata@Base 1:9.11.3+dfsg
  dst__entropy_status@Base 1:9.11.3+dfsg
  dst__gssapi_init@Base 1:9.11.3+dfsg
@@ -1904,6 +1937,21 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_dsdigest_format@Base 1:9.11.3+dfsg
  dns_dsdigest_fromtext@Base 1:9.11.3+dfsg
  dns_dsdigest_totext@Base 1:9.11.3+dfsg
+ dns_dt_attach@Base 1:9.11.4+dfsg-2
+ dns_dt_close@Base 1:9.11.4+dfsg-2
+ dns_dt_create@Base 1:9.11.4+dfsg-2
+ dns_dt_datatotext@Base 1:9.11.4+dfsg-2
+ dns_dt_detach@Base 1:9.11.4+dfsg-2
+ dns_dt_getframe@Base 1:9.11.4+dfsg-2
+ dns_dt_getstats@Base 1:9.11.4+dfsg-2
+ dns_dt_open@Base 1:9.11.4+dfsg-2
+ dns_dt_parse@Base 1:9.11.4+dfsg-2
+ dns_dt_reopen@Base 1:9.11.4+dfsg-2
+ dns_dt_send@Base 1:9.11.4+dfsg-2
+ dns_dt_setidentity@Base 1:9.11.4+dfsg-2
+ dns_dt_setversion@Base 1:9.11.4+dfsg-2
+ dns_dt_shutdown@Base 1:9.11.4+dfsg-2
+ dns_dtdata_free@Base 1:9.11.4+dfsg-2
  dns_dumpctx_attach@Base 1:9.11.3+dfsg
  dns_dumpctx_cancel@Base 1:9.11.3+dfsg
  dns_dumpctx_db@Base 1:9.11.3+dfsg
@@ -2978,6 +3026,24 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_zt_setviewcommit@Base 1:9.11.3+dfsg
  dns_zt_setviewrevert@Base 1:9.11.3+dfsg
  dns_zt_unmount@Base 1:9.11.3+dfsg
+ dnstap__dnstap__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__free_unpacked@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__get_packed_size@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__init@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__pack@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__pack_to_buffer@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__type__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__dnstap__unpack@Base 1:9.11.4+dfsg-2
+ dnstap__message__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__message__free_unpacked@Base 1:9.11.4+dfsg-2
+ dnstap__message__get_packed_size@Base 1:9.11.4+dfsg-2
+ dnstap__message__init@Base 1:9.11.4+dfsg-2
+ dnstap__message__pack@Base 1:9.11.4+dfsg-2
+ dnstap__message__pack_to_buffer@Base 1:9.11.4+dfsg-2
+ dnstap__message__type__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__message__unpack@Base 1:9.11.4+dfsg-2
+ dnstap__socket_family__descriptor@Base 1:9.11.4+dfsg-2
+ dnstap__socket_protocol__descriptor@Base 1:9.11.4+dfsg-2
  dst__entropy_getdata@Base 1:9.11.3+dfsg
  dst__entropy_status@Base 1:9.11.3+dfsg
  dst__gssapi_init@Base 1:9.11.3+dfsg
