@@ -7,10 +7,10 @@ Subject: _multiarch
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/isc-config.sh.in b/isc-config.sh.in
-index 39ca2e8..ff7a5e9 100644
+index 01a2499..1150084 100644
 --- a/isc-config.sh.in
 +++ b/isc-config.sh.in
-@@ -12,7 +12,6 @@ prefix=@prefix@
+@@ -13,7 +13,6 @@ prefix=@prefix@
  exec_prefix=@exec_prefix@
  exec_prefix_set=
  includedir=@includedir@
@@ -18,7 +18,7 @@ index 39ca2e8..ff7a5e9 100644
  
  usage()
  {
-@@ -127,7 +126,7 @@ if test x"$echo_libs" = x"true"; then
+@@ -128,7 +127,7 @@ if test x"$echo_libs" = x"true"; then
  	if test x"${exec_prefix_set}" = x"true"; then
  		libs="-L${exec_prefix}/lib"
  	else

@@ -7,10 +7,10 @@ Subject: _ctxstart_no_sighandling
  1 file changed, 3 insertions(+)
 
 diff --git a/lib/isc/unix/app.c b/lib/isc/unix/app.c
-index d1352fb..e54807b 100644
+index 118729e..5cb59fa 100644
 --- a/lib/isc/unix/app.c
 +++ b/lib/isc/unix/app.c
-@@ -257,6 +257,9 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
+@@ -260,6 +260,9 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
  	ctx->want_reload = ISC_FALSE;
  	ctx->blocked = ISC_FALSE;
  
