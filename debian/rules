@@ -91,6 +91,7 @@ override_dh_auto_configure:
 		--enable-native-pkcs11 \
 		--with-pkcs11=\$${prefix}/lib/softhsm/libsofthsm2.so \
 		--with-randomdev=/dev/urandom \
+		--enable-dnstap \
 		$(EXTRA_FEATURES)
 	dh_auto_configure -B build-udeb -- \
 		--sysconfdir=/etc/bind \
@@ -115,6 +116,8 @@ override_dh_auto_configure:
 	# no need to build these targets here
 	sed -i 's/dnssec-pkcs11//;s/named-pkcs11//' build-udeb/bin/Makefile
 	sed -i 's/dns-pkcs11//;s/isc-pkcs11//' build-udeb/lib/Makefile
+	cp lib/dns/dnstap.proto build/lib/dns
+	cp lib/dns-pkcs11/dnstap.proto build/lib/dns-pkcs11
 
 override_dh_auto_build:
 	dh_auto_build -B build
