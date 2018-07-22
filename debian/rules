@@ -80,6 +80,7 @@ override_dh_auto_configure:
 		--with-gost=no \
 		--with-openssl=/usr \
 		--with-gssapi=/usr \
+		--with-libidn2 \
 		--with-libjson=/usr \
 		--with-lmdb=/usr \
 		--with-gnu-ld \
