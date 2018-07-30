@@ -1,3 +1,10 @@
+bind9 (1:9.11.4+dfsg-4) unstable; urgency=medium
+
+  * Brown-paper-bag release :-(
+  * Fix missing colon in AppArmor profile (Closes: #904983)
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 30 Jul 2018 16:28:21 +0200
+
 bind9 (1:9.11.4+dfsg-3) unstable; urgency=medium
 
   * Enable IDN support for dig+host using libidn2 (Closes: #459010)
