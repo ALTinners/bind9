@@ -1,3 +1,10 @@
+bind9 (1:9.11.4+dfsg-5) UNRELEASED; urgency=medium
+
+  * skip-rtld-deepbind-for-dyndb.diff: Add a patch to fix named-pkcs11
+    crashing on startup. (LP: #1769440)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Tue, 31 Jul 2018 22:01:08 +0300
+
 bind9 (1:9.11.4+dfsg-4) unstable; urgency=medium
 
   * Brown-paper-bag release :-(
