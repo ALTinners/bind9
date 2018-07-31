@@ -1,0 +1,15 @@
+https://bugzilla.redhat.com/show_bug.cgi?id=1410433
+https://bugs.launchpad.net/bugs/1769440
+
+--- a/lib/dns/dyndb.c
++++ b/lib/dns/dyndb.c
+@@ -133,9 +133,6 @@ load_library(isc_mem_t *mctx, const char
+ 		      instname, filename);
+ 
+ 	flags = RTLD_NOW|RTLD_LOCAL;
+-#ifdef RTLD_DEEPBIND
+-	flags |= RTLD_DEEPBIND;
+-#endif
+ 
+ 	handle = dlopen(filename, flags);
+ 	if (handle == NULL)
