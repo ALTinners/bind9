@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2008, 2009, 2011, 2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -160,9 +162,9 @@ totext_nsec3(ARGS_TOTEXT) {
 	/*
 	 * Don't leave a trailing space when there's no typemap present.
 	 */
-	if (((tctx->flags & DNS_STYLEFLAG_MULTILINE) == 0) && (sr.length > 0))
+	if (((tctx->flags & DNS_STYLEFLAG_MULTILINE) == 0) && (sr.length > 0)) {
 		RETERR(str_totext(" ", target));
-
+	}
 	RETERR(typemap_totext(&sr, tctx, target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)

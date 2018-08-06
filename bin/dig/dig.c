@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2000-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -187,7 +190,8 @@ help(void) {
 "                 +[no]fail           (Don't try next server on SERVFAIL)\n"
 "                 +[no]header-only    (Send query without a question section)\n"
 "                 +[no]identify       (ID responders in short answers)\n"
-"                 +[no]idnout         (convert IDN response)\n"
+"                 +[no]idnin          (Parse IDN names)\n"
+"                 +[no]idnout         (Convert IDN response)\n"
 "                 +[no]ignore         (Don't revert to TCP for TC responses.)\n"
 "                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
 "                 +[no]mapped         (Allow mapped IPv4 over IPv6)\n"
@@ -240,7 +244,7 @@ help(void) {
  * Callback from dighost.c to print the received message.
  */
 static void
-received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
+received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	isc_uint64_t diff;
 	time_t tnow;
 	struct tm tmnow;
@@ -288,12 +292,12 @@ received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 		} else {
 			printf(";; MSG SIZE  rcvd: %u\n", bytes);
 		}
-		if (key != NULL) {
+		if (tsigkey != NULL) {
 			if (!validated)
 				puts(";; WARNING -- Some TSIG could not "
 				     "be validated");
 		}
-		if ((key == NULL) && (keysecret[0] != 0)) {
+		if ((tsigkey == NULL) && (keysecret[0] != 0)) {
 			puts(";; WARNING -- TSIG key was not used.");
 		}
 		puts("");
@@ -1091,12 +1095,28 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				lookup->identify = state;
 				break;
 			case 'n':
-				FULLCHECK("idnout");
-#ifndef WITH_IDN
-				fprintf(stderr, ";; IDN support not enabled\n");
+				switch (cmd[3]) {
+				case 'i':
+					FULLCHECK("idnin");
+#ifndef WITH_IDN_SUPPORT
+					fprintf(stderr, ";; IDN input support"
+						" not enabled\n");
 #else
-				lookup->idnout = state;
+					lookup->idnin = state;
 #endif
+				break;
+				case 'o':
+					FULLCHECK("idnout");
+#ifndef WITH_IDN_OUT_SUPPORT
+					fprintf(stderr, ";; IDN output support"
+						" not enabled\n");
+#else
+					lookup->idnout = state;
+#endif
+					break;
+				default:
+					goto invalid_option;
+				}
 				break;
 			default:
 				goto invalid_option;
@@ -1317,11 +1337,11 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 
 			result = parse_uint(&splitwidth, value,
 					    1023, "split");
-			if (splitwidth % 4 != 0) {
+			if ((splitwidth % 4) != 0U) {
 				splitwidth = ((splitwidth + 3) / 4) * 4;
 				fprintf(stderr, ";; Warning, split must be "
 						"a multiple of 4; adjusting "
-						"to %d\n", splitwidth);
+						"to %u\n", splitwidth);
 			}
 			/*
 			 * There is an adjustment done in the
@@ -1884,8 +1904,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 				bargc = 1;
 				input = batchline;
 				bargv[bargc] = next_token(&input, " \t\r\n");
-				while ((bargv[bargc] != NULL) &&
-				       (bargc < 62)) {
+				while ((bargc < 62) && (bargv[bargc] != NULL)) {
 					bargc++;
 					bargv[bargc] =
 						next_token(&input, " \t\r\n");
@@ -2084,7 +2103,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 				goto next_line;
 			input = batchline;
 			bargv[bargc] = next_token(&input, " \t\r\n");
-			while ((bargv[bargc] != NULL) && (bargc < 14)) {
+			while ((bargc < 14) && (bargv[bargc] != NULL)) {
 				bargc++;
 				bargv[bargc] = next_token(&input, " \t\r\n");
 			}
@@ -2154,7 +2173,7 @@ query_finished(void) {
 		bargc = 1;
 		input = batchline;
 		bargv[bargc] = next_token(&input, " \t\r\n");
-		while ((bargv[bargc] != NULL) && (bargc < 14)) {
+		while ((bargc < 14) && (bargv[bargc] != NULL)) {
 			bargc++;
 			bargv[bargc] = next_token(&input, " \t\r\n");
 		}

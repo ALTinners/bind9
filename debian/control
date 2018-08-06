@@ -6,7 +6,7 @@ Uploaders: LaMont Jones <lamont@debian.org>,
            Michael Gilbert <mgilbert@debian.org>,
            Robie Basak <robie.basak@canonical.com>,
            Ondřej Surý <ondrej@debian.org>,
-           Bernhard Schmidt <berni@debian.org>,
+           Bernhard Schmidt <berni@debian.org>
 Build-Depends: bison,
                debhelper (>= 10),
                dh-apparmor,
@@ -15,14 +15,18 @@ Build-Depends: bison,
                dpkg-dev (>= 1.16.1~),
                libcap2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libdb-dev (>>4.6),
+               libfstrm-dev,
                libgeoip-dev (>= 1.4.6.dfsg-5),
+               libidn2-dev,
                libjson-c-dev,
                libkrb5-dev,
                libldap2-dev,
                liblmdb-dev,
+               libprotobuf-c-dev,
                libssl-dev,
                libtool,
                libxml2-dev,
+               protobuf-c-compiler,
                python3,
 #               python3-distutils,	reverted for stretch-backports
                python3-ply,
@@ -36,8 +40,9 @@ Architecture: any
 Depends: adduser,
          bind9utils (= ${binary:Version}),
          debconf | debconf-2.0,
+         dns-root-data,
          libbind9-160 (= ${binary:Version}),
-         libdns1100 (= ${binary:Version}),
+         libdns1102 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
@@ -80,7 +85,7 @@ Package: bind9-host
 Priority: standard
 Architecture: any
 Depends: libbind9-160 (= ${binary:Version}),
-         libdns1100 (= ${binary:Version}),
+         libdns1102 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -99,7 +104,7 @@ Section: libdevel
 Architecture: any
 Replaces: bind9 (<< 1:9.10.3.dfsg.P2-4)
 Depends: libbind9-160 (= ${binary:Version}),
-         libdns1100 (= ${binary:Version}),
+         libdns1102 (= ${binary:Version}),
          libirs160 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
@@ -116,7 +121,7 @@ Package: libbind9-160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libdns1100 (= ${binary:Version}),
+Depends: libdns1102 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          ${misc:Depends},
@@ -129,7 +134,7 @@ Description: BIND9 Shared Library used by BIND
  This package delivers the libbind9 shared library used by BIND's daemons and
  clients.
 
-Package: libdns1100
+Package: libdns1102
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -206,7 +211,7 @@ Package: libisccfg160
 Section: libs
 Architecture: any
 Multi-Arch: same
-Depends: libdns1100 (= ${binary:Version}),
+Depends: libdns1102 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
          libisccc160 (= ${binary:Version}),
          ${misc:Depends},
@@ -225,7 +230,7 @@ Priority: standard
 Architecture: any
 Depends: bind9-host | host,
          libbind9-160 (= ${binary:Version}),
-         libdns1100 (= ${binary:Version}),
+         libdns1102 (= ${binary:Version}),
          libisc169 (= ${binary:Version}),
          libisccfg160 (= ${binary:Version}),
          liblwres160 (= ${binary:Version}),
@@ -250,7 +255,7 @@ Package: libbind-export-dev
 Section: libdevel
 Architecture: any
 Conflicts: libbind-dev
-Depends: libdns-export1100 (= ${binary:Version}),
+Depends: libdns-export1102 (= ${binary:Version}),
          libirs-export160 (= ${binary:Version}),
          libisc-export169 (= ${binary:Version}),
          libisccc-export160 (= ${binary:Version}),
@@ -263,7 +268,7 @@ Description: Development files for the exported BIND libraries
  .
  This package delivers development files for the exported BIND libraries.
 
-Package: libdns-export1100
+Package: libdns-export1102
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -276,7 +281,7 @@ Description: Exported DNS Shared Library
  .
  This package delivers the exported libdns shared library.
 
-Package: libdns-export1100-udeb
+Package: libdns-export1102-udeb
 Section: debian-installer
 Architecture: any
 Multi-Arch: same

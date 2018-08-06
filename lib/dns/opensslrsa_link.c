@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2000-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/*
- * Principal Author: Brian Wellington
- */
 #ifdef OPENSSL
 #include <config.h>
 
@@ -44,7 +44,7 @@
 #if OPENSSL_VERSION_NUMBER > 0x00908000L
 #include <openssl/bn.h>
 #endif
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 #include <openssl/engine.h>
 #endif
 
@@ -120,7 +120,7 @@
 #endif
 #define DST_RET(a) {ret = a; goto err;}
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if !defined(HAVE_RSA_SET0_KEY)
 /* From OpenSSL 1.1.0 */
 static int
 RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
@@ -130,8 +130,9 @@ RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
 	 * parameters MUST be non-NULL for n and e.  d may be
 	 * left NULL (in case only the public key is used).
 	 */
-	if ((r->n == NULL && n == NULL) || (r->e == NULL && e == NULL))
+	if ((r->n == NULL && n == NULL) || (r->e == NULL && e == NULL)) {
 		return 0;
+	}
 
 	if (n != NULL) {
 		BN_free(r->n);
@@ -156,8 +157,9 @@ RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q) {
 	 * If the fields p and q in r are NULL, the corresponding input
 	 * parameters MUST be non-NULL.
 	 */
-	if ((r->p == NULL && p == NULL) || (r->q == NULL && q == NULL))
+	if ((r->p == NULL && p == NULL) || (r->q == NULL && q == NULL)) {
 		return 0;
+	}
 
 	if (p != NULL) {
 		BN_free(r->p);
@@ -180,7 +182,9 @@ RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp) {
 	if ((r->dmp1 == NULL && dmp1 == NULL) ||
 	    (r->dmq1 == NULL && dmq1 == NULL) ||
 	    (r->iqmp == NULL && iqmp == NULL))
+	{
 		return 0;
+	}
 
 	if (dmp1 != NULL) {
 		BN_free(r->dmp1);
@@ -202,32 +206,40 @@ static void
 RSA_get0_key(const RSA *r,
 	     const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
 {
-	if (n != NULL)
+	if (n != NULL) {
 		*n = r->n;
-	if (e != NULL)
+	}
+	if (e != NULL) {
 		*e = r->e;
-	if (d != NULL)
+	}
+	if (d != NULL) {
 		*d = r->d;
+	}
 }
 
 static void
 RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q) {
-	if (p != NULL)
+	if (p != NULL) {
 		*p = r->p;
-	if (q != NULL)
-	*q = r->q;
+	}
+	if (q != NULL) {
+		*q = r->q;
+	}
 }
 
 static void
 RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1, const BIGNUM **dmq1,
 		    const BIGNUM **iqmp)
 {
-	if (dmp1 != NULL)
+	if (dmp1 != NULL) {
 		*dmp1 = r->dmp1;
-	if (dmq1 != NULL)
+	}
+	if (dmq1 != NULL) {
 		*dmq1 = r->dmq1;
-	if (iqmp != NULL)
+	}
+	if (iqmp != NULL) {
 		*iqmp = r->iqmp;
+	}
 }
 
 static int
@@ -1040,6 +1052,7 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 	if (RSA_generate_key_ex(rsa, key->key_size, e, cb)) {
 		BN_free(e);
 		BN_GENCB_free(cb);
+		cb = NULL;
 		SET_FLAGS(rsa);
 #if USE_EVP
 		key->keydata.pkey = pkey;
@@ -1050,21 +1063,28 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 #endif
 		return (ISC_R_SUCCESS);
 	}
-	BN_GENCB_free(cb);
 	ret = dst__openssl_toresult2("RSA_generate_key_ex",
 				     DST_R_OPENSSLFAILURE);
 
  err:
 #if USE_EVP
-	if (pkey != NULL)
+	if (pkey != NULL) {
 		EVP_PKEY_free(pkey);
+		pkey = NULL;
+	}
 #endif
-	if (e != NULL)
+	if (e != NULL) {
 		BN_free(e);
-	if (rsa != NULL)
+		e = NULL;
+	}
+	if (rsa != NULL) {
 		RSA_free(rsa);
-	if (cb != NULL)
+		rsa = NULL;
+	}
+	if (cb != NULL) {
 		BN_GENCB_free(cb);
+		cb = NULL;
+	}
 	return (dst__openssl_toresult(ret));
 #else
 	RSA *rsa;
@@ -1459,13 +1479,13 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	isc_result_t ret;
 	int i;
 	RSA *rsa = NULL, *pubrsa = NULL;
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 	ENGINE *ep = NULL;
 	const BIGNUM *ex = NULL;
 #endif
 	isc_mem_t *mctx = key->mctx;
 	const char *engine = NULL, *label = NULL;
-#if defined(USE_ENGINE) || USE_EVP
+#if !defined(OPENSSL_NO_ENGINE) || USE_EVP
 	EVP_PKEY *pkey = NULL;
 #endif
 	BIGNUM *n = NULL, *e = NULL, *d = NULL;
@@ -1518,7 +1538,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	 * See if we can fetch it.
 	 */
 	if (label != NULL) {
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 		if (engine == NULL)
 			DST_RET(DST_R_NOENGINE);
 		ep = dst__openssl_getengine(engine);
@@ -1667,7 +1687,7 @@ static isc_result_t
 opensslrsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 		     const char *pin)
 {
-#ifdef USE_ENGINE
+#if !defined(OPENSSL_NO_ENGINE)
 	ENGINE *e = NULL;
 	isc_result_t ret;
 	EVP_PKEY *pkey = NULL;

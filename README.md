@@ -1,9 +1,12 @@
 <!--
- - Copyright (C) 2017, 2018  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
 -->
 # BIND 9
 
@@ -91,8 +94,7 @@ may also want to join the __BIND Workers__ mailing list, at
 ### <a name="contrib"/> Contributing to BIND
 
 ISC maintains a public git repository for BIND; details can be found
-at [http://www.isc.org/git/](http://www.isc.org/git/), and also on Github
-at [https://github.com/isc-projects](https://github.com/isc-projects).
+at [http://www.isc.org/git/](http://www.isc.org/git/).
 
 Information for BIND contributors can be found in the following files:
 - General information: [doc/dev/contrib.md](doc/dev/contrib.md)
@@ -258,6 +260,11 @@ store data related to zones added via `rndc addzone` or catalog zones.
 
 BIND 9.11.3 is a maintenance release, and addresses the security flaw
 disclosed in CVE-2017-3145.
+
+#### BIND 9.11.4
+
+BIND 9.11.4 is a maintenance release, and addresses the security flaw
+disclosed in CVE-2018-5738.
 
 ### <a name="build"/> Building BIND
 

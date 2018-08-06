@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 1999-2005, 2007, 2009, 2015-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: nxt_30.c,v 1.65 2009/12/04 22:06:37 tbox Exp $ */
-
-/* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
 /* RFC2535 */
 

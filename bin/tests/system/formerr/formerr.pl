@@ -1,12 +1,13 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# $Id: packet.pl,v 1.2 2011/04/15 01:02:08 each Exp $
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 # This is a tool for sending an arbitrary packet via UDP or TCP to an
 # arbitrary address and port.  The packet is specified in a file or on

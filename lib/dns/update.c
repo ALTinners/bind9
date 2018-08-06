@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2011-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -737,8 +740,7 @@ namelist_append_subdomain(dns_db_t *db, dns_name_t *name, dns_diff_t *affected)
 	dns_name_t *child;
 	dns_dbiterator_t *dbit = NULL;
 
-	dns_fixedname_init(&fixedname);
-	child = dns_fixedname_name(&fixedname);
+	child = dns_fixedname_initname(&fixedname);
 
 	CHECK(dns_db_createiterator(db, DNS_DB_NONSEC3, &dbit));
 
@@ -942,8 +944,7 @@ next_active(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		} else {
 			dns_fixedname_t ffound;
 			dns_name_t *found;
-			dns_fixedname_init(&ffound);
-			found = dns_fixedname_name(&ffound);
+			found = dns_fixedname_initname(&ffound);
 			result = dns_db_find(db, newname, ver,
 					     dns_rdatatype_soa,
 					     DNS_DBFIND_NOWILD, 0, NULL, found,
@@ -984,8 +985,7 @@ add_nsec(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	dns_fixedname_t fixedname;
 	dns_name_t *target;
 
-	dns_fixedname_init(&fixedname);
-	target = dns_fixedname_name(&fixedname);
+	target = dns_fixedname_initname(&fixedname);
 
 	/*
 	 * Find the successor name, aka NSEC target.
@@ -1388,7 +1388,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	unsigned int sigs = 0;
 	unsigned int maxsigs = dns_zone_getsignatures(zone);
 
-	if (statep == NULL || (statep != NULL && *statep == NULL)) {
+	if (statep == NULL || *statep == NULL) {
 		if (statep == NULL) {
 			state = &mystate;
 		} else {
@@ -1593,8 +1593,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			dns_fixedname_t fixedname;
 			dns_name_t *prevname;
 
-			dns_fixedname_init(&fixedname);
-			prevname = dns_fixedname_name(&fixedname);
+			prevname = dns_fixedname_initname(&fixedname);
 
 			if (oldver != NULL)
 				CHECK(name_exists(db, oldver, &t->name,

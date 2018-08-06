@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <config.h>
@@ -53,9 +56,6 @@ ATF_TC_BODY(irs_resconf_load, tc) {
 		isc_result_t checkres;
 	} tests[] = {
 		{
-			"testdata/sortlist-v4.conf", ISC_R_SUCCESS,
-			NULL, ISC_R_SUCCESS
-		}, {
 			"testdata/domain.conf", ISC_R_SUCCESS,
 			NULL, ISC_R_SUCCESS
 		}, {
@@ -78,6 +78,12 @@ ATF_TC_BODY(irs_resconf_load, tc) {
 			NULL, ISC_R_SUCCESS
 		}, {
 			"testdata/options.conf", ISC_R_SUCCESS,
+			NULL, ISC_R_SUCCESS
+		}, {
+			"testdata/options-bad-ndots.conf", ISC_R_RANGE,
+			NULL, ISC_R_SUCCESS
+		}, {
+			"testdata/options-empty.conf", ISC_R_UNEXPECTEDEND,
 			NULL, ISC_R_SUCCESS
 		}, {
 			"testdata/port.conf", ISC_R_SUCCESS,

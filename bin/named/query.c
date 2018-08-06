@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 1999-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -30,6 +33,7 @@
 #include <dns/dns64.h>
 #include <dns/dnssec.h>
 #include <dns/events.h>
+#include <dns/keytable.h>
 #include <dns/message.h>
 #include <dns/ncache.h>
 #include <dns/nsec3.h>
@@ -464,6 +468,9 @@ query_reset(ns_client_t *client, isc_boolean_t everything) {
 	client->query.isreferral = ISC_FALSE;
 	client->query.dns64_options = 0;
 	client->query.dns64_ttl = ISC_UINT32_MAX;
+	client->query.root_key_sentinel_keyid = 0;
+	client->query.root_key_sentinel_is_ta = ISC_FALSE;
+	client->query.root_key_sentinel_not_ta = ISC_FALSE;
 }
 
 static void
@@ -709,9 +716,8 @@ ns_query_init(ns_client_t *client) {
 	client->query.redirect.sigrdataset = NULL;
 	client->query.redirect.authoritative = ISC_FALSE;
 	client->query.redirect.is_zone  = ISC_FALSE;
-	dns_fixedname_init(&client->query.redirect.fixed);
 	client->query.redirect.fname =
-		dns_fixedname_name(&client->query.redirect.fixed);
+		dns_fixedname_initname(&client->query.redirect.fixed);
 	query_reset(client, ISC_FALSE);
 	result = query_newdbversion(client, 3);
 	if (result != ISC_R_SUCCESS) {
@@ -1618,20 +1624,26 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 				dns_rdataset_disassociate(sigrdataset);
 		}
 		if (result == ISC_R_SUCCESS) {
+			isc_boolean_t invalid = ISC_FALSE;
 			mname = NULL;
 #ifdef ALLOW_FILTER_AAAA
 			have_a = ISC_TRUE;
 #endif
-			if (additionaltype == dns_rdatasetadditional_fromcache &&
+			if (additionaltype ==
+			    dns_rdatasetadditional_fromcache &&
 			    (DNS_TRUST_PENDING(rdataset->trust) ||
-			     DNS_TRUST_GLUE(rdataset->trust)) &&
-			    !validate(client, db, fname, rdataset, sigrdataset))
+			     DNS_TRUST_GLUE(rdataset->trust)))
 			{
+				/* validate() may change rdataset->trust */
+				invalid = ISC_TF(!validate(client, db, fname,
+							   rdataset,
+							   sigrdataset));
+			}
+			if (invalid && DNS_TRUST_PENDING(rdataset->trust)) {
 				dns_rdataset_disassociate(rdataset);
 				if (sigrdataset != NULL &&
 				    dns_rdataset_isassociated(sigrdataset))
 					dns_rdataset_disassociate(sigrdataset);
-				/* treat as if not found */
 			} else if (!query_isduplicate(client, fname,
 					       dns_rdatatype_a, &mname))
 			{
@@ -1681,6 +1693,7 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 				dns_rdataset_disassociate(sigrdataset);
 		}
 		if (result == ISC_R_SUCCESS) {
+			isc_boolean_t invalid = ISC_FALSE;
 			mname = NULL;
 			/*
 			 * There's an A; check whether we're filtering AAAA
@@ -1693,16 +1706,21 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 			      !dns_rdataset_isassociated(sigrdataset)))))
 				goto addname;
 #endif
-			if (additionaltype == dns_rdatasetadditional_fromcache &&
+			if (additionaltype ==
+			    dns_rdatasetadditional_fromcache &&
 			    (DNS_TRUST_PENDING(rdataset->trust) ||
-			     DNS_TRUST_GLUE(rdataset->trust)) &&
-			    !validate(client, db, fname, rdataset, sigrdataset))
+			     DNS_TRUST_GLUE(rdataset->trust)))
 			{
+				/* validate() may change rdataset->trust */
+				invalid = ISC_TF(!validate(client, db, fname,
+							   rdataset,
+							   sigrdataset));
+			}
+			if (invalid && DNS_TRUST_PENDING(rdataset->trust)) {
 				dns_rdataset_disassociate(rdataset);
 				if (sigrdataset != NULL &&
 				    dns_rdataset_isassociated(sigrdataset))
 					dns_rdataset_disassociate(sigrdataset);
-				/* treat as if not found */
 			} else if (!query_isduplicate(client, fname,
 					       dns_rdatatype_aaaa, &mname))
 			{
@@ -1859,6 +1877,7 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	dns_rdatasetadditional_t additionaltype;
 	dns_clientinfomethods_t cm;
 	dns_clientinfo_t ci;
+	isc_boolean_t invalid;
 
 	/*
 	 * If we don't have an additional cache call query_addadditional.
@@ -2156,15 +2175,22 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	 */
 	result = dns_db_findrdataset(db, node, version, dns_rdatatype_a, 0,
 				     client->now, rdataset, sigrdataset);
+
 	/*
-	 * If we can't promote glue/pending from the cache to secure
-	 * then drop it.
+	 * Try to promote pending/glue from the cache to secure.
+	 * If unable to do so, drop it from the response unless
+	 * it's glue, in which case it may still be needed.
 	 */
+	invalid = ISC_FALSE;
 	if (result == ISC_R_SUCCESS &&
 	    additionaltype == dns_rdatasetadditional_fromcache &&
 	    (DNS_TRUST_PENDING(rdataset->trust) ||
-	     DNS_TRUST_GLUE(rdataset->trust)) &&
-	    !validate(client, db, fname, rdataset, sigrdataset)) {
+	     DNS_TRUST_GLUE(rdataset->trust)))
+	{
+		invalid = ISC_TF(!validate(client, db, fname,
+					   rdataset, sigrdataset));
+	}
+	if (invalid && DNS_TRUST_PENDING(rdataset->trust)) {
 		dns_rdataset_disassociate(rdataset);
 		if (dns_rdataset_isassociated(sigrdataset))
 			dns_rdataset_disassociate(sigrdataset);
@@ -2199,14 +2225,20 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	result = dns_db_findrdataset(db, node, version, dns_rdatatype_aaaa,
 				     0, client->now, rdataset, sigrdataset);
 	/*
-	 * If we can't promote glue/pending from the cache to secure
-	 * then drop it.
+	 * Try to promote pending/glue from the cache to secure.
+	 * If unable to do so, drop it from the response unless
+	 * it's glue, in which case it may still be needed.
 	 */
+	invalid = ISC_FALSE;
 	if (result == ISC_R_SUCCESS &&
 	    additionaltype == dns_rdatasetadditional_fromcache &&
 	    (DNS_TRUST_PENDING(rdataset->trust) ||
-	     DNS_TRUST_GLUE(rdataset->trust)) &&
-	    !validate(client, db, fname, rdataset, sigrdataset)) {
+	     DNS_TRUST_GLUE(rdataset->trust)))
+	{
+		invalid = ISC_TF(!validate(client, db, fname,
+					   rdataset, sigrdataset));
+	}
+	if (invalid && DNS_TRUST_PENDING(rdataset->trust)) {
 		dns_rdataset_disassociate(rdataset);
 		if (dns_rdataset_isassociated(sigrdataset))
 			dns_rdataset_disassociate(sigrdataset);
@@ -2825,8 +2857,7 @@ query_addsoa(ns_client_t *client, dns_db_t *db, dns_dbversion_t *version,
 		dns_fixedname_t foundname;
 		dns_name_t *fname;
 
-		dns_fixedname_init(&foundname);
-		fname = dns_fixedname_name(&foundname);
+		fname = dns_fixedname_initname(&foundname);
 
 		result = dns_db_findext(db, name, version, dns_rdatatype_soa,
 					client->query.dboptions, 0, &node,
@@ -2910,8 +2941,7 @@ query_addns(ns_client_t *client, dns_db_t *db, dns_dbversion_t *version) {
 	name = NULL;
 	rdataset = NULL;
 	node = NULL;
-	dns_fixedname_init(&foundname);
-	fname = dns_fixedname_name(&foundname);
+	fname = dns_fixedname_initname(&foundname);
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client, NULL);
 
@@ -2989,7 +3019,6 @@ query_addns(ns_client_t *client, dns_db_t *db, dns_dbversion_t *version) {
 	CTRACE(ISC_LOG_DEBUG(3), "query_addns: done");
 	return (eresult);
 }
-
 static isc_result_t
 query_add_cname(ns_client_t *client, dns_name_t *qname, dns_name_t *tname,
 		dns_trust_t trust, dns_ttl_t ttl)
@@ -3063,6 +3092,58 @@ query_add_cname(ns_client_t *client, dns_name_t *qname, dns_name_t *tname,
 		dns_message_puttempname(client->message, &aname);
 
 	return (ISC_R_SUCCESS);
+}
+
+static isc_boolean_t
+get_root_key_sentinel_id(ns_client_t *client, const char *ndata) {
+	unsigned int v = 0;
+	int i;
+
+	for (i = 0; i < 5; i++) {
+		if (ndata[i] < '0' || ndata[i] > '9') {
+			return (ISC_FALSE);
+		}
+		v *= 10;
+		v += ndata[i] - '0';
+	}
+	if (v > 65535U) {
+		return (ISC_FALSE);
+	}
+	client->query.root_key_sentinel_keyid = v;
+	return (ISC_TRUE);
+}
+
+/*%
+ * Find out if the query is for a root key sentinel and if so, record the type
+ * of root key sentinel query and the key id that is being checked for.
+ *
+ * The code is assuming a zero padded decimal field of width 5.
+ */
+static void
+root_key_sentinel_detect(ns_client_t *client) {
+	const char *ndata = (const char *)client->query.qname->ndata;
+
+	if (client->query.qname->length > 30 && ndata[0] == 29 &&
+	    strncasecmp(ndata + 1, "root-key-sentinel-is-ta-", 24) == 0)
+	{
+		if (!get_root_key_sentinel_id(client, ndata + 25)) {
+			return;
+		}
+		client->query.root_key_sentinel_is_ta = ISC_TRUE;
+		ns_client_log(client, NS_LOGCATEGORY_TAT,
+			      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
+			      "root-key-sentinel-is-ta query label found");
+	} else if (client->query.qname->length > 31 && ndata[0] == 30 &&
+		   strncasecmp(ndata + 1, "root-key-sentinel-not-ta-", 25) == 0)
+	{
+		if (!get_root_key_sentinel_id(client, ndata + 26)) {
+			return;
+		}
+		client->query.root_key_sentinel_not_ta = ISC_TRUE;
+		ns_client_log(client, NS_LOGCATEGORY_TAT,
+			      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
+			      "root-key-sentinel-not-ta query label found");
+	}
 }
 
 /*
@@ -3639,8 +3720,7 @@ query_addwildcardproof(ns_client_t *client, dns_db_t *db,
 	 *	wild *.example
 	 */
 	options = client->query.dboptions | DNS_DBFIND_NOWILD;
-	dns_fixedname_init(&wfixed);
-	wname = dns_fixedname_name(&wfixed);
+	wname = dns_fixedname_initname(&wfixed);
  again:
 	have_wname = ISC_FALSE;
 	/*
@@ -3665,8 +3745,7 @@ query_addwildcardproof(ns_client_t *client, dns_db_t *db,
 		/*
 		 * No NSEC proof available, return NSEC3 proofs instead.
 		 */
-		dns_fixedname_init(&cfixed);
-		cname = dns_fixedname_name(&cfixed);
+		cname = dns_fixedname_initname(&cfixed);
 		/*
 		 * Find the closest encloser.
 		 */
@@ -3914,6 +3993,92 @@ free_devent(ns_client_t *client, isc_event_t **eventp,
 	if ((void *)eventp != (void *)deventp)
 		(*deventp) = NULL;
 	isc_event_free(eventp);
+}
+
+/*%
+ * Check the configured trust anchors for a root zone trust anchor
+ * with a key id that matches client->query.root_key_sentinel_keyid.
+ *
+ * Return ISC_TRUE when found, otherwise return ISC_FALSE.
+ */
+static isc_boolean_t
+has_ta(ns_client_t *client) {
+	dns_keytable_t *keytable = NULL;
+	dns_keynode_t *keynode = NULL;
+	isc_result_t result;
+
+	result = dns_view_getsecroots(client->view, &keytable);
+	if (result != ISC_R_SUCCESS) {
+		return (ISC_FALSE);
+	}
+
+	result = dns_keytable_find(keytable, dns_rootname, &keynode);
+	while (result == ISC_R_SUCCESS) {
+		dns_keynode_t *nextnode = NULL;
+		dns_keytag_t keyid = dst_key_id(dns_keynode_key(keynode));
+		if (keyid == client->query.root_key_sentinel_keyid) {
+			dns_keytable_detachkeynode(keytable, &keynode);
+			dns_keytable_detach(&keytable);
+			return (ISC_TRUE);
+		}
+		result = dns_keytable_nextkeynode(keytable, keynode, &nextnode);
+		dns_keytable_detachkeynode(keytable, &keynode);
+		keynode = nextnode;
+	}
+	dns_keytable_detach(&keytable);
+
+	return (ISC_FALSE);
+}
+
+/*%
+ * Check if a root key sentinel SERVFAIL should be returned.
+ */
+static isc_boolean_t
+root_key_sentinel_return_servfail(ns_client_t *client, isc_boolean_t is_zone,
+				  dns_rdataset_t *rdataset, isc_result_t result)
+{
+	/*
+	 * Are we looking at a "root-key-sentinel" query?
+	 */
+	if (!client->query.root_key_sentinel_is_ta &&
+	    !client->query.root_key_sentinel_not_ta)
+	{
+		return (ISC_FALSE);
+	}
+
+	/*
+	 * We only care about the query if 'result' indicates we have a cached
+	 * answer.
+	 */
+	switch (result) {
+	case ISC_R_SUCCESS:
+	case DNS_R_CNAME:
+	case DNS_R_DNAME:
+	case DNS_R_NCACHENXDOMAIN:
+	case DNS_R_NCACHENXRRSET:
+		break;
+	default:
+		return (ISC_FALSE);
+	}
+
+	/*
+	 * Do we meet the specified conditions to return SERVFAIL?
+	 */
+	if (!is_zone && rdataset->trust == dns_trust_secure &&
+	    ((client->query.root_key_sentinel_is_ta && !has_ta(client)) ||
+	     (client->query.root_key_sentinel_not_ta && has_ta(client))))
+	{
+		return (ISC_TRUE);
+	}
+
+	/*
+	 * As special processing may only be triggered by the original QNAME,
+	 * disable it after following a CNAME/DNAME.
+	 */
+	client->query.root_key_sentinel_is_ta = ISC_FALSE;
+	client->query.root_key_sentinel_not_ta = ISC_FALSE;
+
+	return (ISC_FALSE);
 }
 
 static void
@@ -4452,8 +4617,7 @@ rpz_rrset_find(ns_client_t *client, dns_name_t *name, dns_rdatatype_t type,
 	}
 
 	node = NULL;
-	dns_fixedname_init(&fixed);
-	found = dns_fixedname_name(&fixed);
+	found = dns_fixedname_initname(&fixed);
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client, NULL);
 	result = dns_db_findext(*dbp, name, version, type, DNS_DBFIND_GLUEOK,
@@ -4617,8 +4781,7 @@ rpz_find_p(ns_client_t *client, dns_name_t *self_name, dns_rdatatype_t qtype,
 	result = rpz_getdb(client, p_name, rpz_type, zonep, dbp, versionp);
 	if (result != ISC_R_SUCCESS)
 		return (DNS_R_NXDOMAIN);
-	dns_fixedname_init(&foundf);
-	found = dns_fixedname_name(&foundf);
+	found = dns_fixedname_initname(&foundf);
 
 	result = dns_db_findext(*dbp, p_name, *versionp, dns_rdatatype_any, 0,
 				client->now, nodep, found, &cm, &ci,
@@ -4774,8 +4937,7 @@ rpz_rewrite_ip(ns_client_t *client, const isc_netaddr_t *netaddr,
 
 	CTRACE(ISC_LOG_DEBUG(3), "rpz_rewrite_ip");
 
-	dns_fixedname_init(&ip_namef);
-	ip_name = dns_fixedname_name(&ip_namef);
+	ip_name = dns_fixedname_initname(&ip_namef);
 
 	p_zone = NULL;
 	p_db = NULL;
@@ -4810,8 +4972,7 @@ rpz_rewrite_ip(ns_client_t *client, const isc_netaddr_t *netaddr,
 		 * Get the policy for a prefix at least as long
 		 * as the prefix of the entry we had before.
 		 */
-		dns_fixedname_init(&p_namef);
-		p_name = dns_fixedname_name(&p_namef);
+		p_name = dns_fixedname_initname(&p_namef);
 		result = rpz_get_p_name(client, p_name, rpz, rpz_type, ip_name);
 		if (result != ISC_R_SUCCESS)
 			continue;
@@ -5087,8 +5248,7 @@ rpz_rewrite_name(ns_client_t *client, dns_name_t *trig_name,
 	if (zbits == 0)
 		return (ISC_R_SUCCESS);
 
-	dns_fixedname_init(&p_namef);
-	p_name = dns_fixedname_name(&p_namef);
+	p_name = dns_fixedname_initname(&p_namef);
 
 	p_zone = NULL;
 	p_db = NULL;
@@ -5311,12 +5471,9 @@ rpz_rewrite(ns_client_t *client, dns_rdatatype_t qtype,
 		st->m.ttl = ~0;
 		memset(&st->r, 0, sizeof(st->r));
 		memset(&st->q, 0, sizeof(st->q));
-		dns_fixedname_init(&st->_p_namef);
-		dns_fixedname_init(&st->_r_namef);
-		dns_fixedname_init(&st->_fnamef);
-		st->p_name = dns_fixedname_name(&st->_p_namef);
-		st->r_name = dns_fixedname_name(&st->_r_namef);
-		st->fname = dns_fixedname_name(&st->_fnamef);
+		st->p_name = dns_fixedname_initname(&st->_p_namef);
+		st->r_name = dns_fixedname_initname(&st->_r_namef);
+		st->fname = dns_fixedname_initname(&st->_fnamef);
 		st->have = have;
 		st->popt = popt;
 		st->rpz_ver = rpz_ver;
@@ -5697,8 +5854,7 @@ rpz_ck_dnssec(ns_client_t *client, isc_result_t qresult,
 	 */
 	if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) == 0)
 		return (ISC_TRUE);
-	dns_fixedname_init(&fixed);
-	found = dns_fixedname_name(&fixed);
+	found = dns_fixedname_initname(&fixed);
 	dns_rdataset_init(&trdataset);
 	for (result = dns_rdataset_first(rdataset);
 	     result == ISC_R_SUCCESS;
@@ -6288,8 +6444,7 @@ redirect(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 	if (client->view->redirect == NULL)
 		return (ISC_R_NOTFOUND);
 
-	dns_fixedname_init(&fixed);
-	found = dns_fixedname_name(&fixed);
+	found = dns_fixedname_initname(&fixed);
 	dns_rdataset_init(&trdataset);
 
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
@@ -6409,8 +6564,7 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 	if (dns_name_issubdomain(name, client->view->redirectzone))
 		return (ISC_R_NOTFOUND);
 
-	dns_fixedname_init(&fixed);
-	found = dns_fixedname_name(&fixed);
+	found = dns_fixedname_initname(&fixed);
 	dns_rdataset_init(&trdataset);
 
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
@@ -6441,8 +6595,7 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 		}
 	}
 
-	dns_fixedname_init(&fixedredirect);
-	redirectname = dns_fixedname_name(&fixedredirect);
+	redirectname = dns_fixedname_initname(&fixedredirect);
 	if (dns_name_countlabels(name) > 1U) {
 		dns_name_t prefix;
 		unsigned int labels = dns_name_countlabels(name) - 1;
@@ -6925,6 +7078,18 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	}
 
 	/*
+	 * Setup for root key sentinel processing.
+	 */
+	if (client->view->root_key_sentinel &&
+	    client->query.restarts == 0 &&
+	    (qtype == dns_rdatatype_a ||
+	     qtype == dns_rdatatype_aaaa) &&
+	    (client->message->flags & DNS_MESSAGEFLAG_CD) == 0)
+	{
+		 root_key_sentinel_detect(client);
+	}
+
+	/*
 	 * First we must find the right database.
 	 */
 	options &= DNS_GETDB_NOLOG; /* Preserve DNS_GETDB_NOLOG. */
@@ -7381,6 +7546,21 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	}
 
  norpz:
+	/*
+	 * If required, handle special "root-key-sentinel-is-ta-<keyid>" and
+	 * "root-key-sentinel-not-ta-<keyid>" labels by returning SERVFAIL.
+	 */
+	if (root_key_sentinel_return_servfail(client, is_zone,
+					      rdataset, result))
+	{
+		/*
+		 * Don't record this response in the SERVFAIL cache.
+		 */
+		client->attributes |= NS_CLIENTATTR_NOSETFC;
+		QUERY_ERROR(DNS_R_SERVFAIL);
+		goto cleanup;
+	}
+
 	switch (result) {
 	case ISC_R_SUCCESS:
 		/*
@@ -7784,8 +7964,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 				dns_name_t *found;
 				dns_name_t *qname;
 
-				dns_fixedname_init(&fixed);
-				found = dns_fixedname_name(&fixed);
+				found = dns_fixedname_initname(&fixed);
 				qname = client->query.qname;
 
 				query_findclosestnsec3(qname, db, version,
@@ -8336,8 +8515,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		 * Construct the new qname consisting of
 		 * <found name prefix>.<dname target>
 		 */
-		dns_fixedname_init(&fixed);
-		prefix = dns_fixedname_name(&fixed);
+		prefix = dns_fixedname_initname(&fixed);
 		dns_name_split(client->query.qname, nlabels, prefix, NULL);
 		INSIST(fname == NULL);
 		dbuf = query_getnamebuf(client);
@@ -9394,7 +9572,7 @@ ns_query_start(ns_client_t *client) {
 		client->query.attributes &= ~NS_QUERYATTR_SECURE;
 
 	/*
-	 * Set NS_CLIENTATTR_WANTDNSSEC if the client has set AD in the query.
+	 * Set NS_CLIENTATTR_WANTAD if the client has set AD in the query.
 	 * This allows AD to be returned on queries without DO set.
 	 */
 	if ((message->flags & DNS_MESSAGEFLAG_AD) != 0)

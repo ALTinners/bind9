@@ -66,6 +66,7 @@ override_dh_autoreconf: prepare_native_pkcs11
 	dh_autoreconf
 
 override_dh_auto_configure:
+	debian/checkapi
 	dh_auto_configure -B build -- \
 		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
 		--sysconfdir=/etc/bind \
@@ -79,6 +80,7 @@ override_dh_auto_configure:
 		--with-gost=no \
 		--with-openssl=/usr \
 		--with-gssapi=/usr \
+		--with-libidn2 \
 		--with-libjson=/usr \
 		--with-lmdb=/usr \
 		--with-gnu-ld \
@@ -90,6 +92,7 @@ override_dh_auto_configure:
 		--enable-native-pkcs11 \
 		--with-pkcs11=\$${prefix}/lib/softhsm/libsofthsm2.so \
 		--with-randomdev=/dev/urandom \
+		--enable-dnstap \
 		$(EXTRA_FEATURES)
 	dh_auto_configure -B build-udeb -- \
 		--sysconfdir=/etc/bind \
@@ -114,6 +117,8 @@ override_dh_auto_configure:
 	# no need to build these targets here
 	sed -i 's/dnssec-pkcs11//;s/named-pkcs11//' build-udeb/bin/Makefile
 	sed -i 's/dns-pkcs11//;s/isc-pkcs11//' build-udeb/lib/Makefile
+	cp lib/dns/dnstap.proto build/lib/dns
+	cp lib/dns-pkcs11/dnstap.proto build/lib/dns-pkcs11
 
 override_dh_auto_build:
 	dh_auto_build -B build
@@ -146,12 +151,17 @@ override_dh_systemd_enable:
 	dh_systemd_enable -pbind9 --no-enable --name=bind9-pkcs11 bind9-pkcs11.service
 	dh_systemd_enable -pbind9 bind9.service
 
+override_dh_makeshlibs: DNS_SOVER=$(shell debian/getapi dns)
+override_dh_makeshlibs: IRS_SOVER=$(shell debian/getapi irs)
+override_dh_makeshlibs: ISCCC_SOVER=$(shell debian/getapi isccc)
+override_dh_makeshlibs: ISCCFG_SOVER=$(shell debian/getapi isccfg)
+override_dh_makeshlibs: ISC_SOVER=$(shell debian/getapi isc)
 override_dh_makeshlibs:
-	dh_makeshlibs -plibdns-export1100 --add-udeb=libdns-export1100-udeb
-	dh_makeshlibs -plibirs-export160 --add-udeb=libirs-export160-udeb
-	dh_makeshlibs -plibisccc-export160 --add-udeb=libisccc-export160-udeb
-	dh_makeshlibs -plibisccfg-export160 --add-udeb=libisccfg-export160-udeb
-	dh_makeshlibs -plibisc-export169 --add-udeb=libisc-export169-udeb
+	dh_makeshlibs -plibdns-export$(DNS_SOVER) --add-udeb=libdns-export$(DNS_SOVER)-udeb
+	dh_makeshlibs -plibirs-export$(IRS_SOVER) --add-udeb=libirs-export$(IRS_SOVER)-udeb
+	dh_makeshlibs -plibisccc-export$(ISCCC_SOVER) --add-udeb=libisccc-export$(ISCCC_SOVER)-udeb
+	dh_makeshlibs -plibisccfg-export$(ISCCFG_SOVER) --add-udeb=libisccfg-export$(ISCCFG_SOVER)-udeb
+	dh_makeshlibs -plibisc-export$(ISC_SOVER) --add-udeb=libisc-export$(ISC_SOVER)-udeb
 	dh_makeshlibs --remaining-packages
 
 .PHONY: prepare_native_pkcs11 clean_native_pkcs11

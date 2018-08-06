@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 1999-2016, 2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id$ */
 
 /*! \file */
 
@@ -796,7 +798,8 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 		else if (nadded == ncount)
 			fromold = ISC_TRUE;
 		else
-			fromold = ISC_TF(compare_rdata(&ordata, &nrdata) < 0);
+			fromold = ISC_TF(dns_rdata_compare(&ordata,
+							   &nrdata) < 0);
 		if (fromold) {
 #if DNS_RDATASET_FIXED
 			offsettable[oorder] = tcurrent - offsetbase;

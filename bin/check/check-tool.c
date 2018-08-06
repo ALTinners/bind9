@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2000-2002, 2004-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
-/* $Id: check-tool.c,v 1.44 2011/12/22 07:32:39 each Exp $ */
 
 /*! \file */
 
@@ -591,8 +593,7 @@ check_ttls(dns_zone_t *zone, dns_ttl_t maxttl) {
 	dns_rdataset_t rdataset;
 	dns_fixedname_t fname;
 	dns_name_t *name;
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
+	name = dns_fixedname_initname(&fname);
 	dns_rdataset_init(&rdataset);
 
 	CHECK(dns_zone_getdb(zone, &db));
@@ -687,8 +688,7 @@ load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 
 	isc_buffer_constinit(&buffer, zonename, strlen(zonename));
 	isc_buffer_add(&buffer, strlen(zonename));
-	dns_fixedname_init(&fixorigin);
-	origin = dns_fixedname_name(&fixorigin);
+	origin = dns_fixedname_initname(&fixorigin);
 	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname, 0, NULL));
 	CHECK(dns_zone_setorigin(zone, origin));
 	CHECK(dns_zone_setdbtype(zone, 1, (const char * const *) dbtype));

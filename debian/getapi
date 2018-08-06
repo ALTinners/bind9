@@ -1,0 +1,8 @@
+#!/bin/sh
+CURRENT=$(sed -ne "s/^LIBINTERFACE = //p" lib/$1/api)
+REVISION=$(sed -ne "s/^LIBREVISION = //p" lib/$1/api)
+AGE=$(sed -ne "s/^LIBAGE = //p" lib/$1/api)
+
+echo $((${CURRENT}-${AGE}))
+
+exit 0

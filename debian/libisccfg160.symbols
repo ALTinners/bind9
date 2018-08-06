@@ -68,6 +68,7 @@ libisccfg.so.160 libisccfg160 #MINVER#
  cfg_parse_bracketed_list@Base 1:9.10.6+dfsg
  cfg_parse_buffer2@Base 1:9.11.2+dfsg
  cfg_parse_buffer3@Base 1:9.11.2+dfsg
+ cfg_parse_buffer4@Base 1:9.11.4+dfsg
  cfg_parse_buffer@Base 1:9.10.6+dfsg
  cfg_parse_dscp@Base 1:9.10.6+dfsg
  cfg_parse_enum@Base 1:9.10.6+dfsg

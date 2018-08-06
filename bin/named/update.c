@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 1999-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
-
-/* $Id: update.c,v 1.199 2011/12/22 07:32:40 each Exp $ */
 
 #include <config.h>
 
@@ -691,8 +692,7 @@ foreach_rr(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	if (rr_action == add_rr_prepare_action) {
 		add_rr_prepare_ctx_t *ctx = rr_action_data;
 
-		dns_fixedname_init(&fixed);
-		ctx->oldname = dns_fixedname_name(&fixed);
+		ctx->oldname = dns_fixedname_initname(&fixed);
 		dns_name_copy(name, ctx->oldname, NULL);
 		dns_rdataset_getownercase(&rdataset, ctx->oldname);
 	}
@@ -1708,8 +1708,7 @@ check_mx(ns_client_t *client, dns_zone_t *zone,
 	struct in_addr addr;
 	unsigned int options;
 
-	dns_fixedname_init(&fixed);
-	foundname = dns_fixedname_name(&fixed);
+	foundname = dns_fixedname_initname(&fixed);
 	dns_rdata_init(&rdata);
 	options = dns_zone_getoptions(zone);
 
@@ -1729,7 +1728,7 @@ check_mx(ns_client_t *client, dns_zone_t *zone,
 		dns_name_format(&mx.mx, namebuf, sizeof(namebuf));
 		dns_name_format(&t->name, ownerbuf, sizeof(ownerbuf));
 		isaddress = ISC_FALSE;
-		if ((options & DNS_RDATA_CHECKMX) != 0 &&
+		if ((options & DNS_ZONEOPT_CHECKMX) != 0 &&
 		    strlcpy(tmp, namebuf, sizeof(tmp)) < sizeof(tmp)) {
 			if (tmp[strlen(tmp) - 1] == '.')
 				tmp[strlen(tmp) - 1] = '\0';
@@ -1738,7 +1737,7 @@ check_mx(ns_client_t *client, dns_zone_t *zone,
 				isaddress = ISC_TRUE;
 		}
 
-		if (isaddress && (options & DNS_RDATA_CHECKMXFAIL) != 0) {
+		if (isaddress && (options & DNS_ZONEOPT_CHECKMXFAIL) != 0) {
 			update_log(client, zone, ISC_LOG_ERROR,
 				   "%s/MX: '%s': %s",
 				   ownerbuf, namebuf,
@@ -2633,8 +2632,7 @@ update_action(isc_task_t *task, isc_event_t *event) {
 			FAILC(result, "'RRset exists (value dependent)' "
 			      "prerequisite not satisfied");
 
-		dns_fixedname_init(&tmpnamefixed);
-		tmpname = dns_fixedname_name(&tmpnamefixed);
+		tmpname = dns_fixedname_initname(&tmpnamefixed);
 		result = temp_check(mctx, &temp, db, ver, tmpname, &type);
 		if (result != ISC_R_SUCCESS)
 			FAILNT(result, tmpname, type,

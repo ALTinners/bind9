@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 /*! \file */
@@ -62,8 +65,7 @@ str2name(const char *namestr) {
 	static isc_buffer_t namebuf;
 	void *deconst_namestr;
 
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
+	name = dns_fixedname_initname(&fname);
 	DE_CONST(namestr, deconst_namestr); /* OK, since we don't modify it */
 	isc_buffer_init(&namebuf, deconst_namestr, strlen(deconst_namestr));
 	isc_buffer_add(&namebuf, strlen(namestr));
@@ -364,8 +366,7 @@ ATF_TC_BODY(find, tc) {
 	 * dns_keytable_finddeepestmatch() allows partial match.  Also match
 	 * nodes with a null key.
 	 */
-	dns_fixedname_init(&fname);
-	name = dns_fixedname_name(&fname);
+	name = dns_fixedname_initname(&fname);
 	ATF_REQUIRE_EQ(dns_keytable_finddeepestmatch(keytable,
 						     str2name("example.com"),
 						     name), ISC_R_SUCCESS);

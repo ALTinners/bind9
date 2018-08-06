@@ -1,11 +1,14 @@
 /*
- * Portions Copyright (C) 1999-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,11 +21,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.65 2011/10/20 21:20:02 marka Exp $
  */
 
 /*! \file */
@@ -1808,7 +1806,7 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 	fprintf(fp, " ");
 
 	if (key->key_ttl != 0)
-		fprintf(fp, "%d ", key->key_ttl);
+		fprintf(fp, "%u ", key->key_ttl);
 
 	isc_buffer_usedregion(&classb, &r);
 	if ((unsigned) fwrite(r.base, 1, r.length, fp) != r.length)
