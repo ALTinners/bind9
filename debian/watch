@@ -4,8 +4,8 @@ opts=\
 repack,\
 compression=xz,\
 repacksuffix=+dfsg,\
-uversionmangle=s/((rc|b)\d+)$/~$1/,\
-dirversionmangle=s/((rc|b)\d+)$/~$1/,\
+uversionmangle=s/((rc|b)\d+)$/~$1/;s/-P(\d+)$/.P$1/,\
+dirversionmangle=s/((rc|b)\d+)$/~$1/;s/-P(\d+)$/.P$1/,\
 dversionmangle=s/\.dfsg\./-/;s/[\.\+]dfsg$//,\
 pgpsigurlmangle=s/$/.asc/ \
-  https://ftp.isc.org/isc/bind9/(9\.12\.\d\S+)/ bind-@ANY_VERSION@\.tar\.gz
+  https://ftp.isc.org/isc/bind9/(9\.12\.\d+(?:(?:rc|b|-P)\d)?)/ bind-@ANY_VERSION@\.tar\.gz
