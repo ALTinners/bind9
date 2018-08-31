@@ -12,8 +12,10 @@ bind9 (1:9.11.4.P1+dfsg-1) unstable; urgency=medium
   * Don't fail to start if /etc/default/bind9 doesn't exist
   * New upstream version 9.11.4.P1+dfsg
   * Rebase patches for BIND 9.11.4-P1
+  * Add new dst__openssleddsa_init optional symbol (it depends on OpenSSL version) (Closes: #897643)
+  * Put aside named.conf.option from stretch when upgrading (Closes: #905177)
 
- -- Ondřej Surý <ondrej@debian.org>  Fri, 31 Aug 2018 08:43:03 +0000
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 31 Aug 2018 09:53:27 +0000
 
 bind9 (1:9.11.4+dfsg-4) unstable; urgency=medium
 
