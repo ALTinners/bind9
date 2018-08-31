@@ -1,3 +1,21 @@
+bind (1:9.12.2.P1+dfsg-1) experimental; urgency=medium
+
+  [ Bernhard Schmidt ]
+  * Enable IDN support for dig+host using libidn2 (Closes: #459010)
+  * Use root.hints from dns-root-data (Closes: #888491)
+  * Adjust apparmor profile for dns-root-data
+  * Fix missing colon in AppArmor profile (Closes: #904983)
+  * d/watch: Properly deal with -P patch releases
+
+  [ Timo Aaltonen ]
+  * skip-rtld-deepbind-for-dyndb.diff: Add a patch to fix named-pkcs11 crashing on startup. (LP: #1769440)
+
+  [ Ondřej Surý ]
+  * New upstream version 9.12.2.P1+dfsg
+  * Rebase patches for BIND 9.12.2-P1
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 31 Aug 2018 12:20:23 +0000
+
 bind (1:9.12.2+dfsg-1~exp1) experimental; urgency=medium
 
   * Enable dnstap support (Courtesy of Richard James Salts)
