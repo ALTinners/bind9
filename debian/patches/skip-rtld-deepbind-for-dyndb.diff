@@ -1,9 +1,18 @@
+From: BIND 9 Package <bind9@package.debian.org>
+Date: Fri, 31 Aug 2018 08:42:51 +0000
+Subject: skip-rtld-deepbind-for-dyndb
+
 https://bugzilla.redhat.com/show_bug.cgi?id=1410433
 https://bugs.launchpad.net/bugs/1769440
+---
+ lib/dns/dyndb.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
+diff --git a/lib/dns/dyndb.c b/lib/dns/dyndb.c
+index e21a84c..ac18162 100644
 --- a/lib/dns/dyndb.c
 +++ b/lib/dns/dyndb.c
-@@ -133,9 +133,6 @@ load_library(isc_mem_t *mctx, const char
+@@ -133,9 +133,6 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
  		      instname, filename);
  
  	flags = RTLD_NOW|RTLD_LOCAL;
