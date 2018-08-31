@@ -1,9 +1,19 @@
-bind9 (1:9.11.4+dfsg-5) UNRELEASED; urgency=medium
+bind9 (1:9.11.4.P1+dfsg-1) unstable; urgency=medium
 
+  [ Timo Aaltonen ]
   * skip-rtld-deepbind-for-dyndb.diff: Add a patch to fix named-pkcs11
     crashing on startup. (LP: #1769440)
 
- -- Timo Aaltonen <tjaalton@debian.org>  Tue, 31 Jul 2018 22:01:08 +0300
+  [ Bernhard Schmidt ]
+  * Add gbp.conf for pristine-tar usage
+  * d/watch: Properly deal with -P patch releases
+
+  [ Ondřej Surý ]
+  * Don't fail to start if /etc/default/bind9 doesn't exist
+  * New upstream version 9.11.4.P1+dfsg
+  * Rebase patches for BIND 9.11.4-P1
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 31 Aug 2018 08:43:03 +0000
 
 bind9 (1:9.11.4+dfsg-4) unstable; urgency=medium
 
