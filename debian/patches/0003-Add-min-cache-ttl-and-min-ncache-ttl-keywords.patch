@@ -161,7 +161,7 @@ index de6986b..bb7f44d 100644
  						trust = rdataset->trust;
  					/*
 diff --git a/lib/dns/resolver.c b/lib/dns/resolver.c
-index a9d55d1..5993d57 100644
+index 796f2ba..eb3f1dd 100644
 --- a/lib/dns/resolver.c
 +++ b/lib/dns/resolver.c
 @@ -566,7 +566,9 @@ static isc_boolean_t fctx_unlink(fetchctx_t *fctx);
