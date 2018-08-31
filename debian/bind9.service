@@ -7,7 +7,7 @@ Before=nss-lookup.target
 
 [Service]
 Type=forking
-EnvironmentFile=/etc/default/bind9
+EnvironmentFile=-/etc/default/bind9
 ExecStart=/usr/sbin/named $OPTIONS
 ExecReload=/usr/sbin/rndc reload
 ExecStop=/usr/sbin/rndc stop
