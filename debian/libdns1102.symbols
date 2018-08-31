@@ -3063,6 +3063,7 @@ libdns.so.1102 libdns1102 #MINVER#
  dst__openssldh_init@Base 1:9.11.3+dfsg
  dst__openssldsa_init@Base 1:9.11.3+dfsg
  dst__opensslecdsa_init@Base 1:9.11.3+dfsg
+ (optional)dst__openssleddsa_init@Base 1:9.11.4.P1+dfsg
  dst__opensslrsa_init@Base 1:9.11.3+dfsg
  dst__privstruct_free@Base 1:9.11.3+dfsg
  dst__privstruct_parse@Base 1:9.11.3+dfsg
