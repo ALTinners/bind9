@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+setup() {
+	service bind9 stop
+	service bind9 start
+}
+
+run() {
+	dig -x 127.0.0.1 @127.0.0.1
+}
+
+teardown() {
+	service bind9 stop
+}
+
+setup
+run
+teardown
+
