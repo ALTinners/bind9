@@ -1,3 +1,10 @@
+bind (1:9.12.2.P2+dfsg-1) experimental; urgency=medium
+
+  * New upstream version 9.12.2.P2+dfsg
+  * Rebase patches for BIND 9.12.2-P2
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 10 Sep 2018 08:36:28 +0000
+
 bind (1:9.12.2.P1+dfsg-1) experimental; urgency=medium
 
   [ Bernhard Schmidt ]
