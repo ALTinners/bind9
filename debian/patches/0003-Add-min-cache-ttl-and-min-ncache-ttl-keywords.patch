@@ -32,7 +32,7 @@ index afbd805..67ca133 100644
  	max-recursion-queries 75;\n\
  	max-stale-ttl 604800; /* 1 week */\n\
 diff --git a/bin/named/server.c b/bin/named/server.c
-index a4fb2c2..d5e218f 100644
+index 1cd9215..28060a3 100644
 --- a/bin/named/server.c
 +++ b/bin/named/server.c
 @@ -4083,6 +4083,18 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
@@ -161,7 +161,7 @@ index de6986b..bb7f44d 100644
  						trust = rdataset->trust;
  					/*
 diff --git a/lib/dns/resolver.c b/lib/dns/resolver.c
-index 796f2ba..eb3f1dd 100644
+index 5e83e24..118ad43 100644
 --- a/lib/dns/resolver.c
 +++ b/lib/dns/resolver.c
 @@ -566,7 +566,9 @@ static isc_boolean_t fctx_unlink(fetchctx_t *fctx);
