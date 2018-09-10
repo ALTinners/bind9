@@ -1,3 +1,21 @@
+	--- 9.12.2-P2 released ---
+
+5022.	[doc]		Update ms-self, ms-subdomain, krb5-self, and
+			krb5-subdomain documentation. [GL !708]
+
+5015.	[bug]		Reloading all zones caused zone maintenance to cease
+			for inline-signed zones. [GL #435]
+
+5014.	[bug]		Signatures loaded from the journal for the signed
+			version of an inline-signed zone were not scheduled for
+			refresh. [GL #482]
+
+5013.	[bug]		A referral response with a non-empty ANSWER section was
+			inadvertently being treated as an error. [GL #390]
+
+5004.	[bug]		'rndc reconfig' could cause inline zones to stop
+			re-signing. [GL #439]
+
 	--- 9.12.2-P1 released ---
 
 4997.	[security]	named could crash during recursive processing
