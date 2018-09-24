@@ -1,3 +1,9 @@
+bind9 (1:9.11.4.P2+dfsg-2) unstable; urgency=medium
+
+  * Temporarily disable EDDSA to relax OpenSSL version requirement
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 24 Sep 2018 11:08:15 +0200
+
 bind9 (1:9.11.4.P2+dfsg-1) unstable; urgency=medium
 
   [ Bernhard Schmidt ]
