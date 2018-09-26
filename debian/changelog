@@ -1,3 +1,11 @@
+bind9 (1:9.11.4.P2+dfsg-3) unstable; urgency=medium
+
+  * Also avoid OpenSSL 1.1.1 in udebs.
+    Thanks to KiBi for the hint
+  * autopkgtest: Make an external query and check for DNSSEC
+
+ -- Bernhard Schmidt <berni@debian.org>  Wed, 26 Sep 2018 11:21:35 +0200
+
 bind9 (1:9.11.4.P2+dfsg-2) unstable; urgency=medium
 
   * Temporarily disable EDDSA to relax OpenSSL version requirement
