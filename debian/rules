@@ -68,7 +68,6 @@ override_dh_auto_configure:
 		--enable-ipv6 \
 		--enable-rrl \
 		--enable-filter-aaaa \
-		--disable-static \
 		--disable-native-pkcs11 \
 		--enable-dnstap \
 		$(EXTRA_FEATURES)
