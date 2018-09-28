@@ -1,3 +1,24 @@
+	--- 9.11.4-P2 released ---
+
+5022.	[doc]		Update ms-self, ms-subdomain, krb5-self, and
+			krb5-subdomain documentation. [GL !708]
+
+5015.	[bug]		Reloading all zones caused zone maintenance to cease
+			for inline-signed zones. [GL #435]
+
+5014.	[bug]		Signatures loaded from the journal for the signed
+			version of an inline-signed zone were not scheduled for
+			refresh. [GL #482]
+
+5004.	[bug]		'rndc reconfig' could cause inline zones to stop
+			re-signing. [GL #439]
+
+	--- 9.11.4-P1 released ---
+
+4997.	[security]	named could crash during recursive processing
+			of DNAME records when "deny-answer-aliases" was
+			in use. (CVE-2018-5740) [GL #387]
+
 	--- 9.11.4 released ---
 
 	--- 9.11.4rc2 released ---

@@ -35,7 +35,7 @@ index 54bc37f..9efd7a5 100644
  	minimal-any false;\n\
  	minimal-responses false;\n\
 diff --git a/bin/named/server.c b/bin/named/server.c
-index 59a8998..ced3e9be 100644
+index 0c8939d..ad84414 100644
 --- a/bin/named/server.c
 +++ b/bin/named/server.c
 @@ -3703,6 +3703,18 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
@@ -164,7 +164,7 @@ index 2b6d134..74c6215 100644
  						trust = rdataset->trust;
  					/*
 diff --git a/lib/dns/resolver.c b/lib/dns/resolver.c
-index 8f674a2..511b34c 100644
+index 41d1385..dab2f70 100644
 --- a/lib/dns/resolver.c
 +++ b/lib/dns/resolver.c
 @@ -562,7 +562,9 @@ static isc_boolean_t fctx_unlink(fetchctx_t *fctx);

@@ -1,8 +1,47 @@
-bind9 (1:9.11.4+dfsg-4~bpo9+1) stretch-backports; urgency=medium
+bind9 (1:9.11.4.P2+dfsg-3) unstable; urgency=medium
 
-  * Rebuild for stretch-backports.
+  * Also avoid OpenSSL 1.1.1 in udebs.
+    Thanks to KiBi for the hint
+  * autopkgtest: Make an external query and check for DNSSEC
 
- -- Bernhard Schmidt <berni@debian.org>  Wed, 08 Aug 2018 23:20:13 +0200
+ -- Bernhard Schmidt <berni@debian.org>  Wed, 26 Sep 2018 11:21:35 +0200
+
+bind9 (1:9.11.4.P2+dfsg-2) unstable; urgency=medium
+
+  * Temporarily disable EDDSA to relax OpenSSL version requirement
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 24 Sep 2018 11:08:15 +0200
+
+bind9 (1:9.11.4.P2+dfsg-1) unstable; urgency=medium
+
+  [ Bernhard Schmidt ]
+  * Add a very simple autopkgtest (dig @127.0.0.1)
+
+  [ Ondřej Surý ]
+  * New upstream version 9.11.4.P2+dfsg
+  * Rebase patches for BIND 9.11.4-P2
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 10 Sep 2018 08:36:06 +0000
+
+bind9 (1:9.11.4.P1+dfsg-1) unstable; urgency=medium
+
+  [ Timo Aaltonen ]
+  * skip-rtld-deepbind-for-dyndb.diff: Add a patch to fix named-pkcs11
+    crashing on startup. (LP: #1769440)
+
+  [ Bernhard Schmidt ]
+  * Add gbp.conf for pristine-tar usage
+  * d/watch: Properly deal with -P patch releases
+
+  [ Ondřej Surý ]
+  * Don't fail to start if /etc/default/bind9 doesn't exist
+  * New upstream version 9.11.4.P1+dfsg
+  * Rebase patches for BIND 9.11.4-P1
+  * Add new dst__openssleddsa_init optional symbol (it depends on OpenSSL version) (Closes: #897643)
+  * Put aside named.conf.option from stretch when upgrading (Closes: #905177)
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 31 Aug 2018 09:53:27 +0000
+>>>>>>> master
 
 bind9 (1:9.11.4+dfsg-4) unstable; urgency=medium
 

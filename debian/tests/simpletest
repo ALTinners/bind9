@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+setup() {
+	service bind9 stop
+	service bind9 start
+}
+
+run() {
+	# Make a query against a local zone
+	dig -x 127.0.0.1 @127.0.0.1
+
+	# Make a query against an external nameserver and check for DNSSEC validation
+	echo "Checking for DNSSEC validation status of internetsociety.org"
+	dig -t a internetsociety.org @127.0.0.1 | egrep 'flags:.+ad; QUERY'
+}
+
+teardown() {
+	service bind9 stop
+}
+
+setup
+run
+teardown
+

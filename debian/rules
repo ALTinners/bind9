@@ -93,6 +93,7 @@ override_dh_auto_configure:
 		--with-pkcs11=\$${prefix}/lib/softhsm/libsofthsm2.so \
 		--with-randomdev=/dev/urandom \
 		--enable-dnstap \
+		--with-eddsa=no \
 		$(EXTRA_FEATURES)
 	dh_auto_configure -B build-udeb -- \
 		--sysconfdir=/etc/bind \
@@ -111,6 +112,7 @@ override_dh_auto_configure:
 		--enable-shared \
 		--with-libtool \
 		--with-gssapi=no \
+		--with-eddsa=no \
 		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
 		--includedir=/usr/include/bind-export
 	sh debian/apply-export-patch
@@ -163,5 +165,13 @@ override_dh_makeshlibs:
 	dh_makeshlibs -plibisccfg-export$(ISCCFG_SOVER) --add-udeb=libisccfg-export$(ISCCFG_SOVER)-udeb
 	dh_makeshlibs -plibisc-export$(ISC_SOVER) --add-udeb=libisc-export$(ISC_SOVER)-udeb
 	dh_makeshlibs --remaining-packages
+
+override_dh_shlibdeps:
+	dh_shlibdeps
+	# Downgrade libcrypto1.1-udeb dependency from 1.1.1 to 1.1.0
+	# The udebs don't use any newer symbols, but due to them using
+	# shlibs the dependency is generated anyway. This blocks migration
+	# to testing until OpenSSL 1.1.1 is sorted out
+	sed -i 's:libcrypto1.1-udeb (>= 1.1.1):libcrypto1.1-udeb (>= 1.1.0):' debian/*-udeb.substvars
 
 .PHONY: prepare_native_pkcs11 clean_native_pkcs11
