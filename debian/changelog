@@ -1,3 +1,9 @@
+bind9 (1:9.11.4.P2+dfsg-3~bpo9+1) stretch-backports; urgency=medium
+
+  * Rebuild for stretch-backports.
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 28 Sep 2018 14:33:03 +0200
+
 bind9 (1:9.11.4.P2+dfsg-3) unstable; urgency=medium
 
   * Also avoid OpenSSL 1.1.1 in udebs.
@@ -41,7 +47,6 @@ bind9 (1:9.11.4.P1+dfsg-1) unstable; urgency=medium
   * Put aside named.conf.option from stretch when upgrading (Closes: #905177)
 
  -- Ondřej Surý <ondrej@debian.org>  Fri, 31 Aug 2018 09:53:27 +0000
->>>>>>> master
 
 bind9 (1:9.11.4+dfsg-4) unstable; urgency=medium
 
