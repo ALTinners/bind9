@@ -1,7 +1,7 @@
 Source: bind9
 Section: net
 Priority: optional
-Maintainer: BIND 9 Package <bind9@package.debian.org>
+Maintainer: Debian DNS Team <team+dns@@tracker.debian.org>
 Uploaders: LaMont Jones <lamont@debian.org>,
            Michael Gilbert <mgilbert@debian.org>,
            Robie Basak <robie.basak@canonical.com>,
