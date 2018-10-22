@@ -11,6 +11,8 @@ export DPKG_GENSYMBOLS_CHECK_LEVEL := 4
 
 include /usr/share/dpkg/default.mk
 
+DEB_REVISION = $(call dpkg_late_eval,DEB_REVISION,echo '$(DEB_VERSION)' | sed -e 's/^.*-/-/')
+
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -62,7 +64,14 @@ clean_native_pkcs11:
 	rm -rf lib/isc-pkcs11
 	rm -rf lib/dns-pkcs11
 
-override_dh_autoreconf: prepare_native_pkcs11
+prepare_version:
+	if [ ! -f version.bak ]; then cp version version.bak; fi
+	sed -i 's,^EXTENSIONS=.*$$,EXTENSIONS=$(DEB_REVISION)-$(DEB_VENDOR),' version
+
+clean_version:
+	if [ -f version.bak ]; then cp version.bak version; fi
+
+override_dh_autoreconf: prepare_native_pkcs11 prepare_version
 	dh_autoreconf
 
 override_dh_auto_configure:
@@ -126,7 +135,7 @@ override_dh_auto_build:
 	dh_auto_build -B build
 	dh_auto_build -B build-udeb
 
-override_dh_auto_clean: clean_native_pkcs11
+override_dh_auto_clean: clean_native_pkcs11 clean_version
 	dh_auto_clean -B build
 	dh_auto_clean -B build-udeb
 
