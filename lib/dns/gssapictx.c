@@ -13,6 +13,8 @@
 #include <config.h>
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -246,7 +248,7 @@ check_config(const char *gss_name) {
 #endif
 
 isc_result_t
-dst_gssapi_acquirecred(const dns_name_t *name, isc_boolean_t initiate,
+dst_gssapi_acquirecred(const dns_name_t *name, bool initiate,
 		       gss_cred_id_t *cred)
 {
 #ifdef GSSAPI
@@ -343,14 +345,14 @@ cleanup:
 #endif
 }
 
-isc_boolean_t
+bool
 dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 				    const dns_name_t *name,
-				    const dns_name_t *realm)
+				    const dns_name_t *realm,
+				    bool subdomain)
 {
 #ifdef GSSAPI
 	char sbuf[DNS_NAME_FORMATSIZE];
-	char nbuf[DNS_NAME_FORMATSIZE];
 	char rbuf[DNS_NAME_FORMATSIZE];
 	char *sname;
 	char *rname;
@@ -365,8 +367,6 @@ dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 	result = dns_name_toprincipal(signer, &buffer);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	isc_buffer_putuint8(&buffer, 0);
-	if (name != NULL)
-		dns_name_format(name, nbuf, sizeof(nbuf));
 	dns_name_format(realm, rbuf, sizeof(rbuf));
 
 	/*
@@ -376,9 +376,13 @@ dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 	 */
 	rname = strchr(sbuf, '@');
 	if (rname == NULL)
-		return (isc_boolean_false);
+		return (false);
 	*rname = '\0';
 	rname++;
+
+	if (strcmp(rname, rbuf) != 0) {
+		return (false);
+	}
 
 	/*
 	 * Find the host portion of the signer's name.	We do this by
@@ -390,44 +394,51 @@ dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 	 */
 	sname = strchr(sbuf, '/');
 	if (sname == NULL)
-		return (isc_boolean_false);
+		return (false);
 	*sname = '\0';
 	sname++;
 	if (strcmp(sbuf, "host") != 0)
-		return (isc_boolean_false);
+		return (false);
 
 	/*
-	 * Now, we do a simple comparison between the name and the realm.
+	 * If name is non NULL check that it matches against the
+	 * machine name as expected.
 	 */
 	if (name != NULL) {
-		if ((strcasecmp(sname, nbuf) == 0)
-		    && (strcmp(rname, rbuf) == 0))
-			return (isc_boolean_true);
-	} else {
-		if (strcmp(rname, rbuf) == 0)
-			return (isc_boolean_true);
+		dns_fixedname_t fixed;
+		dns_name_t *machine;
+
+		machine = dns_fixedname_initname(&fixed);
+		result = dns_name_fromstring(machine, sname, 0, NULL);
+		if (result != ISC_R_SUCCESS) {
+			return (false);
+		}
+		if (subdomain) {
+			return (dns_name_issubdomain(name, machine));
+		}
+		return (dns_name_equal(name, machine));
 	}
 
-	return (isc_boolean_false);
+	return (true);
 #else
 	UNUSED(signer);
 	UNUSED(name);
 	UNUSED(realm);
-	return (isc_boolean_false);
+	UNUSED(subdomain);
+	return (false);
 #endif
 }
 
-isc_boolean_t
+bool
 dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 				  const dns_name_t *name,
-				  const dns_name_t *realm)
+				  const dns_name_t *realm,
+				  bool subdomain)
 {
 #ifdef GSSAPI
 	char sbuf[DNS_NAME_FORMATSIZE];
-	char nbuf[DNS_NAME_FORMATSIZE];
 	char rbuf[DNS_NAME_FORMATSIZE];
 	char *sname;
-	char *nname;
 	char *rname;
 	isc_buffer_t buffer;
 	isc_result_t result;
@@ -440,8 +451,6 @@ dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 	result = dns_name_toprincipal(signer, &buffer);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	isc_buffer_putuint8(&buffer, 0);
-	if (name != NULL)
-		dns_name_format(name, nbuf, sizeof(nbuf));
 	dns_name_format(realm, rbuf, sizeof(rbuf));
 
 	/*
@@ -451,16 +460,16 @@ dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 	 */
 	rname = strchr(sbuf, '@');
 	if (rname == NULL)
-		return (isc_boolean_false);
+		return (false);
 	sname = strchr(sbuf, '$');
 	if (sname == NULL)
-		return (isc_boolean_false);
+		return (false);
 
 	/*
 	 * Verify that the $ and @ follow one another.
 	 */
 	if (rname - sname != 1)
-		return (isc_boolean_false);
+		return (false);
 
 	/*
 	 * Find the host portion of the signer's name.	Zero out the $ so
@@ -475,37 +484,36 @@ dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 	*sname = '\0';
 	sname = sbuf;
 
-	/*
-	 * Find the first . in the target name, and make it the end of
-	 * the string.	 The rest of the name has to match the realm.
-	 */
-	if (name != NULL) {
-		nname = strchr(nbuf, '.');
-		if (nname == NULL)
-			return (isc_boolean_false);
-		*nname++ = '\0';
+	if (strcmp(rname, rbuf) != 0) {
+		return (false);
 	}
 
 	/*
-	 * Now, we do a simple comparison between the name and the realm.
+	 * Now, we check that the realm matches (case sensitive) and that
+	 * 'name' matches against 'machinename' qualified with 'realm'.
 	 */
 	if (name != NULL) {
-		if ((strcasecmp(sname, nbuf) == 0)
-		    && (strcmp(rname, rbuf) == 0)
-		    && (strcasecmp(nname, rbuf) == 0))
-			return (isc_boolean_true);
-	} else {
-		if (strcmp(rname, rbuf) == 0)
-			return (isc_boolean_true);
+		dns_fixedname_t fixed;
+		dns_name_t *machine;
+
+		machine = dns_fixedname_initname(&fixed);
+		result = dns_name_fromstring2(machine, sbuf, realm, 0, NULL);
+		if (result != ISC_R_SUCCESS) {
+			return (false);
+		}
+		if (subdomain) {
+			return (dns_name_issubdomain(name, machine));
+		}
+		return (dns_name_equal(name, machine));
 	}
 
-
-	return (isc_boolean_false);
+	return (true);
 #else
 	UNUSED(signer);
 	UNUSED(name);
 	UNUSED(realm);
-	return (isc_boolean_false);
+	UNUSED(subdomain);
+	return (false);
 #endif
 }
 
@@ -540,7 +548,7 @@ dst_gssapi_releasecred(gss_cred_id_t *cred) {
  * call chain for reporting to the user.
  */
 static void
-gss_err_message(isc_mem_t *mctx, isc_uint32_t major, isc_uint32_t minor,
+gss_err_message(isc_mem_t *mctx, uint32_t major, uint32_t minor,
 		char **err_message)
 {
 	char buf[1024];
@@ -841,7 +849,7 @@ dst_gssapi_deletectx(isc_mem_t *mctx, gss_ctx_id_t *gssctx)
 }
 
 char *
-gss_error_tostring(isc_uint32_t major, isc_uint32_t minor,
+gss_error_tostring(uint32_t major, uint32_t minor,
 		   char *buf, size_t buflen) {
 #ifdef GSSAPI
 	gss_buffer_desc msg_minor = GSS_C_EMPTY_BUFFER,

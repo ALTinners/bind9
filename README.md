@@ -158,16 +158,15 @@ BIND 9.12.2 is a maintenance release, and addresses security
 vulnerabilities disclosed in CVE-2018-5736, CVE-2018-5737 and
 CVE-2018-5738.
 
-#### BIND 9.12.2-P1
+#### BIND 9.12.3
 
-BIND 9.12.2-P1 addresses a security vulnerability disclosed in
-CVE-2018-5740.
+BIND 9.12.3 is a maintenance release, and also addresses CVE-2018-5741
+by correcting faulty documentation and introducing the following new
+feature:
 
-#### BIND 9.12.2-P2
-
-BIND 9.12.2-P2 fixes several operationally significant bugs with
-inline-signing zones, and a regression which could cause certain domains
-to be unresolvable.
+* New `krb5-selfsub` and `ms-selfsub` rule types for `update-policy`
+  statements allow updating of subdomains based on a Kerberos or
+  Active Directory machine principal.
 
 ### <a name="build"/> Building BIND
 
