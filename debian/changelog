@@ -1,3 +1,13 @@
+bind (1:9.12.3+dfsg-1) experimental; urgency=medium
+
+  * New upstream version 9.12.3+dfsg
+  * Remove --disable-static from the dh_auto_configure call
+  * Use team+dns@tracker.debian.org as Maintainer
+  * Fix double @@ in Maintainer address
+  * Rebase patches for BIND 9.12.3
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 22 Oct 2018 13:27:34 +0000
+
 bind (1:9.12.2.P2+dfsg-1) experimental; urgency=medium
 
   * New upstream version 9.12.2.P2+dfsg
