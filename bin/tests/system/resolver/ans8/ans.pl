@@ -61,19 +61,15 @@ sub handleUDP {
 	my $qclass = $questions[0]->qclass;
 	my $id = $request->header->id;
 
-	my $packet = new Net::DNS::Packet();
-
-	$packet->header->qr(1);
-	$packet->header->aa(0);
-	$packet->header->id($id);
+	# don't use Net::DNS to construct the header only reply as early
+	# versions just get it completely wrong.
 
 	if ($qname eq "truncated.no-questions") {
-		$packet->header->tc(1);
-	} else {
-		$packet->header->tc(0);
+		# QR, AA, TC
+		return (pack("nnnnnn", $id, 0x8600, 0, 0, 0, 0));
 	}
-
-	return $packet->data;
+	# QR, AA
+	return (pack("nnnnnn", $id, 0x8400, 0, 0, 0, 0));
 }
 
 sub handleTCP {

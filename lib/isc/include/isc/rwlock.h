@@ -13,6 +13,8 @@
 #ifndef ISC_RWLOCK_H
 #define ISC_RWLOCK_H 1
 
+#include <inttypes.h>
+
 /*! \file isc/rwlock.h */
 
 #include <isc/condition.h>
@@ -21,8 +23,11 @@
 #include <isc/types.h>
 
 #if defined(ISC_PLATFORM_HAVESTDATOMIC)
-#include <stdint.h>
+#if defined(__cplusplus)
+#include <isc/stdatomic.h>
+#else
 #include <stdatomic.h>
+#endif
 #endif
 
 ISC_LANG_BEGINDECLS
@@ -45,7 +50,7 @@ struct isc_rwlock {
 	/* Unlocked. */
 	unsigned int		magic;
 	isc_mutex_t		lock;
-	isc_int32_t		spins;
+	int32_t		spins;
 
 #if defined(ISC_RWLOCK_USEATOMIC)
 	/*
@@ -67,9 +72,9 @@ struct isc_rwlock {
 	atomic_int_fast32_t	write_completions;
 	atomic_int_fast32_t	cnt_and_flag;
 #else
-	isc_int32_t		write_requests;
-	isc_int32_t		write_completions;
-	isc_int32_t		cnt_and_flag;
+	int32_t		write_requests;
+	int32_t		write_completions;
+	int32_t		cnt_and_flag;
 #endif
 
 	/* Locked by lock. */

@@ -58,7 +58,7 @@ ATF_TC_BODY(isc_mem, tc) {
 	unsigned int i, j;
 	int rval;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
+	result = isc_test_begin(NULL, true, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = isc_mem_create(0, 0, &localmctx);
@@ -135,6 +135,20 @@ ATF_TC_BODY(isc_mem, tc) {
 
 	isc_mem_destroy(&localmctx);
 
+	result = isc_mem_createx2(0, 0, default_memalloc, default_memfree,
+				  NULL, &localmctx, ISC_MEMFLAG_INTERNAL);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = isc_mempool_create(localmctx, 2, &mp1);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	tmp = isc_mempool_get(mp1);
+	ATF_CHECK(tmp != NULL);
+
+	isc_mempool_put(mp1, tmp);
+
+	isc_mempool_destroy(&mp1);
+
 	isc_test_end();
 }
 
@@ -150,7 +164,7 @@ ATF_TC_BODY(isc_mem_total, tc) {
 	ssize_t diff;
 	int i;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
+	result = isc_test_begin(NULL, true, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* Local alloc, free */
@@ -217,7 +231,7 @@ ATF_TC_BODY(isc_mem_inuse, tc) {
 	ssize_t diff;
 	void *ptr;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
+	result = isc_test_begin(NULL, true, 0);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	mctx2 = NULL;
