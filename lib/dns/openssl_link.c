@@ -64,7 +64,7 @@ entropy_get(unsigned char *buf, int num) {
 	isc_result_t result;
 	if (num < 0)
 		return (-1);
-	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_FALSE);
+	result = dst__entropy_getdata(buf, (unsigned int) num, false);
 	return (result == ISC_R_SUCCESS ? 1 : -1);
 }
 
@@ -78,7 +78,7 @@ entropy_getpseudo(unsigned char *buf, int num) {
 	isc_result_t result;
 	if (num < 0)
 		return (-1);
-	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_TRUE);
+	result = dst__entropy_getdata(buf, (unsigned int) num, true);
 	return (result == ISC_R_SUCCESS ? 1 : -1);
 }
 
@@ -193,7 +193,7 @@ _set_thread_id(CRYPTO_THREADID *id)
 isc_result_t
 dst__openssl_init(const char *engine) {
 	isc_result_t result;
-#if defined(USE_ENGINE) && !defined(ISC_PLATFORM_CRYPTORANDOM)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(ISC_PLATFORM_CRYPTORANDOM)
 	ENGINE *re;
 #else
 
@@ -388,7 +388,7 @@ dst__openssl_destroy(void) {
 static isc_result_t
 toresult(isc_result_t fallback) {
 	isc_result_t result = fallback;
-	unsigned long err = ERR_get_error();
+	unsigned long err = ERR_peek_error();
 #if defined(HAVE_OPENSSL_ECDSA) && \
     defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
 	int lib = ERR_GET_LIB(err);

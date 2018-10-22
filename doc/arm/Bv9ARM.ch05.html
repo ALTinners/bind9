@@ -4700,6 +4700,11 @@ options {
                   <span class="command"><strong>slave</strong></span> zones respectively.
                   It is off by default.
                 </p>
+                <p>
+                  Note: if inline signing is enabled for a zone, the
+                  user-provided <span class="command"><strong>ixfr-from-differences</strong></span>
+                  setting is ignored for that zone.
+                </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>multi-master</strong></span></span></dt>
 <dd>
@@ -9291,7 +9296,7 @@ view "external" {
 	<span class="command"><strong>sig-signing-type</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>sig-validity-interval</strong></span> <em class="replaceable"><code>integer</code></em> [ <em class="replaceable"><code>integer</code></em> ];
 	<span class="command"><strong>update-check-ksk</strong></span> <em class="replaceable"><code>boolean</code></em>;
-	<span class="command"><strong>update-policy</strong></span> ( local | { ( deny | grant ) <em class="replaceable"><code>string</code></em> ( 6to4-self | external | krb5-self | krb5-subdomain | ms-self | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <em class="replaceable"><code>string</code></em> ] <em class="replaceable"><code>rrtypelist</code></em>; ... };
+	<span class="command"><strong>update-policy</strong></span> ( local | { ( deny | grant ) <em class="replaceable"><code>string</code></em> ( 6to4-self | external | krb5-self | krb5-selfsub | krb5-subdomain | ms-self | ms-selfsub | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <em class="replaceable"><code>string</code></em> ] <em class="replaceable"><code>rrtypelist</code></em>; ... };
 	<span class="command"><strong>zero-no-soa-ttl</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>zone-statistics</strong></span> ( full | terse | none | <em class="replaceable"><code>boolean</code></em> );
 };
@@ -10544,12 +10549,13 @@ example.com. NS ns2.example.net.
               the rules are checked for each existing record type.
             </p>
             <p>
-              The <em class="replaceable"><code>ruletype</code></em> field has 13
+              The <em class="replaceable"><code>ruletype</code></em> field has 16
               values:
               <code class="varname">name</code>, <code class="varname">subdomain</code>,
               <code class="varname">wildcard</code>, <code class="varname">self</code>,
               <code class="varname">selfsub</code>, <code class="varname">selfwild</code>,
               <code class="varname">krb5-self</code>, <code class="varname">ms-self</code>,
+              <code class="varname">krb5-selfsub</code>, <code class="varname">ms-selfsub</code>,
               <code class="varname">krb5-subdomain</code>,
               <code class="varname">ms-subdomain</code>,
               <code class="varname">tcp-self</code>, <code class="varname">6to4-self</code>,
@@ -10720,6 +10726,21 @@ example.com. NS ns2.example.net.
 <tr>
 <td>
                       <p>
+                        <code class="varname">ms-selfsub</code>
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        This is similar to <span class="command"><strong>ms-self</strong></span>
+                        except it also allows updates to any subdomain of
+                        the name specified in the Windows machine
+                        principal, not just to the name itself.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
                         <code class="varname">ms-subdomain</code>
                       </p>
                     </td>
@@ -10787,6 +10808,21 @@ example.com. NS ns2.example.net.
                         allows any machine with a valid principal in
                         the realm <strong class="userinput"><code>EXAMPLE.COM</code></strong> to update
                         its own address records.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
+                        <code class="varname">krb5-selfsub</code>
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        This is similar to <span class="command"><strong>krb5-self</strong></span>
+                        except it also allows updates to any subdomain of
+                        the name specified in the 'machine' part of the
+                        Kerberos principal, not just to the name itself.
                       </p>
                     </td>
 </tr>
@@ -14751,6 +14787,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P2</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.3</p>
 </body>
 </html>
