@@ -1,7 +1,53 @@
-	--- 9.11.4-P2 released ---
+	--- 9.11.5 released ---
+
+	--- 9.11.5rc1 released ---
+
+5038.	[bug]		Chaosnet addresses were compared incorrectly.
+			[GL #562]
+
+5034.	[bug]		A race between threads could prevent zone maintenance
+			scheduled immediately after zone load from being
+			performed. [GL #542]
+
+5033.	[bug]		When adding NTAs to multiple views using "rndc nta",
+			the text returned via rndc was incorrectly terminated
+			after the first line, making it look as if only one
+			NTA had been added. Also, it was not possible to
+			differentiate between views with the same name but
+			different classes; this has been corrected with the
+			addition of a "-class" option. [GL #105]
+
+5032.	[func]		Add krb5-selfsub and ms-selfsub update policy rules.
+			[GL #511]
+
+5030.	[bug]		Align CMSG buffers to a 64-bit boundary, fixes crash
+			on architectures with strict alignment. [GL #521]
+
+5028.	[bug]		Spread the initial RRSIG expiration times over the
+			entire working sig-validity-interval when signing a
+			zone in named to even out re-signing and transfer
+			loads. [GL #418]
+
+5026.	[bug]		rndc reconfig should not touch already loaded zones.
+			[GL #276]
 
 5022.	[doc]		Update ms-self, ms-subdomain, krb5-self, and
 			krb5-subdomain documentation. [GL !708]
+
+5021.	[bug]		dig returned a non-zero exit code when it received a
+			reply over TCP after a retry. [GL #487]
+
+5019.	[cleanup]	A message is now logged when ixfr-from-differences is
+			set at zone level for an inline-signed zone. [GL #470]
+
+5018.	[bug]		Fix incorrect sizeof arguments in lib/isc/pk11.c.
+			[GL !588]
+
+5017.	[bug]		lib/isc/pk11.c failed to unlink the session before
+			releasing the lock which is unsafe. [GL !589]
+
+5016.	[bug]		Named could assert with overlapping filter-aaaa and
+			dns64 acls. [GL #445]
 
 5015.	[bug]		Reloading all zones caused zone maintenance to cease
 			for inline-signed zones. [GL #435]
@@ -10,8 +56,46 @@
 			version of an inline-signed zone were not scheduled for
 			refresh. [GL #482]
 
+5012.	[bug]		Fix lock order reversal in pk11_initialize. [GL !590]
+
+5009.	[bug]		Upon an OpenSSL failure, the first error in the OpenSSL
+			error queue was not logged. [GL #476]
+
+5008.	[bug]		"rndc signing -nsec3param ..." requests were silently
+			ignored for zones which were not yet loaded or
+			transferred. [GL #468]
+
+5007.	[cleanup]	Replace custom ISC boolean and integer data types
+			with C99 stdint.h and stdbool.h types. [GL #9]
+
+5005.	[bug]		dnssec-verify, and dnssec-signzone at the verification
+			step, failed on some validly signed zones. [GL #442]
+
 5004.	[bug]		'rndc reconfig' could cause inline zones to stop
 			re-signing. [GL #439]
+
+5003.	[bug]		dns_acl_isinsecure did not handle geoip elements.
+			[GL #406]
+
+5002.	[bug]		mdig: Handle malformed +ednsopt option, support 100
+			+ednsopt options per query rather than 100 total and
+			address memory leaks if +ednsopt was specified.
+			[GL #410]
+
+5001.	[bug]		Fix refcount errors on error paths. [GL !563]
+
+4996.	[bug]		dig: Handle malformed +ednsopt option. [GL #403]
+
+4995.	[test]		Add tests for "tcp-self" update policy. [GL !282]
+
+4994.	[bug]		Trust anchor telemetry queries were not being sent
+			upstream for locally served zones. [GL #392]
+
+4992.	[bug]		The wrong address was being logged for trust anchor
+			telemetry queries. [GL #379]
+
+4990.	[bug]		Prevent a possible NULL reference in pkcs11-keygen.
+			[GL #401]
 
 	--- 9.11.4-P1 released ---
 
@@ -525,8 +609,8 @@
 
 4761.	[protocol]	Add support for DOA. [RT #45612]
 
-4759.	[func]		Add logging channel "trust-anchor-telementry" to
-			record trust-anchor-telementry in incoming requests.
+4759.	[func]		Add logging channel "trust-anchor-telemetry" to
+			record trust-anchor-telemetry in incoming requests.
 			Both _ta-XXXX.<anchor>/NULL and EDNS KEY-TAG options
 			are logged.  [RT #46124]
 
@@ -571,7 +655,7 @@
 			tests when running on terminals that support them.
 			[RT #45977]
 
-4744.	[bug]		Suppress trust-anchor-telementry queries if
+4744.	[bug]		Suppress trust-anchor-telemetry queries if
 			validation is disabled. [RT #46131]
 
 4741.	[bug]		Make isc_refcount_current() atomically read the

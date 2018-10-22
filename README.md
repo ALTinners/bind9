@@ -266,14 +266,15 @@ disclosed in CVE-2017-3145.
 BIND 9.11.4 is a maintenance release, and addresses the security flaw
 disclosed in CVE-2018-5738.
 
-#### BIND 9.11.4-P1
+#### BIND 9.11.5
 
-BIND 9.11.4-P1 addresses the security flaw disclosed in CVE-2018-5740.
+BIND 9.11.5 is a maintenance release, and also addresses CVE-2018-5741
+by correcting faulty documentation and introducing the following new
+feature:
 
-#### BIND 9.11.4-P2
-
-BIND 9.11.4-P2 fixes several operationally significant bugs with
-inline-signing zones.
+* New `krb5-selfsub` and `ms-selfsub` rule types for `update-policy`
+  statements allow updating of subdomains based on a Kerberos or
+  Active Directory machine principal.
 
 ### <a name="build"/> Building BIND
 

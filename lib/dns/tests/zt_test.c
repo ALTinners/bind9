@@ -15,10 +15,12 @@
 
 #include <atf-c.h>
 
+#include <stdbool.h>
 #include <unistd.h>
 
 #include <isc/app.h>
 #include <isc/buffer.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 
@@ -33,6 +35,7 @@
 struct args {
 	void *arg1;
 	void *arg2;
+	bool arg3;
 };
 
 /*
@@ -51,21 +54,21 @@ count_zone(dns_zone_t *zone, void *uap) {
 static isc_result_t
 load_done(dns_zt_t *zt, dns_zone_t *zone, isc_task_t *task) {
 	/* We treat zt as a pointer to a boolean for testing purposes */
-	isc_boolean_t *done = (isc_boolean_t *) zt;
+	bool *done = (bool *) zt;
 
 	UNUSED(zone);
 	UNUSED(task);
 
-	*done = ISC_TRUE;
+	*done = true;
 	isc_app_shutdown();
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
 all_done(void *arg) {
-	isc_boolean_t *done = (isc_boolean_t *) arg;
+	bool *done = (bool *) arg;
 
-	*done = ISC_TRUE;
+	*done = true;
 	isc_app_shutdown();
 	return (ISC_R_SUCCESS);
 }
@@ -76,7 +79,7 @@ start_zt_asyncload(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	dns_zt_asyncload(args->arg1, all_done, args->arg2);
+	dns_zt_asyncload2(args->arg1, all_done, args->arg2, false);
 
 	isc_event_free(&event);
 }
@@ -87,7 +90,7 @@ start_zone_asyncload(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	dns_zone_asyncload(args->arg1, load_done, args->arg2);
+	dns_zone_asyncload2(args->arg1, load_done, args->arg2, args->arg3);
 	isc_event_free(&event);
 }
 
@@ -106,17 +109,17 @@ ATF_TC_BODY(apply, tc) {
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL, ISC_TRUE);
+	result = dns_test_begin(NULL, true);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_test_makezone("foo", &zone, NULL, ISC_TRUE);
+	result = dns_test_makezone("foo", &zone, NULL, true);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	view = dns_zone_getview(zone);
 	ATF_REQUIRE(view->zonetable != NULL);
 
 	ATF_CHECK_EQ(0, nzones);
-	result = dns_zt_apply(view->zonetable, ISC_FALSE, count_zone, &nzones);
+	result = dns_zt_apply(view->zonetable, false, count_zone, &nzones);
 	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
 	ATF_CHECK_EQ(1, nzones);
 
@@ -141,19 +144,22 @@ ATF_TC_HEAD(asyncload_zone, tc) {
 }
 ATF_TC_BODY(asyncload_zone, tc) {
 	isc_result_t result;
+	int n;
 	dns_zone_t *zone = NULL;
 	dns_view_t *view = NULL;
 	dns_db_t *db = NULL;
-	isc_boolean_t done = ISC_FALSE;
+	FILE* zonefile, *origfile;
+	char buf[4096];
+	bool done = false;
 	int i = 0;
 	struct args args;
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL, ISC_TRUE);
+	result = dns_test_begin(NULL, true);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_test_makezone("foo", &zone, NULL, ISC_TRUE);
+	result = dns_test_makezone("foo", &zone, NULL, true);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_test_setupzonemgr();
@@ -166,20 +172,68 @@ ATF_TC_BODY(asyncload_zone, tc) {
 
 	ATF_CHECK(!dns__zone_loadpending(zone));
 	ATF_CHECK(!done);
-	dns_zone_setfile(zone, "testdata/zt/zone1.db");
+	zonefile = fopen("./zone.data", "wb");
+	ATF_CHECK(zonefile != NULL);
+	origfile = fopen("./testdata/zt/zone1.db", "r+b");
+	ATF_CHECK(origfile != NULL);
+	n = fread(buf, 1, 4096, origfile);
+	fclose(origfile);
+	fwrite(buf, 1, n, zonefile);
+	fflush(zonefile);
+
+	dns_zone_setfile(zone, "./zone.data");
 
 	args.arg1 = zone;
 	args.arg2 = &done;
+	args.arg3 = false;
 	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
 
 	isc_app_run();
 	while (dns__zone_loadpending(zone) && i++ < 5000)
 		dns_test_nap(1000);
 	ATF_CHECK(done);
-
 	/* The zone should now be loaded; test it */
 	result = dns_zone_getdb(zone, &db);
 	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	dns_db_detach(&db);
+	/*
+	 * Add something to zone file, reload zone with newonly - it should
+	 * not be reloaded.
+	 */
+	fprintf(zonefile, "\nb in b 1.2.3.4\n");
+	fflush(zonefile);
+	fclose(zonefile);
+
+	args.arg1 = zone;
+	args.arg2 = &done;
+	args.arg3 = false;
+	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
+
+	isc_app_run();
+
+	while (dns__zone_loadpending(zone) && i++ < 5000)
+		dns_test_nap(1000);
+	ATF_CHECK(done);
+	/* The zone should now be loaded; test it */
+	result = dns_zone_getdb(zone, &db);
+	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	dns_db_detach(&db);
+
+	/* Now reload it without newonly - it should be reloaded */
+	args.arg1 = zone;
+	args.arg2 = &done;
+	args.arg3 = false;
+	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
+
+	isc_app_run();
+
+	while (dns__zone_loadpending(zone) && i++ < 5000)
+		dns_test_nap(1000);
+	ATF_CHECK(done);
+	/* The zone should now be loaded; test it */
+	result = dns_zone_getdb(zone, &db);
+	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+
 	ATF_CHECK(db != NULL);
 	if (db != NULL)
 		dns_db_detach(&db);
@@ -203,26 +257,26 @@ ATF_TC_BODY(asyncload_zt, tc) {
 	dns_view_t *view;
 	dns_zt_t *zt;
 	dns_db_t *db = NULL;
-	isc_boolean_t done = ISC_FALSE;
+	bool done = false;
 	int i = 0;
 	struct args args;
 
 	UNUSED(tc);
 
-	result = dns_test_begin(NULL, ISC_TRUE);
+	result = dns_test_begin(NULL, true);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_test_makezone("foo", &zone1, NULL, ISC_TRUE);
+	result = dns_test_makezone("foo", &zone1, NULL, true);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	dns_zone_setfile(zone1, "testdata/zt/zone1.db");
 	view = dns_zone_getview(zone1);
 
-	result = dns_test_makezone("bar", &zone2, view, ISC_FALSE);
+	result = dns_test_makezone("bar", &zone2, view, false);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	dns_zone_setfile(zone2, "testdata/zt/zone1.db");
 
 	/* This one will fail to load */
-	result = dns_test_makezone("fake", &zone3, view, ISC_FALSE);
+	result = dns_test_makezone("fake", &zone3, view, false);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	dns_zone_setfile(zone3, "testdata/zt/nonexistent.db");
 

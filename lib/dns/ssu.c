@@ -13,6 +13,8 @@
 
 #include <config.h>
 
+#include <stdbool.h>
+
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
@@ -36,7 +38,7 @@
 
 struct dns_ssurule {
 	unsigned int magic;
-	isc_boolean_t grant;	/*%< is this a grant or a deny? */
+	bool grant;	/*%< is this a grant or a deny? */
 	unsigned int matchtype;	/*%< which type of pattern match? */
 	dns_name_t *identity;	/*%< the identity to match */
 	dns_name_t *name;	/*%< the name being updated */
@@ -128,7 +130,7 @@ dns_ssutable_attach(dns_ssutable_t *source, dns_ssutable_t **targetp) {
 void
 dns_ssutable_detach(dns_ssutable_t **tablep) {
 	dns_ssutable_t *table;
-	isc_boolean_t done = ISC_FALSE;
+	bool done = false;
 
 	REQUIRE(tablep != NULL);
 	table = *tablep;
@@ -138,7 +140,7 @@ dns_ssutable_detach(dns_ssutable_t **tablep) {
 
 	INSIST(table->references > 0);
 	if (--table->references == 0)
-		done = ISC_TRUE;
+		done = true;
 	UNLOCK(&table->lock);
 
 	*tablep = NULL;
@@ -148,7 +150,7 @@ dns_ssutable_detach(dns_ssutable_t **tablep) {
 }
 
 isc_result_t
-dns_ssutable_addrule(dns_ssutable_t *table, isc_boolean_t grant,
+dns_ssutable_addrule(dns_ssutable_t *table, bool grant,
 		     dns_name_t *identity, unsigned int matchtype,
 		     dns_name_t *name, unsigned int ntypes,
 		     dns_rdatatype_t *types)
@@ -235,11 +237,11 @@ dns_ssutable_addrule(dns_ssutable_t *table, isc_boolean_t grant,
 	return (result);
 }
 
-static inline isc_boolean_t
+static inline bool
 isusertype(dns_rdatatype_t type) {
-	return (ISC_TF(type != dns_rdatatype_ns &&
-		       type != dns_rdatatype_soa &&
-		       type != dns_rdatatype_rrsig));
+	return (type != dns_rdatatype_ns &&
+		type != dns_rdatatype_soa &&
+		type != dns_rdatatype_rrsig);
 }
 
 static void
@@ -336,21 +338,21 @@ stf_from_address(dns_name_t *stfself, isc_netaddr_t *tcpaddr) {
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 }
 
-isc_boolean_t
+bool
 dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 			dns_name_t *name, isc_netaddr_t *addr,
 			dns_rdatatype_t type, const dst_key_t *key)
 {
 	return (dns_ssutable_checkrules2
 		(table, signer, name, addr,
-		 addr == NULL ? ISC_FALSE : ISC_TRUE,
+		 addr == NULL ? false : true,
 		 NULL, type, key));
 }
 
-isc_boolean_t
+bool
 dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 			 dns_name_t *name, isc_netaddr_t *addr,
-			 isc_boolean_t tcp, const dns_aclenv_t *env,
+			 bool tcp, const dns_aclenv_t *env,
 			 dns_rdatatype_t type, const dst_key_t *key)
 {
 	dns_ssurule_t *rule;
@@ -368,7 +370,7 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 	REQUIRE(addr == NULL || env != NULL);
 
 	if (signer == NULL && addr == NULL)
-		return (ISC_FALSE);
+		return (false);
 
 	for (rule = ISC_LIST_HEAD(table->rules);
 	     rule != NULL;
@@ -393,10 +395,12 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 					continue;
 			}
 			break;
-		case DNS_SSUMATCHTYPE_SELFKRB5:
-		case DNS_SSUMATCHTYPE_SELFMS:
-		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
-		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
+		case dns_ssumatchtype_selfkrb5:
+		case dns_ssumatchtype_selfms:
+		case dns_ssumatchtype_selfsubkrb5:
+		case dns_ssumatchtype_selfsubms:
+		case dns_ssumatchtype_subdomainkrb5:
+		case dns_ssumatchtype_subdomainms:
 			if (signer == NULL)
 				continue;
 			break;
@@ -460,30 +464,56 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 			if (!dns_name_matcheswildcard(name, wildcard))
 				continue;
 			break;
-		case DNS_SSUMATCHTYPE_SELFKRB5:
-			if (!dst_gssapi_identitymatchesrealmkrb5(signer, name,
-							       rule->identity))
-				continue;
-			break;
-		case DNS_SSUMATCHTYPE_SELFMS:
-			if (!dst_gssapi_identitymatchesrealmms(signer, name,
-							       rule->identity))
-				continue;
-			break;
-		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
+		case dns_ssumatchtype_selfkrb5:
+			if (dst_gssapi_identitymatchesrealmkrb5(signer, name,
+								rule->identity,
+								false))
+			{
+				break;
+			}
+			continue;
+		case dns_ssumatchtype_selfms:
+			if (dst_gssapi_identitymatchesrealmms(signer, name,
+							      rule->identity,
+							      false))
+			{
+				break;
+			}
+			continue;
+		case dns_ssumatchtype_selfsubkrb5:
+			if (dst_gssapi_identitymatchesrealmkrb5(signer, name,
+								rule->identity,
+								true))
+			{
+				break;
+			}
+			continue;
+		case dns_ssumatchtype_selfsubms:
+			if (dst_gssapi_identitymatchesrealmms(signer, name,
+							      rule->identity,
+							      true))
+				break;
+			continue;
+		case dns_ssumatchtype_subdomainkrb5:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
-			if (!dst_gssapi_identitymatchesrealmkrb5(signer, NULL,
-							       rule->identity))
-				continue;
-			break;
-		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
+			if (dst_gssapi_identitymatchesrealmkrb5(signer, NULL,
+								rule->identity,
+								false))
+			{
+				break;
+			}
+			continue;
+		case dns_ssumatchtype_subdomainms:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
-			if (!dst_gssapi_identitymatchesrealmms(signer, NULL,
-							       rule->identity))
-				continue;
-			break;
+			if (dst_gssapi_identitymatchesrealmms(signer, NULL,
+							      rule->identity,
+							      false))
+			{
+				break;
+			}
+			continue;
 		case DNS_SSUMATCHTYPE_TCPSELF:
 			tcpself = dns_fixedname_initname(&fixed);
 			reverse_from_address(tcpself, addr);
@@ -546,10 +576,10 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 		return (rule->grant);
 	}
 
-	return (ISC_FALSE);
+	return (false);
 }
 
-isc_boolean_t
+bool
 dns_ssurule_isgrant(const dns_ssurule_t *rule) {
 	REQUIRE(VALID_SSURULE(rule));
 	return (rule->grant);
@@ -625,7 +655,7 @@ dns_ssutable_createdlz(isc_mem_t *mctx, dns_ssutable_t **tablep,
 	rule->identity = NULL;
 	rule->name = NULL;
 	rule->types = NULL;
-	rule->grant = ISC_TRUE;
+	rule->grant = true;
 	rule->matchtype = DNS_SSUMATCHTYPE_DLZ;
 	rule->ntypes = 0;
 	rule->types = NULL;
@@ -656,8 +686,12 @@ dns_ssu_mtypefromstring(const char *str, dns_ssumatchtype_t *mtype) {
 		*mtype = dns_ssumatchtype_selfwild;
 	} else if (strcasecmp(str, "ms-self") == 0) {
 		*mtype = dns_ssumatchtype_selfms;
+	} else if (strcasecmp(str, "ms-selfsub") == 0) {
+		*mtype = dns_ssumatchtype_selfsubms;
 	} else if (strcasecmp(str, "krb5-self") == 0) {
 		*mtype = dns_ssumatchtype_selfkrb5;
+	} else if (strcasecmp(str, "krb5-selfsub") == 0) {
+		*mtype = dns_ssumatchtype_selfsubkrb5;
 	} else if (strcasecmp(str, "ms-subdomain") == 0) {
 		*mtype = dns_ssumatchtype_subdomainms;
 	} else if (strcasecmp(str, "krb5-subdomain") == 0) {
