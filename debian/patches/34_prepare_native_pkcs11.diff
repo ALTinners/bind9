@@ -26,7 +26,7 @@ index f0c504a..ef6bf5f 100644
  TARGETS =
  
 diff --git a/bin/dnssec/Makefile.in b/bin/dnssec/Makefile.in
-index 1be1d5f..fc983bf 100644
+index 2239ad1..1ded1fa 100644
 --- a/bin/dnssec/Makefile.in
 +++ b/bin/dnssec/Makefile.in
 @@ -19,7 +19,7 @@ VERSION=@BIND9_VERSION@
@@ -73,10 +73,10 @@ index ae90616..4bc1256 100644
  DEPLIBS =	${ISCDEPLIBS}
  
 diff --git a/configure.in b/configure.in
-index 7af8ab7..21b51de 100644
+index bf028fe..f8603b8 100644
 --- a/configure.in
 +++ b/configure.in
-@@ -1164,12 +1164,14 @@ AC_SUBST(USE_GSSAPI)
+@@ -1109,12 +1109,14 @@ AC_SUBST(USE_GSSAPI)
  AC_SUBST(DST_GSSAPI_INC)
  AC_SUBST(DNS_GSSAPI_LIBS)
  DNS_CRYPTO_LIBS="$DNS_GSSAPI_LIBS $DNS_CRYPTO_LIBS"
@@ -91,7 +91,7 @@ index 7af8ab7..21b51de 100644
  
  #
  # was --with-randomdev specified?
-@@ -1554,11 +1556,6 @@ fi
+@@ -1499,11 +1501,6 @@ fi
  AC_MSG_CHECKING(for OpenSSL library)
  OPENSSL_WARNING=
  openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
@@ -103,7 +103,7 @@ index 7af8ab7..21b51de 100644
  
  if test "auto" = "$use_openssl"
  then
-@@ -1571,6 +1568,7 @@ then
+@@ -1516,6 +1513,7 @@ then
  		fi
  	done
  fi
@@ -111,7 +111,7 @@ index 7af8ab7..21b51de 100644
  OPENSSL_ECDSA=""
  OPENSSL_GOST=""
  OPENSSL_ED25519=""
-@@ -1592,11 +1590,10 @@ case "$with_gost" in
+@@ -1537,11 +1535,10 @@ case "$with_gost" in
  		;;
  esac
  
@@ -126,7 +126,7 @@ index 7af8ab7..21b51de 100644
  		OPENSSLECDSALINKOBJS=""
  		OPENSSLECDSALINKSRCS=""
  		OPENSSLEDDSALINKOBJS=""
-@@ -1605,7 +1602,9 @@ case "$use_openssl" in
+@@ -1550,7 +1547,9 @@ case "$use_openssl" in
  		OPENSSLGOSTLINKSRCS=""
  		OPENSSLLINKOBJS=""
  		OPENSSLLINKSRCS=""
@@ -137,7 +137,7 @@ index 7af8ab7..21b51de 100644
  	no)
  		AC_MSG_RESULT(no)
  		DST_OPENSSL_INC=""
-@@ -1635,11 +1634,6 @@ case "$use_openssl" in
+@@ -1580,11 +1579,6 @@ case "$use_openssl" in
  If you don't want OpenSSL, use --without-openssl])
  		;;
  	*)
@@ -149,7 +149,7 @@ index 7af8ab7..21b51de 100644
  		if test "yes" = "$use_openssl"
  		then
  			# User did not specify a path - guess it
-@@ -2062,6 +2056,7 @@ AC_SUBST(OPENSSL_ED25519)
+@@ -2007,6 +2001,7 @@ AC_SUBST(OPENSSL_ED25519)
  AC_SUBST(OPENSSL_GOST)
  
  DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
@@ -157,7 +157,7 @@ index 7af8ab7..21b51de 100644
  
  ISC_PLATFORM_WANTAES="#undef ISC_PLATFORM_WANTAES"
  if test "yes" = "$with_aes"
-@@ -2381,6 +2376,7 @@ esac
+@@ -2326,6 +2321,7 @@ esac
  AC_SUBST(PKCS11LINKOBJS)
  AC_SUBST(PKCS11LINKSRCS)
  AC_SUBST(CRYPTO)
@@ -165,7 +165,7 @@ index 7af8ab7..21b51de 100644
  AC_SUBST(PKCS11_ECDSA)
  AC_SUBST(PKCS11_GOST)
  AC_SUBST(PKCS11_ED25519)
-@@ -5424,8 +5420,11 @@ AC_CONFIG_FILES([
+@@ -5331,8 +5327,11 @@ AC_CONFIG_FILES([
  	bin/delv/Makefile
  	bin/dig/Makefile
  	bin/dnssec/Makefile
@@ -177,7 +177,7 @@ index 7af8ab7..21b51de 100644
  	bin/nsupdate/Makefile
  	bin/pkcs11/Makefile
  	bin/python/Makefile
-@@ -5499,6 +5498,10 @@ AC_CONFIG_FILES([
+@@ -5406,6 +5405,10 @@ AC_CONFIG_FILES([
  	lib/dns/include/dns/Makefile
  	lib/dns/include/dst/Makefile
  	lib/dns/tests/Makefile
@@ -188,7 +188,7 @@ index 7af8ab7..21b51de 100644
  	lib/irs/Makefile
  	lib/irs/include/Makefile
  	lib/irs/include/irs/Makefile
-@@ -5523,6 +5526,24 @@ AC_CONFIG_FILES([
+@@ -5430,6 +5433,24 @@ AC_CONFIG_FILES([
  	lib/isc/unix/include/Makefile
  	lib/isc/unix/include/isc/Makefile
  	lib/isc/unix/include/pkcs11/Makefile
