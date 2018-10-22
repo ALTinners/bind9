@@ -1,4 +1,4 @@
-liblwres.so.160 liblwres160 #MINVER#
+liblwres.so.161 liblwres161 #MINVER#
  lwres__print_snprintf@Base 1:9.10.6+dfsg
  lwres__print_sprintf@Base 1:9.10.6+dfsg
  lwres__print_vsnprintf@Base 1:9.10.6+dfsg
