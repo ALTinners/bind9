@@ -1,7 +1,7 @@
 Source: bind
 Section: net
 Priority: optional
-Maintainer: Debian DNS Team <team+dns@@tracker.debian.org>
+Maintainer: Debian DNS Team <team+dns@tracker.debian.org>
 Uploaders: Ondřej Surý <ondrej@debian.org>,
            Bernhard Schmidt <berni@debian.org>
 Build-Depends: bison,
