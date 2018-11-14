@@ -1,0 +1,273 @@
+From: =?utf-8?b?T25kxZllaiBTdXLDvQ==?= <ondrej@sury.org>
+Date: Thu, 8 Nov 2018 01:21:13 +0700
+Subject: Add system tests for {min,max}-{cache,ncache}-ttl
+
+---
+ bin/tests/system/Makefile.in            |  2 +-
+ bin/tests/system/conf.sh.in             |  2 +-
+ bin/tests/system/conf.sh.win32          |  2 +-
+ bin/tests/system/ttl/clean.sh           | 12 +++++++++
+ bin/tests/system/ttl/ns1/max-example.db |  9 +++++++
+ bin/tests/system/ttl/ns1/min-example.db |  9 +++++++
+ bin/tests/system/ttl/ns1/named.conf.in  | 46 +++++++++++++++++++++++++++++++++
+ bin/tests/system/ttl/ns2/hints.db       |  2 ++
+ bin/tests/system/ttl/ns2/named.conf.in  | 40 ++++++++++++++++++++++++++++
+ bin/tests/system/ttl/setup.sh           |  7 +++++
+ bin/tests/system/ttl/tests.sh           | 35 +++++++++++++++++++++++++
+ 11 files changed, 163 insertions(+), 3 deletions(-)
+ create mode 100644 bin/tests/system/ttl/clean.sh
+ create mode 100644 bin/tests/system/ttl/ns1/max-example.db
+ create mode 100644 bin/tests/system/ttl/ns1/min-example.db
+ create mode 100644 bin/tests/system/ttl/ns1/named.conf.in
+ create mode 100644 bin/tests/system/ttl/ns2/hints.db
+ create mode 100644 bin/tests/system/ttl/ns2/named.conf.in
+ create mode 100644 bin/tests/system/ttl/setup.sh
+ create mode 100644 bin/tests/system/ttl/tests.sh
+
+diff --git a/bin/tests/system/Makefile.in b/bin/tests/system/Makefile.in
+index 9dc0bbe..5f52e90 100644
+--- a/bin/tests/system/Makefile.in
++++ b/bin/tests/system/Makefile.in
+@@ -69,7 +69,7 @@ PARALLEL = rpzrecurse serve-stale dnssec \
+ 	   rrchecker rrl rrsetorder rsabigexponent runtime \
+ 	   sfcache smartsign sortlist \
+ 	   spf staticstub statistics statschannel stub synthfromdnssec \
+-	   tcp tools tsig tsiggss \
++	   tcp tools tsig tsiggss ttl \
+ 	   unknown upforwd verify views wildcard \
+ 	   xfer xferquota zero zonechecks
+ 
+diff --git a/bin/tests/system/conf.sh.in b/bin/tests/system/conf.sh.in
+index 77ecced..a38bc59 100644
+--- a/bin/tests/system/conf.sh.in
++++ b/bin/tests/system/conf.sh.in
+@@ -100,7 +100,7 @@ PARALLELDIRS="acl additional addzone allow-query auth autosign \
+ 	rrchecker rrl rrsetorder rsabigexponent runtime \
+ 	serve-stale sfcache smartsign sortlist \
+ 	spf staticstub statistics statschannel stub synthfromdnssec \
+-	tcp tools tsig tsiggss \
++	tcp tools tsig tsiggss ttl \
+ 	unknown upforwd verify views wildcard \
+ 	xfer xferquota zero zonechecks"
+ 
+diff --git a/bin/tests/system/conf.sh.win32 b/bin/tests/system/conf.sh.win32
+index 4d6c44e..90343ea 100644
+--- a/bin/tests/system/conf.sh.win32
++++ b/bin/tests/system/conf.sh.win32
+@@ -99,7 +99,7 @@ SEQUENTIALDIRS="acl additional addzone autosign builtin \
+ 	 redirect resolver rndc rpz rrchecker rrl \
+ 	 rrsetorder rsabigexponent runtime sfcache smartsign sortlist \
+ 	 spf staticstub statistics statschannel stub tcp tkey tsig \
+-	 tsiggss unknown upforwd verify views wildcard xfer xferquota \
++	 tsiggss ttl unknown upforwd verify views wildcard xfer xferquota \
+ 	 zero zonechecks"
+ 
+ # List of tests that use unique ports (other than 5300 and 9953). These
+diff --git a/bin/tests/system/ttl/clean.sh b/bin/tests/system/ttl/clean.sh
+new file mode 100644
+index 0000000..0f928d6
+--- /dev/null
++++ b/bin/tests/system/ttl/clean.sh
+@@ -0,0 +1,12 @@
++#!/bin/sh
++
++. ../conf.sh
++
++rm -f ./dig.out.*
++rm -f ./*/named.conf
++rm -f ./*/named.memstats
++rm -f ./*/named.run
++rm -f ./ns*/named.lock
++rm -f ./ns*/_default.nzf
++rm -f ./ns*/_default.nzd*
++rm -f ./ns*/managed-keys.bind* ns*/*.mkeys*
+diff --git a/bin/tests/system/ttl/ns1/max-example.db b/bin/tests/system/ttl/ns1/max-example.db
+new file mode 100644
+index 0000000..87efa57
+--- /dev/null
++++ b/bin/tests/system/ttl/ns1/max-example.db
+@@ -0,0 +1,9 @@
++max-example.	1209600	IN SOA	ns root (
++				2000082401 ; serial
++				1800       ; refresh (30 minutes)
++				1800       ; retry (30 minutes)
++				1814400    ; expire (3 weeks)
++				1209600    ; minimum (2 weeks)
++				)
++max-example.	1209600	IN NS	ns.max-example.
++ns.max-example.	1209600	IN A	10.53.0.1
+diff --git a/bin/tests/system/ttl/ns1/min-example.db b/bin/tests/system/ttl/ns1/min-example.db
+new file mode 100644
+index 0000000..da1db00
+--- /dev/null
++++ b/bin/tests/system/ttl/ns1/min-example.db
+@@ -0,0 +1,9 @@
++min-example.	0	IN SOA	ns root (
++				2000082401 ; serial
++				1800       ; refresh (30 minutes)
++				1800       ; retry (30 minutes)
++				1814400    ; expire (3 weeks)
++				0          ; minimum (0 seconds)
++				)
++min-example.	0	IN NS	ns.min-example.
++ns.min-example.	0	IN A	10.53.0.1
+diff --git a/bin/tests/system/ttl/ns1/named.conf.in b/bin/tests/system/ttl/ns1/named.conf.in
+new file mode 100644
+index 0000000..211d959
+--- /dev/null
++++ b/bin/tests/system/ttl/ns1/named.conf.in
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++key rndc_key {
++	secret "1234abcd8765";
++	algorithm hmac-sha256;
++};
++
++controls {
++	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
++};
++
++options {
++	query-source address 10.53.0.1;
++	notify-source 10.53.0.1;
++	transfer-source 10.53.0.1;
++	port @PORT@;
++	pid-file "named.pid";
++	listen-on { 10.53.0.1; };
++	listen-on-v6 { none; };
++	recursion no;
++	check-integrity no;
++};
++
++zone "." {
++	type hint;
++	file "../../common/root.hint";
++};
++
++zone "min-example" {
++	type master;
++	file "min-example.db";
++};
++
++zone "max-example" {
++	type master;
++	file "max-example.db";
++};
+diff --git a/bin/tests/system/ttl/ns2/hints.db b/bin/tests/system/ttl/ns2/hints.db
+new file mode 100644
+index 0000000..348fc96
+--- /dev/null
++++ b/bin/tests/system/ttl/ns2/hints.db
+@@ -0,0 +1,2 @@
++. 60 IN NS ns.nil.
++ns.nil. 60 IN A 10.53.0.1
+diff --git a/bin/tests/system/ttl/ns2/named.conf.in b/bin/tests/system/ttl/ns2/named.conf.in
+new file mode 100644
+index 0000000..0762625
+--- /dev/null
++++ b/bin/tests/system/ttl/ns2/named.conf.in
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++options {
++	directory ".";
++	query-source address 10.53.0.2;
++	notify-source 10.53.0.2;
++	transfer-source 10.53.0.2;
++	port @PORT@;
++	pid-file "named.pid";
++	listen-on { 10.53.0.2; };
++	listen-on-v6 { none; };
++	servfail-ttl 0;
++	max-recursion-depth 12;
++	recursion yes;
++	dnssec-validation no;
++	min-cache-ttl 60;
++	min-ncache-ttl 30;
++	max-cache-ttl 120;
++	max-ncache-ttl 60;
++};
++
++key rndc_key {
++	secret "1234abcd8765";
++	algorithm hmac-sha256;
++};
++
++controls {
++	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
++};
++
++zone "." { type hint; file "hints.db"; };
+diff --git a/bin/tests/system/ttl/setup.sh b/bin/tests/system/ttl/setup.sh
+new file mode 100644
+index 0000000..68fd0d2
+--- /dev/null
++++ b/bin/tests/system/ttl/setup.sh
+@@ -0,0 +1,7 @@
++#!/bin/sh
++
++. ../conf.sh
++
++$SHELL clean.sh
++copy_setports ns1/named.conf.in ns1/named.conf
++copy_setports ns2/named.conf.in ns2/named.conf
+diff --git a/bin/tests/system/ttl/tests.sh b/bin/tests/system/ttl/tests.sh
+new file mode 100644
+index 0000000..e0a3582
+--- /dev/null
++++ b/bin/tests/system/ttl/tests.sh
+@@ -0,0 +1,35 @@
++#!/bin/sh
++
++. ../conf.sh
++
++dig_with_options() { "$DIG" +noadd +nosea +nostat +noquest +nocomm +nocmd -p "${PORT}" "$@"; }
++
++status=0
++t=0
++
++echo_i "testing min-cache-ttl"
++t=$((t+1))
++dig_with_options IN SOA min-example. @10.53.0.2 > dig.out.${t}
++TTL=$(< dig.out.${t} awk '{ print $2; }')
++[ "$TTL" -eq 60 ] || status=$((status+1))
++
++echo_i "testing min-ncache-ttl"
++t=$((t+1))
++dig_with_options IN MX min-example. @10.53.0.2 > dig.out.${t}
++TTL=$(< dig.out.${t} awk '{ print $2; }')
++[ "$TTL" -eq 30 ] || status=$((status+1))
++
++echo_i "testing max-cache-ttl"
++t=$((t+1))
++dig_with_options IN SOA max-example. @10.53.0.2 > dig.out.${t}
++TTL=$(< dig.out.${t} awk '{ print $2; }')
++[ "$TTL" -eq 120 ] || status=$((status+1))
++
++echo_i "testing max-ncache-ttl"
++t=$((t+1))
++dig_with_options IN MX max-example. @10.53.0.2 > dig.out.${t}
++TTL=$(< dig.out.${t} awk '{ print $2; }')
++[ "$TTL" -eq 60 ] || status=$((status+1))
++
++echo_i "exit status: $status"
++[ $status -eq 0 ] || exit 1

@@ -1,0 +1,119 @@
+From: =?utf-8?b?T25kxZllaiBTdXLDvQ==?= <ondrej@sury.org>
+Date: Thu, 8 Nov 2018 00:24:09 +0700
+Subject: Add min-{n,}cache-ttl tests for checkconf
+
+---
+ bin/tests/system/checkconf/bad-mincachettl.conf   | 14 ++++++++++++
+ bin/tests/system/checkconf/bad-minncachettl.conf  | 14 ++++++++++++
+ bin/tests/system/checkconf/good-mincachettl.conf  | 26 +++++++++++++++++++++++
+ bin/tests/system/checkconf/good-minncachettl.conf | 26 +++++++++++++++++++++++
+ 4 files changed, 80 insertions(+)
+ create mode 100644 bin/tests/system/checkconf/bad-mincachettl.conf
+ create mode 100644 bin/tests/system/checkconf/bad-minncachettl.conf
+ create mode 100644 bin/tests/system/checkconf/good-mincachettl.conf
+ create mode 100644 bin/tests/system/checkconf/good-minncachettl.conf
+
+diff --git a/bin/tests/system/checkconf/bad-mincachettl.conf b/bin/tests/system/checkconf/bad-mincachettl.conf
+new file mode 100644
+index 0000000..0a1c188
+--- /dev/null
++++ b/bin/tests/system/checkconf/bad-mincachettl.conf
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view one {
++	min-cache-ttl 1x;
++};
+diff --git a/bin/tests/system/checkconf/bad-minncachettl.conf b/bin/tests/system/checkconf/bad-minncachettl.conf
+new file mode 100644
+index 0000000..ac2e29b
+--- /dev/null
++++ b/bin/tests/system/checkconf/bad-minncachettl.conf
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view one {
++	min-ncache-ttl 1x;
++};
+diff --git a/bin/tests/system/checkconf/good-mincachettl.conf b/bin/tests/system/checkconf/good-mincachettl.conf
+new file mode 100644
+index 0000000..7afb8d0
+--- /dev/null
++++ b/bin/tests/system/checkconf/good-mincachettl.conf
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view one {
++	min-cache-ttl 0;
++};
++view two {
++	min-cache-ttl 30;
++};
++view three {
++	min-cache-ttl 60;
++};
++view four {
++	min-cache-ttl 90s;
++};
++view five {
++	min-cache-ttl 1m;
++};
+diff --git a/bin/tests/system/checkconf/good-minncachettl.conf b/bin/tests/system/checkconf/good-minncachettl.conf
+new file mode 100644
+index 0000000..6bfc663
+--- /dev/null
++++ b/bin/tests/system/checkconf/good-minncachettl.conf
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view one {
++	min-ncache-ttl 0;
++};
++view two {
++	min-ncache-ttl 30;
++};
++view three {
++	min-ncache-ttl 60;
++};
++view four {
++	min-ncache-ttl 90s;
++};
++view five {
++	min-ncache-ttl 1m;
++};

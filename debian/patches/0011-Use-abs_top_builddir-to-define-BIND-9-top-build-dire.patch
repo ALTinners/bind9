@@ -1,0 +1,25 @@
+From: =?utf-8?b?T25kxZllaiBTdXLDvQ==?= <ondrej@sury.org>
+Date: Thu, 8 Nov 2018 14:51:36 +0700
+Subject: Use @abs_top_builddir@ to define BIND 9 top build directory in
+ conf.sh
+
+---
+ bin/tests/system/conf.sh.in | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/bin/tests/system/conf.sh.in b/bin/tests/system/conf.sh.in
+index ec07ddb..77ecced 100644
+--- a/bin/tests/system/conf.sh.in
++++ b/bin/tests/system/conf.sh.in
+@@ -15,10 +15,7 @@
+ #
+ 
+ # Find the top of the BIND9 tree.
+-TOP=${SYSTEMTESTTOP:=.}/../../..
+-
+-# Make it absolute so that it continues to work after we cd.
+-TOP=`cd $TOP && pwd`
++TOP=@abs_top_builddir@
+ 
+ ARPANAME=$TOP/bin/tools/arpaname
+ CDS=$TOP/bin/dnssec/dnssec-cds

@@ -1,0 +1,156 @@
+From: =?utf-8?b?T25kxZllaiBTdXLDvQ==?= <ondrej@sury.org>
+Date: Mon, 12 Nov 2018 14:55:57 +0100
+Subject: Fix the max-ncache-ttl tests
+
+---
+ bin/tests/system/checkconf/bad-maxncachettl-2.conf | 14 ++++++++++
+ bin/tests/system/checkconf/bad-maxncachettl-3.conf | 17 ++++++++++++
+ bin/tests/system/checkconf/bad-maxncachettl-4.conf | 14 ++++++++++
+ bin/tests/system/checkconf/good-maxcachettl.conf   | 32 ++++++++++++++++++++++
+ bin/tests/system/checkconf/good-maxncachettl.conf  | 32 ++++++++++++++++++++++
+ 5 files changed, 109 insertions(+)
+ create mode 100644 bin/tests/system/checkconf/bad-maxncachettl-2.conf
+ create mode 100644 bin/tests/system/checkconf/bad-maxncachettl-3.conf
+ create mode 100644 bin/tests/system/checkconf/bad-maxncachettl-4.conf
+ create mode 100644 bin/tests/system/checkconf/good-maxcachettl.conf
+ create mode 100644 bin/tests/system/checkconf/good-maxncachettl.conf
+
+diff --git a/bin/tests/system/checkconf/bad-maxncachettl-2.conf b/bin/tests/system/checkconf/bad-maxncachettl-2.conf
+new file mode 100644
+index 0000000..e8eae8f
+--- /dev/null
++++ b/bin/tests/system/checkconf/bad-maxncachettl-2.conf
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view two {
++	max-ncache-ttl 604801;
++};
+diff --git a/bin/tests/system/checkconf/bad-maxncachettl-3.conf b/bin/tests/system/checkconf/bad-maxncachettl-3.conf
+new file mode 100644
+index 0000000..f31c133
+--- /dev/null
++++ b/bin/tests/system/checkconf/bad-maxncachettl-3.conf
+@@ -0,0 +1,17 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view three {
++	max-ncache-ttl 4000000000;
++};
++view four {
++	max-ncache-ttl -1;
++};
+diff --git a/bin/tests/system/checkconf/bad-maxncachettl-4.conf b/bin/tests/system/checkconf/bad-maxncachettl-4.conf
+new file mode 100644
+index 0000000..c220ecd
+--- /dev/null
++++ b/bin/tests/system/checkconf/bad-maxncachettl-4.conf
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view four {
++	max-ncache-ttl -1;
++};
+diff --git a/bin/tests/system/checkconf/good-maxcachettl.conf b/bin/tests/system/checkconf/good-maxcachettl.conf
+new file mode 100644
+index 0000000..2ebef0a
+--- /dev/null
++++ b/bin/tests/system/checkconf/good-maxcachettl.conf
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view one {
++	max-cache-ttl 0;
++};
++view two {
++	max-cache-ttl 86400;
++};
++view three {
++	max-cache-ttl 4000000000;
++};
++view four {
++	max-cache-ttl 3600s;
++};
++view five {
++	max-cache-ttl 1h;
++};
++view six {
++	max-cache-ttl 1d;
++};
++view seven {
++	max-cache-ttl 1w;
++};
+diff --git a/bin/tests/system/checkconf/good-maxncachettl.conf b/bin/tests/system/checkconf/good-maxncachettl.conf
+new file mode 100644
+index 0000000..198f3bd
+--- /dev/null
++++ b/bin/tests/system/checkconf/good-maxncachettl.conf
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++view one {
++	max-ncache-ttl 0;
++};
++view two {
++	max-ncache-ttl 86400;
++};
++view three {
++	max-ncache-ttl 604800;
++};
++view four {
++	max-ncache-ttl 3600s;
++};
++view five {
++	max-ncache-ttl 1h;
++};
++view six {
++	max-ncache-ttl 1d;
++};
++view seven {
++	max-ncache-ttl 1w;
++};

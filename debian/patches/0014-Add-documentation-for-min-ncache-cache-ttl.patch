@@ -1,0 +1,88 @@
+From: =?utf-8?b?T25kxZllaiBTdXLDvQ==?= <ondrej@sury.org>
+Date: Thu, 8 Nov 2018 02:10:52 +0700
+Subject: Add documentation for min-{ncache,cache}-ttl
+
+---
+ bin/named/named.conf.docbook |  2 ++
+ doc/arm/Bv9ARM-book.xml      | 34 ++++++++++++++++++++++++++++++++++
+ doc/misc/options             |  2 ++
+ 3 files changed, 38 insertions(+)
+
+diff --git a/bin/named/named.conf.docbook b/bin/named/named.conf.docbook
+index 56bb23e..658121b 100644
+--- a/bin/named/named.conf.docbook
++++ b/bin/named/named.conf.docbook
+@@ -337,6 +337,8 @@ options {
+ 	memstatistics <replaceable>boolean</replaceable>;
+ 	memstatistics-file <replaceable>quoted_string</replaceable>;
+ 	message-compression <replaceable>boolean</replaceable>;
++	min-cache-ttl <replaceable>ttlval</replaceable>;
++	min-ncache-ttl <replaceable>ttlval</replaceable>;
+ 	min-refresh-time <replaceable>integer</replaceable>;
+ 	min-retry-time <replaceable>integer</replaceable>;
+ 	minimal-any <replaceable>boolean</replaceable>;
+diff --git a/doc/arm/Bv9ARM-book.xml b/doc/arm/Bv9ARM-book.xml
+index c051a8a..c6fa235 100644
+--- a/doc/arm/Bv9ARM-book.xml
++++ b/doc/arm/Bv9ARM-book.xml
+@@ -4292,6 +4292,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
+ 		  <command>max-ncache-ttl</command>,
+ 		  <command>max-stale-ttl</command>,
+ 		  <command>max-cache-size</command>, and
++		  <command>min-cache-ttl</command>,
++		  <command>min-ncache-ttl</command>,
+ 		  <command>zero-no-soa-ttl</command>.
+ 		</para>
+ 
+@@ -8918,6 +8920,38 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
+ 	      </listitem>
+ 	    </varlistentry>
+ 
++	    <varlistentry>
++	      <term><command>min-ncache-ttl</command></term>
++	      <listitem>
++		<para>
++		  To reduce network traffic and increase performance, the server
++		  stores negative answers. <command>min-ncache-ttl</command> is
++		  used to set a minimum retention time for these answers in the
++		  server in seconds.  For convenience, TTL-style time unit
++		  suffixes may be used to specify the value.  The default
++		  <command>min-ncache-ttl</command> is <literal>0</literal>
++		  seconds.  <command>min-ncache-ttl</command> cannot exceed 90
++		  seconds and will be truncated to 90 seconds if set to a
++		  greater value.
++		</para>
++	      </listitem>
++	    </varlistentry>
++
++	    <varlistentry>
++	      <term><command>min-cache-ttl</command></term>
++	      <listitem>
++		<para>
++		  Sets the minimum time for which the server will cache ordinary
++		  (positive) answers in seconds. For convenience, TTL-style time
++		  unit suffixes may be used to specify the value. The default
++		  <command>min-cache-ttl</command> is <literal>0</literal>
++		  seconds. <command>min-cache-ttl</command> cannot exceed 90
++		  seconds and will be truncated to 90 seconds if set to a
++		  greater value.
++		</para>
++	      </listitem>
++	    </varlistentry>
++
+ 	    <varlistentry>
+ 	      <term><command>max-ncache-ttl</command></term>
+ 	      <listitem>
+diff --git a/doc/misc/options b/doc/misc/options
+index 5e35861..69b5307 100644
+--- a/doc/misc/options
++++ b/doc/misc/options
+@@ -568,6 +568,8 @@ view <string> [ <class> ] {
+         max-udp-size <integer>;
+         max-zone-ttl ( unlimited | <ttlval> );
+         message-compression <boolean>;
++        min-cache-ttl <ttlval>;
++        min-ncache-ttl <ttlval>;
+         min-refresh-time <integer>;
+         min-retry-time <integer>;
+         min-roots <integer>; // not implemented
