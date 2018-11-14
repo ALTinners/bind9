@@ -1,3 +1,9 @@
+bind (1:9.12.3+dfsg-2) experimental; urgency=medium
+
+  * Pull fixed min-{n,}cache-ttl patch from upstream master branch
+
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 14 Nov 2018 19:36:04 +0000
+
 bind (1:9.12.3+dfsg-1) experimental; urgency=medium
 
   * New upstream version 9.12.3+dfsg
