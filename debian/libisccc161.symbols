@@ -1,4 +1,4 @@
-libisccc.so.160 libisccc160 #MINVER#
+libisccc.so.161 libisccc161 #MINVER#
  isccc_alist_alistp@Base 1:9.10.6+dfsg
  isccc_alist_assq@Base 1:9.10.6+dfsg
  isccc_alist_create@Base 1:9.10.6+dfsg

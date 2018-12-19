@@ -1,4 +1,4 @@
-libisc.so.169 libisc169 #MINVER#
+libisc.so.1100 libisc1100 #MINVER#
  (optional)bsdcompat@Base 1:9.11.3+dfsg
  isc___errno2result@Base 1:9.11.3+dfsg
  isc___mem_allocate@Base 1:9.11.3+dfsg
@@ -900,7 +900,7 @@ libisc.so.169 libisc169 #MINVER#
  pkcs_C_VerifyFinal@Base 1:9.11.3+dfsg
  pkcs_C_VerifyInit@Base 1:9.11.3+dfsg
  pkcs_C_VerifyUpdate@Base 1:9.11.3+dfsg
-libisc-pkcs11.so.169 libisc169 #MINVER#
+libisc-pkcs11.so.1100 libisc1100 #MINVER#
  (optional)bsdcompat@Base 1:9.11.3+dfsg
  isc___errno2result@Base 1:9.11.3+dfsg
  isc___mem_allocate@Base 1:9.11.3+dfsg

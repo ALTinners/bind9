@@ -1,4 +1,4 @@
-libdns-pkcs11.so.1102 libdns1102 #MINVER#
+libdns-pkcs11.so.1104 libdns1104 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
@@ -1115,6 +1115,7 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_version@Base 1:9.11.3+dfsg
  dns_view_adddelegationonly@Base 1:9.11.3+dfsg
  dns_view_addzone@Base 1:9.11.3+dfsg
+ dns_view_asyncload2@Base 1:9.11.5+dfsg
  dns_view_asyncload@Base 1:9.11.3+dfsg
  dns_view_attach@Base 1:9.11.3+dfsg
  dns_view_checksig@Base 1:9.11.3+dfsg
@@ -1188,6 +1189,7 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_xfrin_detach@Base 1:9.11.3+dfsg
  dns_xfrin_shutdown@Base 1:9.11.3+dfsg
  dns_zone_addnsec3chain@Base 1:9.11.3+dfsg
+ dns_zone_asyncload2@Base 1:9.11.5+dfsg
  dns_zone_asyncload@Base 1:9.11.3+dfsg
  dns_zone_attach@Base 1:9.11.3+dfsg
  dns_zone_catz_enable@Base 1:9.11.3+dfsg
@@ -1427,6 +1429,7 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  dns_zonemgr_unreachabledel@Base 1:9.11.3+dfsg
  dns_zt_apply2@Base 1:9.11.3+dfsg
  dns_zt_apply@Base 1:9.11.3+dfsg
+ dns_zt_asyncload2@Base 1:9.11.5+dfsg
  dns_zt_asyncload@Base 1:9.11.3+dfsg
  dns_zt_attach@Base 1:9.11.3+dfsg
  dns_zt_create@Base 1:9.11.3+dfsg
@@ -1577,7 +1580,7 @@ libdns-pkcs11.so.1102 libdns1102 #MINVER#
  isc__rdatalist_next@Base 1:9.11.3+dfsg
  isc__rdatalist_setownercase@Base 1:9.11.3+dfsg
  ishex@Base 1:9.11.3+dfsg
-libdns.so.1102 libdns1102 #MINVER#
+libdns.so.1104 libdns1104 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
@@ -2694,6 +2697,7 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_version@Base 1:9.11.3+dfsg
  dns_view_adddelegationonly@Base 1:9.11.3+dfsg
  dns_view_addzone@Base 1:9.11.3+dfsg
+ dns_view_asyncload2@Base 1:9.11.5+dfsg
  dns_view_asyncload@Base 1:9.11.3+dfsg
  dns_view_attach@Base 1:9.11.3+dfsg
  dns_view_checksig@Base 1:9.11.3+dfsg
@@ -2769,6 +2773,7 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_xfrin_detach@Base 1:9.11.3+dfsg
  dns_xfrin_shutdown@Base 1:9.11.3+dfsg
  dns_zone_addnsec3chain@Base 1:9.11.3+dfsg
+ dns_zone_asyncload2@Base 1:9.11.5+dfsg
  dns_zone_asyncload@Base 1:9.11.3+dfsg
  dns_zone_attach@Base 1:9.11.3+dfsg
  dns_zone_catz_enable@Base 1:9.11.3+dfsg
@@ -3011,6 +3016,7 @@ libdns.so.1102 libdns1102 #MINVER#
  dns_zonemgr_unreachabledel@Base 1:9.11.3+dfsg
  dns_zt_apply2@Base 1:9.11.3+dfsg
  dns_zt_apply@Base 1:9.11.3+dfsg
+ dns_zt_asyncload2@Base 1:9.11.5+dfsg
  dns_zt_asyncload@Base 1:9.11.3+dfsg
  dns_zt_attach@Base 1:9.11.3+dfsg
  dns_zt_create@Base 1:9.11.3+dfsg
