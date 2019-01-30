@@ -1,6 +1,6 @@
-bind9 (1:9.11.5.P1+dfsg-2) UNRELEASES; urgency=medium
+bind9 (1:9.11.5.P1+dfsg-2) UNRELEASED; urgency=medium
 
-  * Support dyndb modules with apparmor.
+  * Support dyndb modules with apparmor. (Closes: #900879)
 
  -- Dominik George <natureshadow@debian.org>  Wed, 30 Jan 2019 11:01:15 +0100
 
