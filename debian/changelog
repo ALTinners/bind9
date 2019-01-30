@@ -1,3 +1,9 @@
+bind9 (1:9.11.5.P1+dfsg-2) UNRELEASES; urgency=medium
+
+  * Support dyndb modules with apparmor.
+
+ -- Dominik George <natureshadow@debian.org>  Wed, 30 Jan 2019 11:01:15 +0100
+
 bind9 (1:9.11.5.P1+dfsg-1) unstable; urgency=medium
 
   * New upstream version 9.11.5.P1+dfsg
