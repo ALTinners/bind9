@@ -74,6 +74,12 @@
   # dyndb backends
   /usr/lib/bind/*.so rm,
 
+  # Samba DLZ
+  /var/lib/samba/private/dns.keytab r,
+  /var/lib/samba/private/named.conf r,
+  /var/lib/samba/private/dns/** rwk,
+  /etc/smb.conf r,
+
   # Site-specific additions and overrides. See local/README for details.
   #include <local/usr.sbin.named>
 }
