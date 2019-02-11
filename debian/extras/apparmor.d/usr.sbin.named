@@ -22,6 +22,9 @@
   /var/cache/bind/** lrw,
   /var/cache/bind/ rw,
 
+  # Database file used by allow-new-zones
+  /var/cache/bind/_default.nzd-lock rwk,
+
   # gssapi
   /etc/krb5.keytab kr,
   /etc/bind/krb5.keytab kr,
