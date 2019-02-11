@@ -1,8 +1,14 @@
-bind9 (1:9.11.5.P1+dfsg-2) UNRELEASED; urgency=medium
+bind9 (1:9.11.5.P1+dfsg-2) unstable; urgency=medium
 
+  [ Dominik George ]
   * Support dyndb modules with apparmor. (Closes: #900879)
 
- -- Dominik George <natureshadow@debian.org>  Wed, 30 Jan 2019 11:01:15 +0100
+  [ Bernhard Schmidt ]
+  * apparmor-policy: permit locking of the allow-new-zones database
+    (Closes: #922065)
+  * apparmor-policy: allow access to Samba DLZ files (Closes: #920530)
+
+ -- Bernhard Schmidt <berni@debian.org>  Tue, 12 Feb 2019 00:34:21 +0100
 
 bind9 (1:9.11.5.P1+dfsg-1) unstable; urgency=medium
 
