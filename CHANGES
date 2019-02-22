@@ -1,3 +1,22 @@
+	--- 9.11.5-P4 released ---
+
+	--- 9.11.5-P3 released (withdrawn) ---
+
+5141.	[security]	Zone transfer controls for writable DLZ zones were
+			not effective as the allowzonexfr method was not being
+			called for such zones. (CVE-2019-6465) [GL #790]
+
+	--- 9.11.5-P2 released (withdrawn) ---
+
+5118.	[security]	Named could crash if it is managing a key with
+			`managed-keys` and the authoritative zone is rolling
+			the key to an unsupported algorithm. (CVE-2018-5745)
+			[GL #780]
+
+5110.	[security]	Named leaked memory if there were multiple Key Tag
+			EDNS options present. (CVE-2018-5744) [GL #772]
+
+
 	--- 9.11.5-P1 released ---
 
 5108.	[bug]		Named could fail to determine bottom of zone when
