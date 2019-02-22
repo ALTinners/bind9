@@ -1,3 +1,21 @@
+bind9 (1:9.11.5.P4+dfsg-1) unstable; urgency=high
+
+  [ Bernhard Schmidt ]
+  * New upstream version 9.11.5.P4+dfsg
+    - CVE-2018-5744: A specially crafted packet can cause named to leak memory
+    - CVE-2018-5745: An assertion failure can occur if a trust anchor rolls over
+      to an unsupported key algorithm when using managed-keys
+    - CVE-2019-6465: Controls for zone transfers might not be properly applied
+      to Dynamically Loadable Zones (DLZs) if the zones are writable.
+  * d/watch: Do not use beta or RC versions
+  * d/libdns1104.symbols: fix symbols-file-contains-debian-revision for dnstap
+    symbols
+
+  [ Ondřej Surý ]
+  * Add new upstream GPG signing-key
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 22 Feb 2019 17:54:10 +0100
+
 bind9 (1:9.11.5.P1+dfsg-2) unstable; urgency=medium
 
   [ Dominik George ]
