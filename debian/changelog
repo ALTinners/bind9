@@ -1,3 +1,10 @@
+bind9 (1:9.11.5.P4+dfsg-1~bpo9+1) stretch-backports; urgency=high
+
+  * Rebuild for stretch-backports.
+  * High Urgency and before testing migration due to CVE-2018-5744
+
+ -- Bernhard Schmidt <berni@debian.org>  Tue, 26 Feb 2019 21:52:49 +0100
+
 bind9 (1:9.11.5.P4+dfsg-1) unstable; urgency=high
 
   [ Bernhard Schmidt ]
