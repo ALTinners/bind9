@@ -1,3 +1,13 @@
+bind (1:9.12.3.P4-1) experimental; urgency=medium
+
+  [ Bernhard Schmidt ]
+  * d/watch: Do not use beta or RC versions
+
+  [ Ondřej Surý ]
+  * New upstream version 9.12.3.P4
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 26 Feb 2019 11:01:30 +0000
+
 bind (1:9.12.3.P1+dfsg-1) experimental; urgency=medium
 
   * New upstream version 9.12.3.P1+dfsg
