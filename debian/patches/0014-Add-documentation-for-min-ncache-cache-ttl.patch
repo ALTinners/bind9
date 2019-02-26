@@ -9,10 +9,10 @@ Subject: Add documentation for min-{ncache,cache}-ttl
  3 files changed, 38 insertions(+)
 
 diff --git a/bin/named/named.conf.docbook b/bin/named/named.conf.docbook
-index 56bb23e..658121b 100644
+index 6efadef..72e0710 100644
 --- a/bin/named/named.conf.docbook
 +++ b/bin/named/named.conf.docbook
-@@ -337,6 +337,8 @@ options {
+@@ -338,6 +338,8 @@ options {
  	memstatistics <replaceable>boolean</replaceable>;
  	memstatistics-file <replaceable>quoted_string</replaceable>;
  	message-compression <replaceable>boolean</replaceable>;
@@ -22,10 +22,10 @@ index 56bb23e..658121b 100644
  	min-retry-time <replaceable>integer</replaceable>;
  	minimal-any <replaceable>boolean</replaceable>;
 diff --git a/doc/arm/Bv9ARM-book.xml b/doc/arm/Bv9ARM-book.xml
-index c051a8a..c6fa235 100644
+index a5141af..58bea26 100644
 --- a/doc/arm/Bv9ARM-book.xml
 +++ b/doc/arm/Bv9ARM-book.xml
-@@ -4292,6 +4292,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
+@@ -4293,6 +4293,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
  		  <command>max-ncache-ttl</command>,
  		  <command>max-stale-ttl</command>,
  		  <command>max-cache-size</command>, and
@@ -34,7 +34,7 @@ index c051a8a..c6fa235 100644
  		  <command>zero-no-soa-ttl</command>.
  		</para>
  
-@@ -8918,6 +8920,38 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
+@@ -8919,6 +8921,38 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
  	      </listitem>
  	    </varlistentry>
  
