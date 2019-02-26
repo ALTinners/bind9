@@ -1,8 +1,32 @@
-bind9 (1:9.11.5.P1+dfsg-1~bpo9+1) stretch-backports; urgency=medium
+bind9 (1:9.11.5.P4+dfsg-1) unstable; urgency=high
 
-  * Rebuild for stretch-backports.
+  [ Bernhard Schmidt ]
+  * New upstream version 9.11.5.P4+dfsg
+    - CVE-2018-5744: A specially crafted packet can cause named to leak memory
+    - CVE-2018-5745: An assertion failure can occur if a trust anchor rolls over
+      to an unsupported key algorithm when using managed-keys
+    - CVE-2019-6465: Controls for zone transfers might not be properly applied
+      to Dynamically Loadable Zones (DLZs) if the zones are writable.
+  * d/watch: Do not use beta or RC versions
+  * d/libdns1104.symbols: fix symbols-file-contains-debian-revision for dnstap
+    symbols
 
- -- Bernhard Schmidt <berni@debian.org>  Wed, 19 Dec 2018 22:44:36 +0100
+  [ Ondřej Surý ]
+  * Add new upstream GPG signing-key
+
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 22 Feb 2019 17:54:10 +0100
+
+bind9 (1:9.11.5.P1+dfsg-2) unstable; urgency=medium
+
+  [ Dominik George ]
+  * Support dyndb modules with apparmor. (Closes: #900879)
+
+  [ Bernhard Schmidt ]
+  * apparmor-policy: permit locking of the allow-new-zones database
+    (Closes: #922065)
+  * apparmor-policy: allow access to Samba DLZ files (Closes: #920530)
+
+ -- Bernhard Schmidt <berni@debian.org>  Tue, 12 Feb 2019 00:34:21 +0100
 
 bind9 (1:9.11.5.P1+dfsg-1) unstable; urgency=medium
 

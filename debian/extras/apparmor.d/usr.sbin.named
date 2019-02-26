@@ -22,6 +22,9 @@
   /var/cache/bind/** lrw,
   /var/cache/bind/ rw,
 
+  # Database file used by allow-new-zones
+  /var/cache/bind/_default.nzd-lock rwk,
+
   # gssapi
   /etc/krb5.keytab kr,
   /etc/bind/krb5.keytab kr,
@@ -67,6 +70,15 @@
 
   # dynamic updates
   /var/tmp/DNS_* rw,
+
+  # dyndb backends
+  /usr/lib/bind/*.so rm,
+
+  # Samba DLZ
+  /var/lib/samba/private/dns.keytab r,
+  /var/lib/samba/private/named.conf r,
+  /var/lib/samba/private/dns/** rwk,
+  /etc/smb.conf r,
 
   # Site-specific additions and overrides. See local/README for details.
   #include <local/usr.sbin.named>
