@@ -664,12 +664,12 @@ make_empty_lookup(void) {
 	looknew->ttlunits = false;
 	looknew->qr = false;
 #ifdef WITH_IDN_SUPPORT
-	looknew->idnin = true;
+	looknew->idnin = isatty(1)?(getenv("IDN_DISABLE") == NULL):false;
 #else
 	looknew->idnin = false;
 #endif
 #ifdef WITH_IDN_OUT_SUPPORT
-	looknew->idnout = true;
+	looknew->idnout = looknew->idnin;
 #else
 	looknew->idnout = false;
 #endif
@@ -1271,6 +1271,19 @@ create_search_list(irs_resconf_t *resconf) {
 }
 
 /*%
+ * Append 'addr' to the list of servers to be queried.  This function is only
+ * called when no server addresses are explicitly specified and either libirs
+ * returns an empty list of servers to use or none of the addresses returned by
+ * libirs are usable due to the specified address family restrictions.
+ */
+static void
+add_fallback_nameserver(const char *addr) {
+	dig_server_t *server = make_server(addr, addr);
+	ISC_LINK_INIT(server, link);
+	ISC_LIST_APPEND(server_list, server, link);
+}
+
+/*%
  * Setup the system as a whole, reading key information and resolv.conf
  * settings.
  */
@@ -1313,6 +1326,16 @@ setup_system(bool ipv4only, bool ipv6only) {
 	/* If user doesn't specify server use nameservers from resolv.conf. */
 	if (ISC_LIST_EMPTY(server_list)) {
 		get_server_list(resconf);
+	}
+
+	/* If we don't find a nameserver fall back to localhost */
+	if (ISC_LIST_EMPTY(server_list)) {
+		if (have_ipv6) {
+			add_fallback_nameserver("::1");
+		}
+		if (have_ipv4) {
+			add_fallback_nameserver("127.0.0.1");
+		}
 	}
 
 	irs_resconf_destroy(&resconf);
@@ -2343,7 +2366,7 @@ setup_lookup(dig_lookup_t *lookup) {
 
 		if (lookup->ecs_addr != NULL) {
 			uint8_t addr[16];
-			uint16_t family;
+			uint16_t family = 0;
 			uint32_t plen;
 			struct sockaddr *sa;
 			struct sockaddr_in *sin;
@@ -2400,6 +2423,7 @@ setup_lookup(dig_lookup_t *lookup) {
 				break;
 			default:
 				INSIST(0);
+				ISC_UNREACHABLE();
 			}
 
 			isc_buffer_init(&b, ecsbuf, sizeof(ecsbuf));
@@ -2753,27 +2777,6 @@ send_tcp_connect(dig_query_t *query) {
 		return;
 	}
 
-	if (specified_source &&
-	    (isc_sockaddr_pf(&query->sockaddr) !=
-	     isc_sockaddr_pf(&bind_address))) {
-		printf(";; Skipping server %s, incompatible "
-		       "address family\n", query->servname);
-		query->waiting_connect = false;
-		if (ISC_LINK_LINKED(query, link))
-			next = ISC_LIST_NEXT(query, link);
-		else
-			next = NULL;
-		l = query->lookup;
-		clear_query(query);
-		if (next == NULL) {
-			printf(";; No acceptable nameservers\n");
-			check_next_lookup(l);
-			return;
-		}
-		send_tcp_connect(next);
-		return;
-	}
-
 	INSIST(query->sock == NULL);
 
 	if (keep != NULL && isc_sockaddr_equal(&keepaddr, &query->sockaddr)) {
@@ -2936,6 +2939,36 @@ send_udp(dig_query_t *query) {
 }
 
 /*%
+ * If there are more servers available for querying within 'lookup', initiate a
+ * TCP or UDP query to the next available server and return true; otherwise,
+ * return false.
+ */
+static bool
+try_next_server(dig_lookup_t *lookup) {
+	dig_query_t *current_query, *next_query;
+
+	current_query = lookup->current_query;
+	if (current_query == NULL || !ISC_LINK_LINKED(current_query, link)) {
+		return (false);
+	}
+
+	next_query = ISC_LIST_NEXT(current_query, link);
+	if (next_query == NULL) {
+		return (false);
+	}
+
+	debug("trying next server...");
+
+	if (lookup->tcp_mode) {
+		send_tcp_connect(next_query);
+	} else {
+		send_udp(next_query);
+	}
+
+	return (true);
+}
+
+/*%
  * IO timeout handler, used for both connect and recv timeouts.  If
  * retries are still allowed, either resend the UDP packet or queue a
  * new TCP lookup.  Otherwise, cancel the lookup.
@@ -2943,7 +2976,7 @@ send_udp(dig_query_t *query) {
 static void
 connect_timeout(isc_task_t *task, isc_event_t *event) {
 	dig_lookup_t *l = NULL;
-	dig_query_t *query = NULL, *cq;
+	dig_query_t *query = NULL;
 
 	UNUSED(task);
 	REQUIRE(event->ev_type == ISC_TIMEREVENT_IDLE);
@@ -2957,18 +2990,19 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 
 	INSIST(!free_now);
 
-	if ((query != NULL) && (query->lookup->current_query != NULL) &&
-	    ISC_LINK_LINKED(query->lookup->current_query, link) &&
-	    (ISC_LIST_NEXT(query->lookup->current_query, link) != NULL)) {
-		debug("trying next server...");
-		cq = query->lookup->current_query;
-		if (!l->tcp_mode)
-			send_udp(ISC_LIST_NEXT(cq, link));
-		else {
-			if (query->sock != NULL)
+	if (cancel_now) {
+		UNLOCK_LOOKUP;
+		return;
+	}
+
+	if (try_next_server(l)) {
+		if (l->tcp_mode) {
+			if (query->sock != NULL) {
 				isc_socket_cancel(query->sock, NULL,
 						  ISC_SOCKCANCEL_ALL);
-			send_tcp_connect(ISC_LIST_NEXT(cq, link));
+			} else {
+				clear_query(query);
+			}
 		}
 		UNLOCK_LOOKUP;
 		return;
@@ -3423,7 +3457,7 @@ process_cookie(dig_lookup_t *l, dns_message_t *msg,
 	}
 
 	INSIST(msg->cc_ok == 0 && msg->cc_bad == 0);
-	if (optlen >= len && optlen >= 8U) {
+	if (len >= 8 && optlen >= 8U) {
 		if (isc_safe_memequal(isc_buffer_current(optbuf), sent, 8)) {
 			msg->cc_ok = 1;
 		} else {
@@ -3509,6 +3543,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	dig_lookup_t *n, *l;
 	bool docancel = false;
 	bool match = true;
+	bool done_process_opt = false;
 	unsigned int parseflags;
 	dns_messageid_t id;
 	unsigned int msgflags;
@@ -3804,6 +3839,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			UNLOCK_LOOKUP;
 			return;
 		}
+		done_process_opt = true;
 	}
 	if ((msg->rcode == dns_rcode_servfail && !l->servfail_stops) ||
 	    (check_ra && (msg->flags & DNS_MESSAGEFLAG_RA) == 0 && l->recurse))
@@ -3893,13 +3929,17 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		}
 	}
 
-	if (l->cookie != NULL) {
-		if (msg->opt == NULL)
-			printf(";; expected opt record in response\n");
-		else
+	if (!done_process_opt) {
+		if (l->cookie != NULL) {
+			if (msg->opt == NULL) {
+				printf(";; expected opt record in response\n");
+			} else {
+				process_opt(l, msg);
+			}
+		} else if (l->sendcookie && msg->opt != NULL) {
 			process_opt(l, msg);
-	} else if (l->sendcookie && msg->opt != NULL)
-		process_opt(l, msg);
+		}
+	}
 	if (!l->doing_xfr || l->xfr_q == query) {
 		if (msg->rcode == dns_rcode_nxdomain &&
 		    (l->origin != NULL || l->need_search)) {

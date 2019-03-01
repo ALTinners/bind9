@@ -380,6 +380,7 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 				break;
 			default:
 				INSIST(0);
+				ISC_UNREACHABLE();
 			}
 
 			if (result == ISC_R_SUCCESS) {
@@ -478,7 +479,7 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 		dns_name_t *name;
 
 		name = &t->name;
-		while (t != NULL && dns_name_equal(&t->name, name)) {
+		while (t != NULL && dns_name_caseequal(&t->name, name)) {
 			dns_rdatatype_t type, covers;
 			dns_diffop_t op;
 			dns_rdatalist_t rdl;
@@ -494,7 +495,7 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 			rdl.rdclass = t->rdata.rdclass;
 			rdl.ttl = t->ttl;
 
-			while (t != NULL && dns_name_equal(&t->name, name) &&
+			while (t != NULL && dns_name_caseequal(&t->name, name) &&
 			       t->op == op && t->rdata.type == type &&
 			       rdata_covers(&t->rdata) == covers)
 			{

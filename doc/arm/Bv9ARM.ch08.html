@@ -36,7 +36,7 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl class="toc">
-<dt><span class="section"><a href="Bv9ARM.ch08.html#id-1.9.2">Release Notes for BIND Version 9.12.3-P4</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch08.html#id-1.9.2">Release Notes for BIND Version 9.12.4</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_download">Download</a></span></dt>
@@ -52,7 +52,7 @@
 </div>
       <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.9.2"></a>Release Notes for BIND Version 9.12.3-P4</h2></div></div></div>
+<a name="id-1.9.2"></a>Release Notes for BIND Version 9.12.4</h2></div></div></div>
   
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -210,6 +210,15 @@
 	  in the respective principals.
 	</p>
       </li>
+<li class="listitem">
+	<p>
+	  The new configure option <span class="command"><strong>--enable-fips-mode</strong></span>
+	  can be used to make BIND enable and enforce FIPS mode in the
+	  OpenSSL library.  When compiled with such option the BIND will
+	  refuse to run if FIPS mode can't be enabled, thus this option
+	  must be only enabled for the systems where FIPS mode is available.
+	</p>
+      </li>
 </ul></div>
   </div>
 
@@ -237,6 +246,16 @@
 	  between views of the same name but different class; this
 	  has been corrected with the addition of a <span class="command"><strong>-class</strong></span>
 	  option. [GL #105]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  When compiled with IDN support, the <span class="command"><strong>dig</strong></span> and the
+	  <span class="command"><strong>nslookup</strong></span> commands now disable IDN processing when
+	  the standard output is not a tty (e.g. not used by human).  The command
+	  line options +idnin and +idnout need to be used to enable IDN
+	  processing when <span class="command"><strong>dig</strong></span> or <span class="command"><strong>nslookup</strong></span>
+	  is used from the shell scripts.
 	</p>
       </li>
 </ul></div>
@@ -335,6 +354,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.3-P4</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.4</p>
 </body>
 </html>

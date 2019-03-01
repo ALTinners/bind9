@@ -167,6 +167,15 @@
 	  in the respective principals.
 	</para>
       </listitem>
+      <listitem>
+	<para>
+	  The new configure option <command>--enable-fips-mode</command>
+	  can be used to make BIND enable and enforce FIPS mode in the
+	  OpenSSL library.  When compiled with such option the BIND will
+	  refuse to run if FIPS mode can't be enabled, thus this option
+	  must be only enabled for the systems where FIPS mode is available.
+	</para>
+      </listitem>
     </itemizedlist>
   </section>
 
@@ -192,6 +201,16 @@
 	  between views of the same name but different class; this
 	  has been corrected with the addition of a <command>-class</command>
 	  option. [GL #105]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  When compiled with IDN support, the <command>dig</command> and the
+	  <command>nslookup</command> commands now disable IDN processing when
+	  the standard output is not a tty (e.g. not used by human).  The command
+	  line options +idnin and +idnout need to be used to enable IDN
+	  processing when <command>dig</command> or <command>nslookup</command>
+	  is used from the shell scripts.
 	</para>
       </listitem>
     </itemizedlist>

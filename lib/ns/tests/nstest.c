@@ -13,6 +13,8 @@
 
 #include <config.h>
 
+#ifdef NS_HOOKS_ENABLE
+
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -70,7 +72,7 @@ int ncpus;
 bool debug_mem_record = true;
 bool run_managers = false;
 
-static bool hash_active = false, dst_active = false;
+static bool hash_active = false, dst_active = false, test_running = false;
 
 static dns_zone_t *served_zone = NULL;
 
@@ -134,9 +136,6 @@ shutdown_managers(isc_task_t *task, isc_event_t *event) {
 
 static void
 cleanup_managers(void) {
-	if (app_running)
-		isc_app_finish();
-
 	shutdown_done = false;
 
 	if (maintask != NULL) {
@@ -158,14 +157,21 @@ cleanup_managers(void) {
 #endif
 	}
 
-	if (sctx != NULL)
+	if (sctx != NULL) {
 		ns_server_detach(&sctx);
-	if (socketmgr != NULL)
+	}
+	if (socketmgr != NULL) {
 		isc_socketmgr_destroy(&socketmgr);
-	if (taskmgr != NULL)
+	}
+	if (taskmgr != NULL) {
 		isc_taskmgr_destroy(&taskmgr);
-	if (timermgr != NULL)
+	}
+	if (timermgr != NULL) {
 		isc_timermgr_destroy(&timermgr);
+	}
+	if (app_running) {
+		isc_app_finish();
+	}
 }
 
 static void
@@ -240,15 +246,24 @@ isc_result_t
 ns_test_begin(FILE *logfile, bool start_managers) {
 	isc_result_t result;
 
-	if (start_managers)
+	INSIST(!test_running);
+	test_running = true;
+
+	if (start_managers) {
 		CHECK(isc_app_start());
-	if (debug_mem_record)
+	}
+	if (debug_mem_record) {
 		isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
+	}
+
+	INSIST(mctx == NULL);
 	CHECK(isc_mem_create(0, 0, &mctx));
 	CHECK(isc_entropy_create(mctx, &ectx));
 
-	CHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_BLOCKING));
-	dst_active = true;
+	if (!dst_active) {
+		CHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_BLOCKING));
+		dst_active = true;
+	}
 
 	CHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
 	hash_active = true;
@@ -257,7 +272,9 @@ ns_test_begin(FILE *logfile, bool start_managers) {
 		isc_logdestination_t destination;
 		isc_logconfig_t *logconfig = NULL;
 
+		INSIST(lctx == NULL);
 		CHECK(isc_log_create(mctx, &lctx, &logconfig));
+
 		isc_log_registercategories(lctx, categories);
 		isc_log_setcontext(lctx);
 		dns_log_init(lctx);
@@ -276,16 +293,18 @@ ns_test_begin(FILE *logfile, bool start_managers) {
 
 	dns_result_register();
 
-	if (start_managers)
+	if (start_managers) {
 		CHECK(create_managers());
+	}
 
 	/*
 	 * atf-run changes us to a /tmp directory, so tests
 	 * that access test data files must first chdir to the proper
 	 * location.
 	 */
-	if (chdir(TESTS) == -1)
+	if (chdir(TESTS) == -1) {
 		CHECK(ISC_R_FAILURE);
+	}
 
 	ns__hook_table = NULL;
 
@@ -310,14 +329,19 @@ ns_test_end(void) {
 		hash_active = false;
 	}
 
-	if (ectx != NULL)
+	if (ectx != NULL) {
 		isc_entropy_detach(&ectx);
+	}
 
-	if (lctx != NULL)
+	if (lctx != NULL) {
 		isc_log_destroy(&lctx);
+	}
 
-	if (mctx != NULL)
+	if (mctx != NULL) {
 		isc_mem_destroy(&mctx);
+	}
+
+	test_running = false;
 }
 
 isc_result_t
@@ -934,3 +958,4 @@ ns_test_getdata(const char *file, unsigned char *buf,
 	isc_stdio_close(f);
 	return (result);
 }
+#endif

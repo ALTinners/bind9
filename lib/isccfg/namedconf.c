@@ -98,7 +98,7 @@ static cfg_type_t cfg_type_addrmatchelt;
 static cfg_type_t cfg_type_bracketed_aml;
 static cfg_type_t cfg_type_bracketed_dscpsockaddrlist;
 static cfg_type_t cfg_type_bracketed_namesockaddrkeylist;
-static cfg_type_t cfg_type_bracketed_sockaddrlist;
+static cfg_type_t cfg_type_bracketed_netaddrlist;
 static cfg_type_t cfg_type_bracketed_sockaddrnameportlist;
 static cfg_type_t cfg_type_controls;
 static cfg_type_t cfg_type_controls_sockaddr;
@@ -563,10 +563,10 @@ static cfg_type_t cfg_type_bracketed_dscpsockaddrlist = {
 	&cfg_type_sockaddrdscp
 };
 
-static cfg_type_t cfg_type_bracketed_sockaddrlist = {
-	"bracketed_sockaddrlist", cfg_parse_bracketed_list,
+static cfg_type_t cfg_type_bracketed_netaddrlist = {
+	"bracketed_netaddrlist", cfg_parse_bracketed_list,
 	cfg_print_bracketed_list, cfg_doc_bracketed_list, &cfg_rep_list,
-	&cfg_type_sockaddr
+	&cfg_type_netaddr
 };
 
 static const char *autodnssec_enums[] = {
@@ -1586,7 +1586,7 @@ cfg_doc_kv_tuple(cfg_printer_t *pctx, const cfg_type_t *type) {
 	}
 }
 
-static keyword_type_t zone_kw = {"zone", &cfg_type_qstring};
+static keyword_type_t zone_kw = {"zone", &cfg_type_astring};
 static cfg_type_t cfg_type_rpz_zone = {
 	"zone", parse_keyvalue, print_keyvalue,
 	doc_keyvalue, &cfg_rep_string,
@@ -2269,7 +2269,7 @@ zone_only_clauses[] = {
 	{ "pubkey", &cfg_type_pubkey,
 		CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_OBSOLETE
 	},
-	{ "server-addresses", &cfg_type_bracketed_sockaddrlist,
+	{ "server-addresses", &cfg_type_bracketed_netaddrlist,
 		CFG_ZONE_STATICSTUB
 	},
 	{ "server-names", &cfg_type_namelist,
@@ -3250,12 +3250,14 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type,
 	unsigned int have_dscp = 0;
 	const unsigned int *flagp = type->of;
 
-	if ((*flagp & CFG_ADDR_V4OK) != 0)
+	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		isc_netaddr_any(&netaddr);
-	else if ((*flagp & CFG_ADDR_V6OK) != 0)
+	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		isc_netaddr_any6(&netaddr);
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	for (;;) {
 		CHECK(cfg_peektoken(pctx, 0));
@@ -3337,20 +3339,24 @@ doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
 	const unsigned int *flagp = type->of;
 
 	cfg_print_cstr(pctx, "( ( [ address ] ( ");
-	if (*flagp & CFG_ADDR_V4OK)
+	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv4_address>");
-	else if (*flagp & CFG_ADDR_V6OK)
+	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv6_address>");
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 	cfg_print_cstr(pctx, " | * ) [ port ( <integer> | * ) ] ) | "
 		       "( [ [ address ] ( ");
-	if (*flagp & CFG_ADDR_V4OK)
+	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv4_address>");
-	else if (*flagp & CFG_ADDR_V6OK)
+	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv6_address>");
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 	cfg_print_cstr(pctx, " | * ) ] port ( <integer> | * ) ) )"
 		       " [ dscp <integer> ]");
 }
@@ -4140,6 +4146,7 @@ cfg_print_zonegrammar(const unsigned int zonetype,
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	for (clause = clauses; clause->name != NULL; clause++) {

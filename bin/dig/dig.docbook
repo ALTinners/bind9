@@ -132,9 +132,10 @@
 
     <para>
       It is possible to set per-user defaults for <command>dig</command> via
-      <filename>${HOME}/.digrc</filename>.  This file is read and
-      any options in it
-      are applied before the command line arguments.
+      <filename>${HOME}/.digrc</filename>. This file is read and any
+      options in it are applied before the command line arguments.
+      The <option>-r</option> option disables this feature, for
+      scripts that need predictable behaviour.
     </para>
 
     <para>
@@ -331,6 +332,16 @@
 	  <para>
 	    The domain name to query. This is useful to distinguish
 	    the <parameter>name</parameter> from other arguments.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-r</term>
+	<listitem>
+	  <para>
+	    Do not read options from <filename>${HOME}/.digrc</filename>.
+	    This is useful for scripts that need predictable behaviour.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -790,7 +801,13 @@
 	    <para>
 	      Process [do not process] IDN domain names on input.
 	      This requires IDN SUPPORT to have been enabled at
-	      compile time.  The default is to process IDN input.
+	      compile time.
+	    </para>
+	    <para>
+	      The default is to process IDN input when standard output
+	      is a tty.  The IDN processing on input is disabled when
+	      dig output is redirected to files, pipes, and other
+	      non-tty file descriptors.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -801,7 +818,13 @@
 	    <para>
 	      Convert [do not convert] puny code on output.
 	      This requires IDN SUPPORT to have been enabled at
-	      compile time.  The default is to convert output.
+	      compile time.
+	    </para>
+	    <para>
+	      The default is to process puny code on output when
+	      standard output is a tty.  The puny code processing on
+	      output is disabled when dig output is redirected to
+	      files, pipes, and other non-tty file descriptors.
 	    </para>
 	  </listitem>
 	</varlistentry>

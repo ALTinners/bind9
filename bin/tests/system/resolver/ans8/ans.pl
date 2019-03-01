@@ -61,6 +61,16 @@ sub handleUDP {
 	my $qclass = $questions[0]->qclass;
 	my $id = $request->header->id;
 
+	if ($qname =~ /\.formerr-to-all$/) {
+		my $response = new Net::DNS::Packet($qname, $qtype, $qclass);
+		$response->header->qr(1);
+		$response->header->aa(1);
+		$response->header->tc(0);
+		$response->header->id($id);
+		$response->header->rcode("FORMERR");
+		return $response->data;
+	}
+
 	# don't use Net::DNS to construct the header only reply as early
 	# versions just get it completely wrong.
 
@@ -92,14 +102,14 @@ sub handleTCP {
 	my $id = $request->header->id;
 
 	my @results = ();
-	my $packet = new Net::DNS::Packet($qname, $qtype, $qclass);
+	my $response = new Net::DNS::Packet($qname, $qtype, $qclass);
 
-	$packet->header->qr(1);
-	$packet->header->aa(1);
-	$packet->header->id($id);
+	$response->header->qr(1);
+	$response->header->aa(1);
+	$response->header->id($id);
 
-	$packet->push("answer", new Net::DNS::RR("$qname 300 A 1.2.3.4"));
-	push(@results, $packet->data);
+	$response->push("answer", new Net::DNS::RR("$qname 300 A 1.2.3.4"));
+	push(@results, $response->data);
 
 	return \@results;
 }

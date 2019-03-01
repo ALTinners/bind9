@@ -1,26 +1,242 @@
-	--- 9.12.3-P4 released ---
+	--- 9.12.4 released ---
 
-	--- 9.12.3-P3 released (withdrawn) ---
+	--- 9.12.4rc1 released ---
+
+5166.	[port]		openbsd: Threads are now enabled by default. [GL !1548]
+
+5164.	[bug]		Correct errno to result translation in dlz filesystem
+			modules. [GL #884]
+
+5163.	[cleanup]	Out-of-tree builds failed --enable-dnstap. [GL #836]
+
+5162.	[cleanup]	Improve dnssec-keymgr manual. Thanks to Tony Finch.
+			[GL !1518]
+
+5160.	[contrib]	Added DNAME support to the DLZ LDAP schema. Also
+			fixed a compilation bug affecting several DLZ
+			modules. [GL #872]
+
+5159.	[bug]		dnssec-coverage was incorrectly ignoring
+			names specified on the command line without
+			trailing dots. [GL !1478]
+
+5158.	[protocol]	Add support for AMTRELAY and ZONEMD. [GL #867]
+
+5157.	[bug]		Nslookup now errors out if there are extra command
+			line arguments. [GL #207]
+
+5154.	[bug]		dig: process_opt could be called twice on the same
+			message leading to a assertion failure. [GL #860]
+
+5149.	[func]		"rndc dumpdb" now prints a line above a stale RRset
+			indicating how long the data will be retained in the
+			cache for emergency use. [GL #101]
+
+5148.	[bug]		named did not sign the TKEY response. [GL #821]
+
+5147.	[bug]		dnssec-keymgr: Add a five-minute margin to better
+			handle key events close to 'now'. [GL #848]
+
+5146.	[bug]		Removed an unnecessary assert that could be
+			triggered from PKCS#11 modules during
+			deconstruction. [GL #841]
+
+5143.	[bug]		dnssec-keymgr and dnssec-coverage failed to find
+			key files for zone names ending in ".". [GL #560]
 
 5141.	[security]	Zone transfer controls for writable DLZ zones were
 			not effective as the allowzonexfr method was not being
 			called for such zones. (CVE-2019-6465) [GL #790]
 
-	--- 9.12.3-P2 released (withdrawn) ---
+5140.	[bug]		Don't immediately mark existing keys as inactive and
+			deleted when running dnssec-keymgr for the first
+			time. [GL #117]
+
+5139.	[bug]		If possible, don't use forwarders when priming.
+			This ensures we can get root server IP addresses
+			from priming query response glue, which may not
+			be present if the forwarding server is returning
+			minimal responses. [GL #752]
+
+5134.	[bug]		win32: WSAStartup was not called before getservbyname
+			was called. [GL #590]
+
+5133.	[bug]		'rndc managed-keys' didn't handle class and view
+			correctly and failed to add new lines between each
+			view. [GL !1327]
+
+5132.	[bug]		Fix race condition in cleanup part of dns_dt_create().
+			[GL !1323]
+
+5128.	[bug]		Refreshkeytime was not being updated for managed
+			keys zones. [GL #784]
+
+5127.	[bug]		rcode.c:maybe_numeric failed to handle NUL in text
+			regions. [GL #807]
+
+5126.	[bug]		Named incorrectly accepted empty base64 and hex encoded
+			fields when reading master files. [GL #807]
+
+5125.	[bug]		Allow for up to 100 records or 64k of data when caching
+			a negative response. [GL #804]
+
+5124.	[bug]		Named could incorrectly return FORMERR rather than
+			SERVFAIL. [GL #804]
+
+5123.	[bug]		dig could hang indefinitely after encountering an error
+			before creating a TCP socket. [GL #692]
+
+5122.	[bug]		In a "forward first;" configuration, a forwarder
+			timeout did not prevent that forwarder from being
+			queried again after falling back to full recursive
+			resolution. [GL #315]
+
+5121.	[contrib]	dlz_stub_driver.c fails to return ISC_R_NOTFOUND on none
+			matching zone names. [GL !1299]
 
 5118.	[security]	Named could crash if it is managing a key with
 			`managed-keys` and the authoritative zone is rolling
 			the key to an unsupported algorithm. (CVE-2018-5745)
 			[GL #780]
 
+5115.	[bug]		Allow unsupported algorithms in zone when not used for
+			signing with dnssec-signzone. [GL #783]
+
+5112.	[bug]		Named/named-checkconf could dump core if there was
+			a missing masters clause and a bad notify clause.
+			[GL #779]
+
+5111.	[bug]		Occluded DNSKEY records could make it into the
+			delegating NSEC/NSEC3 bitmap. [GL #742]
+
 5110.	[security]	Named leaked memory if there were multiple Key Tag
 			EDNS options present. (CVE-2018-5744) [GL #772]
-
-	--- 9.12.3-P1 released ---
 
 5108.	[bug]		Named could fail to determine bottom of zone when
 			removing out of date keys leading to invalid NSEC
 			and NSEC3 records being added to the zone. [GL #771]
+
+5107.	[bug]		'host -U' did not work. [GL #769]
+
+5104.	[cleanup]	Log clearer informational message when a catz zone
+			is overridden by a zone in named.conf.
+			Thanks to Tony Finch. [GL !1157]
+
+5103.	[bug]		Add missing design by contract tests to dns_catz*.
+			[GL #748]
+
+5102.	[bug]		dnssec-coverage failed to use the default TTL when
+			checking KSK deletion times leading to a exception.
+			[GL #585]
+
+5101.	[bug]		Fix default installation path for Python modules.
+			[GL #730]
+
+5098.	[func]		Failed memory allocations are now fatal. [GL #674]
+
+5097.	[cleanup]	Remove embedded ATF unit testing framework
+			from BIND source distribution.  [GL !875]
+
+5095.	[test]		Converted all unit tests from ATF to CMocka;
+			removed the source code for the ATF libraries.
+			Build with "configure --with-cmocka" to enable
+			unit testing. [GL #620]
+
+5094.	[func]		Add 'dig -r' to disable reading of .digrc. [GL !970]
+
+5092.	[bug]		Address memory leak on SIGTERM in nsupdate when using
+			GSS-TSIG. [GL #558]
+
+5090.	[bug]		dig and mdig failed to properly preparse dash value
+			pairs when value was a seperate argument and started
+			with a dash. [GL #584]
+
+5089.	[bug]		Restore localhost fallback in dig and host which is
+			used when no nameserver addresses present in
+			/etc/resolv.conf are usable due to the requested
+			address family restrictions. [GL #433]
+
+5088.	[bug]		dig/host/nslookup could crash when interrupted close to
+			a query timeout. [GL #599]
+
+5087.	[test]		Check that result tables are complete. [GL #676]
+
+5086.	[func]		Log of RPZ now includes the QTYPE and QCLASS. [GL #623]
+
+5085.	[bug]		win32: Restore looking up nameservers, search list,
+			etc. [GL #186]
+
+5084.	[func]		Add configure time detection of Utimaco HSM
+			and disable runtime md5/sha1 detection when it
+			compiled with it. [GL #656]
+
+5079.	[func]		Disable IDN processing in dig and nslookup
+			when not on a tty. [GL #653]
+
+5078.	[cleanup]	Require python components to be explicitly disabled if
+			python is not available on unix platforms. [GL #601]
+
+5076.	[bug]		"require-server-cookie" was not effective if
+			"rate-limit" was configured. [GL #617]
+
+5072.	[bug]		Add unit tests for isc_buffer_copyregion() and fix its
+			behavior for auto-reallocated buffers. [GL #644]
+
+5071.	[bug]		Comparision of NXT records was broken. [GL #631]
+
+5070.	[bug]		Record types which support a empty rdata field were
+			not handling the empty rdata field case. [GL #638]
+
+5069.	[bug]		Fix a hang on in RPZ when named is shutdown during RPZ
+			zone update. [GL !907]
+
+5068.	[bug]		Fix a race in RPZ with min-update-interval set to 0.
+			[GL #643]
+
+5066.	[cleanup]	Allow unquoted strings to be used as a zone names
+			in response-policy statements. [GL #641]
+
+5065.	[bug]		Only set IPV6_USE_MIN_MTU on IPv6. [GL #553]
+
+5064.	[test]		Initalize TZ environment variable before calling
+			dns_test_begin in dnstap_test. [GL #624]
+
+5061.	[protocol]	Add support for EID and NIMLOC. [GL #626]
+
+5060.	[bug]		GID, UID and UINFO could not be loaded using unknown
+			record format. [GL #627]
+
+5059.	[bug]		Display a per-view list of zones in the web interface.
+			[GL #427]
+
+5057.	[protocol]	Add support for ATMA. [GL #619]
+
+5051.	[doc]		Documentation incorrectly stated that the
+			"server-addresses" static-stub zone option accepts
+			custom port numbers. [GL #582]
+
+5050.	[bug]		The libirs version of getaddrinfo() was unable to parse
+			scoped IPv6 addresses present in /etc/resolv.conf.
+			[GL #187]
+
+5048.	[func]		Add configure option to enabled and enforce FIPS mode
+			in BIND 9. [GL #506]
+
+5047.	[bug]		Messages logged for certain query processing failures
+			now include a more specific error description if it is
+			available. [GL #572]
+
+5046.	[bug]		named could crash during shutdown if an RPZ
+			reload was in progress. [RT #46210]
+
+5042.	[test]		Make the chained delegations in reclimit behave
+			like they would in a regular name server. [GL  #578]
+
+5041.	[test]		The chain test contains a incomplete delegation.
+			[GL #568]
+
+5039.	[bug]		Named could fail to preserve owner name case of new
+			RRset. [GL #420]
 
 	--- 9.12.3 released ---
 

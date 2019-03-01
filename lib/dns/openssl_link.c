@@ -163,9 +163,11 @@ mem_alloc(size_t size FLARG) {
 
 static void
 mem_free(void *ptr FLARG) {
-	INSIST(dst__memory_pool != NULL);
-	if (ptr != NULL)
+	if (ptr != NULL) {
+		INSIST(dst__memory_pool != NULL);
+
 		isc__mem_free(dst__memory_pool, ptr FLARG_PASS);
+	}
 }
 
 static void *
@@ -190,6 +192,23 @@ _set_thread_id(CRYPTO_THREADID *id)
 }
 #endif
 
+static void
+enable_fips_mode(void) {
+#ifdef HAVE_FIPS_MODE
+	if (FIPS_mode() != 0) {
+		/*
+		 * FIPS mode is already enabled.
+		 */
+		return;
+	}
+
+	if (FIPS_mode_set(1) == 0) {
+		dst__openssl_toresult2("FIPS_mode_set", DST_R_OPENSSLFAILURE);
+		exit(1);
+	}
+#endif /* HAVE_FIPS_MODE */
+}
+
 isc_result_t
 dst__openssl_init(const char *engine) {
 	isc_result_t result;
@@ -199,6 +218,8 @@ dst__openssl_init(const char *engine) {
 
 	UNUSED(engine);
 #endif
+
+	enable_fips_mode();
 
 #ifdef  DNS_CRYPTO_LEAKS
 	CRYPTO_malloc_debug_init();
@@ -328,7 +349,6 @@ dst__openssl_init(const char *engine) {
 void
 dst__openssl_destroy(void) {
 #if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
-	OPENSSL_cleanup();
 #ifndef ISC_PLATFORM_CRYPTORANDOM
 	if (rm != NULL) {
 		mem_free(rm FILELINE);
@@ -461,7 +481,7 @@ dst__openssl_toresult3(isc_logcategory_t *category,
 		isc_log_write(dns_lctx, category,
 			      DNS_LOGMODULE_CRYPTO, ISC_LOG_INFO,
 			      "%s:%s:%d:%s", buf, file, line,
-			      (flags & ERR_TXT_STRING) ? data : "");
+			      ((flags & ERR_TXT_STRING) != 0) ? data : "");
 	}
 
     done:
