@@ -69,7 +69,7 @@ static bool short_form = false, printcmd = true,
 	multiline = false, nottl = false, noclass = false,
 	onesoa = false, use_usec = false,
 	nocrypto = false, ttlunits = false,
-	ipv4only = false, ipv6only = false;
+	ipv4only = false, ipv6only = false, digrc = true;
 static uint32_t splitwidth = 0xffffffff;
 
 /*% rrcomments are neither explicitly enabled nor disabled by default */
@@ -158,6 +158,7 @@ help(void) {
 "                 -m                  (enable memory usage debugging)\n"
 "                 -p port             (specify port number)\n"
 "                 -q name             (specify query name)\n"
+"                 -r                  (do not read ~/.digrc)\n"
 "                 -t type             (specify query type)\n"
 "                 -u                  (display times in usec instead of msec)\n"
 "                 -x dot-notation     (shortcut for reverse lookups)\n"
@@ -193,8 +194,10 @@ help(void) {
 "                 +[no]fail           (Don't try next server on SERVFAIL)\n"
 "                 +[no]header-only    (Send query without a question section)\n"
 "                 +[no]identify       (ID responders in short answers)\n"
-"                 +[no]idnin          (Parse IDN names)\n"
-"                 +[no]idnout         (Convert IDN response)\n"
+#ifdef HAVE_LIBIDN2
+"                 +[no]idnin          (Parse IDN names [default=on on tty])\n"
+"                 +[no]idnout         (Convert IDN response [default=on on tty])\n"
+#endif
 "                 +[no]ignore         (Don't revert to TCP for TC responses.)\n"
 "                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
 "                 +[no]mapped         (Allow mapped IPv4 over IPv6)\n"
@@ -1525,8 +1528,8 @@ plus_option(const char *option, bool is_batchfile,
 /*%
  * #true returned if value was used
  */
-static const char *single_dash_opts = "46dhimnuv";
-static const char *dash_opts = "46bcdfhikmnptvyx";
+static const char *single_dash_opts = "46dhimnruv";
+static const char *dash_opts = "46bcdfhikmnpqrtvyx";
 static bool
 dash_option(char *option, char *next, dig_lookup_t **lookup,
 	    bool *open_type_class, bool *need_clone,
@@ -1596,6 +1599,10 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			break;
 		case 'n':
 			/* deprecated */
+			break;
+		case 'r':
+			debug("digrc (late)");
+			digrc = false;
 			break;
 		case 'u':
 			use_usec = true;
@@ -1829,10 +1836,22 @@ preparse_args(int argc, char **argv) {
 		option = &rv[0][1];
 		while (strpbrk(option, single_dash_opts) == &option[0]) {
 			switch (option[0]) {
+			case 'd':
+				/* For debugging early startup */
+				debugging = true;
+				break;
 			case 'm':
 				memdebugging = true;
 				isc_mem_debugging = ISC_MEM_DEBUGTRACE |
 					ISC_MEM_DEBUGRECORD;
+				break;
+			case 'r':
+				/*
+				 * Must be done early, because ~/.digrc
+				 * is read before command line parsing
+				 */
+				debug("digrc (early)");
+				digrc = false;
 				break;
 			case '4':
 				if (ipv6only)
@@ -1847,6 +1866,20 @@ preparse_args(int argc, char **argv) {
 			}
 			option = &option[1];
 		}
+		if (strlen(option) == 0U) {
+			continue;
+		}
+		/* Look for dash value option. */
+		if (strpbrk(option, dash_opts) != &option[0] ||
+		    strlen(option) > 1U) {
+			/* Error or value in option. */
+			continue;
+		}
+		/* Dash value is next argument so we need to skip it. */
+		rc--, rv++;
+		/* Handle missing argument */
+		if (rc == 0)
+			break;
 	}
 }
 
@@ -1899,8 +1932,9 @@ parse_args(bool is_batchfile, bool config_only,
 		 */
 		INSIST(batchfp == NULL);
 		homedir = getenv("HOME");
-		if (homedir != NULL) {
+		if (homedir != NULL && digrc) {
 			unsigned int n;
+			debug("digrc (open)");
 			n = snprintf(rcfile, sizeof(rcfile), "%s/.digrc",
 				     homedir);
 			if (n < sizeof(rcfile))

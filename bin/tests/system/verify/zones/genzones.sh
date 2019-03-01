@@ -13,8 +13,8 @@ SYSTEMTESTTOP=../..
 SYSTESTDIR=verify
 
 dumpit () {
-	echo "D:${debug}: dumping ${1}"
-	cat "${1}" | sed 's/^/D:/'
+	echo_d "${debug}: dumping ${1}"
+	cat "${1}" | cat_d
 }
 setup () {
 	echo_i "setting up $2 zone: $1"
@@ -82,8 +82,8 @@ $SIGNER -3 - -SP -o ${zone} -f ${file} ${file}.tmp > s.out$n 2>&1 || dumpit s.ou
 # becomes foo when the zone is loaded.
 #
 setup nsec-next-name-case-mismatch good
-ksk=`$KEYGEN -a rsasha256 -fK ${zone} 2> kg2.out$n` || dumpit kg2.out$n
-zsk=`$KEYGEN -a rsasha256 ${zone} 2> kg2.out$n` || dumpit kg2.out$n
+ksk=`$KEYGEN -3 -r $RANDFILE -fK ${zone} 2> kg2.out$n` || dumpit kg2.out$n
+zsk=`$KEYGEN -3 -r $RANDFILE ${zone} 2> kg2.out$n` || dumpit kg2.out$n
 cat << EOF > ${zone}.tmp
 \$TTL 0
 @ IN SOA  foo . ( 1 28800 7200 604800 1800 )

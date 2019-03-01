@@ -15,7 +15,7 @@
 
   <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.2"></a>Release Notes for BIND Version 9.11.5-P4</h2></div></div></div>
+<a name="id-1.2"></a>Release Notes for BIND Version 9.11.6</h2></div></div></div>
   
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -229,6 +229,16 @@
 	  between views of the same name but different class; this
 	  has been corrected with the addition of a <span class="command"><strong>-class</strong></span>
 	  option. [GL #105]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  When compiled with IDN support, the <span class="command"><strong>dig</strong></span> and the
+	  <span class="command"><strong>nslookup</strong></span> commands now disable IDN processing when
+	  the standard output is not a tty (e.g. not used by human).  The command
+	  line options +idnin and +idnout need to be used to enable IDN
+	  processing when <span class="command"><strong>dig</strong></span> or <span class="command"><strong>nslookup</strong></span>
+	  is used from the shell scripts.
 	</p>
       </li>
 </ul></div>

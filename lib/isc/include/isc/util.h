@@ -69,7 +69,7 @@
  * Use this in translation units that would otherwise be empty, to
  * suppress compiler warnings.
  */
-#define EMPTY_TRANSLATION_UNIT static void isc__empty(void) { isc__empty(); }
+#define EMPTY_TRANSLATION_UNIT extern int isc__empty;
 
 /*%
  * We use macros instead of calling the routines directly because
@@ -106,7 +106,6 @@
 					      ISC_MSG_UNLOCKED, "UNLOCKED"), \
 			       (lp), __FILE__, __LINE__)); \
 	} while (0)
-#define ISLOCKED(lp) (1)
 #define DESTROYLOCK(lp) \
 	RUNTIME_CHECK(isc_mutex_destroy((lp)) == ISC_R_SUCCESS)
 
@@ -203,6 +202,34 @@
  */
 #include <isc/likely.h>
 
+#ifdef HAVE_BUILTIN_UNREACHABLE
+#define ISC_UNREACHABLE() __builtin_unreachable();
+#else
+#define ISC_UNREACHABLE()
+#endif
+
+#if !defined(__has_feature)
+#define __has_feature(x) 0
+#endif
+
+/* GCC defines __SANITIZE_ADDRESS__, so reuse the macro for clang */
+#if __has_feature(address_sanitizer)
+#define __SANITIZE_ADDRESS__ 1
+#endif
+
+#ifdef UNIT_TESTING
+extern void mock_assert(const int result, const char* const expression,
+			const char * const file, const int line);
+#define REQUIRE(expression)						\
+	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+#define ENSURE(expression)						\
+	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+#define INSIST(expression)						\
+	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+#define INVARIANT(expression)						\
+	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+
+#else /* UNIT_TESTING */
 /*
  * Assertions
  */
@@ -217,6 +244,8 @@
 /*% Invariant Assertion */
 #define INVARIANT(e)			ISC_INVARIANT(e)
 
+#endif /* UNIT_TESTING */
+
 /*
  * Errors
  */
@@ -226,8 +255,18 @@
 #define UNEXPECTED_ERROR		isc_error_unexpected
 /*% Fatal Error */
 #define FATAL_ERROR			isc_error_fatal
+
+#ifdef UNIT_TESTING
+
+#define RUNTIME_CHECK(expression)					\
+	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+
+#else /* UNIT_TESTING */
+
 /*% Runtime Check */
 #define RUNTIME_CHECK(cond)		ISC_ERROR_RUNTIMECHECK(cond)
+
+#endif /* UNIT_TESTING */
 
 /*%
  * Time
