@@ -9,14 +9,14 @@ https://bugs.launchpad.net/bugs/1769440
  1 file changed, 3 deletions(-)
 
 diff --git a/lib/dns/dyndb.c b/lib/dns/dyndb.c
-index 93ad795..11ba0f5 100644
+index 15561ce..11ba0f5 100644
 --- a/lib/dns/dyndb.c
 +++ b/lib/dns/dyndb.c
 @@ -133,9 +133,6 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
  		      instname, filename);
  
  	flags = RTLD_NOW|RTLD_LOCAL;
--#ifdef RTLD_DEEPBIND
+-#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__
 -	flags |= RTLD_DEEPBIND;
 -#endif
  

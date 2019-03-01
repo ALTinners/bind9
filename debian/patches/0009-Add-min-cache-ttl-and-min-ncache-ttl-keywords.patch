@@ -22,7 +22,7 @@ Signed-off-by: LaMont Jones <lamont@debian.org>
  10 files changed, 90 insertions(+), 28 deletions(-)
 
 diff --git a/bin/named/config.c b/bin/named/config.c
-index 1da5226..a731be1 100644
+index d1decc4..11e128a 100644
 --- a/bin/named/config.c
 +++ b/bin/named/config.c
 @@ -183,6 +183,8 @@ options {\n\
@@ -35,10 +35,10 @@ index 1da5226..a731be1 100644
  	minimal-any false;\n\
  	minimal-responses no-auth-recursive;\n\
 diff --git a/bin/named/server.c b/bin/named/server.c
-index b63a1f2..28b25dd 100644
+index 15f536e..14492a3 100644
 --- a/bin/named/server.c
 +++ b/bin/named/server.c
-@@ -4083,8 +4083,16 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
+@@ -4106,8 +4106,16 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
  	result = named_config_get(maps, "max-ncache-ttl", &obj);
  	INSIST(result == ISC_R_SUCCESS);
  	view->maxncachettl = cfg_obj_asuint32(obj);
@@ -78,7 +78,7 @@ index 5673e98..c9be056 100644
  	serial-queries 34;
  
 diff --git a/lib/bind9/check.c b/lib/bind9/check.c
-index 9584ed6..fbd1dda 100644
+index 9504b41..4f826a0 100644
 --- a/lib/bind9/check.c
 +++ b/lib/bind9/check.c
 @@ -959,15 +959,25 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
@@ -173,7 +173,7 @@ index ff568f2..d1d67f4 100644
  	uint32_t			nta_recheck;
  	char				*nta_file;
 diff --git a/lib/dns/ncache.c b/lib/dns/ncache.c
-index 79bb5f1..1f060a4 100644
+index 371e839..f83fe28 100644
 --- a/lib/dns/ncache.c
 +++ b/lib/dns/ncache.c
 @@ -45,7 +45,8 @@
@@ -240,10 +240,10 @@ index 79bb5f1..1f060a4 100644
  					 * Copy the owner name to the buffer.
  					 */
 diff --git a/lib/dns/resolver.c b/lib/dns/resolver.c
-index 3b70d77..24437f2 100644
+index b61ccc9..e3e6124 100644
 --- a/lib/dns/resolver.c
 +++ b/lib/dns/resolver.c
-@@ -568,7 +568,9 @@ static bool fctx_unlink(fetchctx_t *fctx);
+@@ -569,7 +569,9 @@ static bool fctx_unlink(fetchctx_t *fctx);
  static isc_result_t ncache_adderesult(dns_message_t *message,
  				      dns_db_t *cache, dns_dbnode_t *node,
  				      dns_rdatatype_t covers,
@@ -254,7 +254,7 @@ index 3b70d77..24437f2 100644
  				      bool optout,
  				      bool secure,
  				      dns_rdataset_t *ardataset,
-@@ -5271,8 +5273,10 @@ validated(isc_task_t *task, isc_event_t *event) {
+@@ -5311,8 +5313,10 @@ validated(isc_task_t *task, isc_event_t *event) {
  			ttl = 0;
  
  		result = ncache_adderesult(fctx->rmessage, fctx->cache, node,
@@ -267,7 +267,7 @@ index 3b70d77..24437f2 100644
  		if (result != ISC_R_SUCCESS)
  			goto noanswer_response;
  		goto answer_response;
-@@ -5763,6 +5767,13 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
+@@ -5803,6 +5807,13 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
  			rdataset->ttl = res->view->maxcachettl;
  		}
  
@@ -281,7 +281,7 @@ index 3b70d77..24437f2 100644
  		/*
  		 * Mark the rdataset as being prefetch eligible.
  		 */
-@@ -6151,7 +6162,8 @@ cache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_stdtime_t now)
+@@ -6191,7 +6202,8 @@ cache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_stdtime_t now)
   */
  static isc_result_t
  ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
@@ -291,7 +291,7 @@ index 3b70d77..24437f2 100644
  		  bool optout, bool secure,
  		  dns_rdataset_t *ardataset, isc_result_t *eresultp)
  {
-@@ -6164,10 +6176,10 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
+@@ -6204,10 +6216,10 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
  	}
  	if (secure)
  		result = dns_ncache_addoptout(message, cache, node, covers,
@@ -304,7 +304,7 @@ index 3b70d77..24437f2 100644
  	if (result == DNS_R_UNCHANGED || result == ISC_R_SUCCESS) {
  		/*
  		 * If the cache now contains a negative entry and we
-@@ -6342,8 +6354,9 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
+@@ -6382,8 +6394,9 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
  		ttl = 0;
  
  	result = ncache_adderesult(fctx->rmessage, fctx->cache, node,
@@ -317,7 +317,7 @@ index 3b70d77..24437f2 100644
  		goto unlock;
  
 diff --git a/lib/isccfg/namedconf.c b/lib/isccfg/namedconf.c
-index 7eef458..9627d82 100644
+index 652e509..eb74965 100644
 --- a/lib/isccfg/namedconf.c
 +++ b/lib/isccfg/namedconf.c
 @@ -1925,6 +1925,8 @@ view_clauses[] = {

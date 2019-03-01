@@ -5,7 +5,6 @@ Subject: Add system tests for {min,max}-{cache,ncache}-ttl
 ---
  bin/tests/system/Makefile.in            |  2 +-
  bin/tests/system/conf.sh.in             |  2 +-
- bin/tests/system/conf.sh.win32          |  2 +-
  bin/tests/system/ttl/clean.sh           | 12 +++++++++
  bin/tests/system/ttl/ns1/max-example.db |  9 +++++++
  bin/tests/system/ttl/ns1/min-example.db |  9 +++++++
@@ -14,7 +13,7 @@ Subject: Add system tests for {min,max}-{cache,ncache}-ttl
  bin/tests/system/ttl/ns2/named.conf.in  | 40 ++++++++++++++++++++++++++++
  bin/tests/system/ttl/setup.sh           |  7 +++++
  bin/tests/system/ttl/tests.sh           | 35 +++++++++++++++++++++++++
- 11 files changed, 163 insertions(+), 3 deletions(-)
+ 10 files changed, 162 insertions(+), 2 deletions(-)
  create mode 100644 bin/tests/system/ttl/clean.sh
  create mode 100644 bin/tests/system/ttl/ns1/max-example.db
  create mode 100644 bin/tests/system/ttl/ns1/min-example.db
@@ -38,10 +37,10 @@ index 9dc0bbe..5f52e90 100644
  	   xfer xferquota zero zonechecks
  
 diff --git a/bin/tests/system/conf.sh.in b/bin/tests/system/conf.sh.in
-index 77ecced..a38bc59 100644
+index 557bbd2..2945369 100644
 --- a/bin/tests/system/conf.sh.in
 +++ b/bin/tests/system/conf.sh.in
-@@ -100,7 +100,7 @@ PARALLELDIRS="acl additional addzone allow-query auth autosign \
+@@ -114,7 +114,7 @@ PARALLELDIRS="acl additional addzone allow-query auth autosign \
  	rrchecker rrl rrsetorder rsabigexponent runtime \
  	serve-stale sfcache smartsign sortlist \
  	spf staticstub statistics statschannel stub synthfromdnssec \
@@ -50,19 +49,6 @@ index 77ecced..a38bc59 100644
  	unknown upforwd verify views wildcard \
  	xfer xferquota zero zonechecks"
  
-diff --git a/bin/tests/system/conf.sh.win32 b/bin/tests/system/conf.sh.win32
-index 4d6c44e..90343ea 100644
---- a/bin/tests/system/conf.sh.win32
-+++ b/bin/tests/system/conf.sh.win32
-@@ -99,7 +99,7 @@ SEQUENTIALDIRS="acl additional addzone autosign builtin \
- 	 redirect resolver rndc rpz rrchecker rrl \
- 	 rrsetorder rsabigexponent runtime sfcache smartsign sortlist \
- 	 spf staticstub statistics statschannel stub tcp tkey tsig \
--	 tsiggss unknown upforwd verify views wildcard xfer xferquota \
-+	 tsiggss ttl unknown upforwd verify views wildcard xfer xferquota \
- 	 zero zonechecks"
- 
- # List of tests that use unique ports (other than 5300 and 9953). These
 diff --git a/bin/tests/system/ttl/clean.sh b/bin/tests/system/ttl/clean.sh
 new file mode 100644
 index 0000000..0f928d6

@@ -9,7 +9,7 @@ Subject: Add documentation for min-{ncache,cache}-ttl
  3 files changed, 38 insertions(+)
 
 diff --git a/bin/named/named.conf.docbook b/bin/named/named.conf.docbook
-index 6efadef..72e0710 100644
+index 68910cc..1680f6d 100644
 --- a/bin/named/named.conf.docbook
 +++ b/bin/named/named.conf.docbook
 @@ -338,6 +338,8 @@ options {
@@ -22,7 +22,7 @@ index 6efadef..72e0710 100644
  	min-retry-time <replaceable>integer</replaceable>;
  	minimal-any <replaceable>boolean</replaceable>;
 diff --git a/doc/arm/Bv9ARM-book.xml b/doc/arm/Bv9ARM-book.xml
-index a5141af..58bea26 100644
+index fc5d5c6..604f98b 100644
 --- a/doc/arm/Bv9ARM-book.xml
 +++ b/doc/arm/Bv9ARM-book.xml
 @@ -4293,6 +4293,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
@@ -74,7 +74,7 @@ index a5141af..58bea26 100644
  	      <term><command>max-ncache-ttl</command></term>
  	      <listitem>
 diff --git a/doc/misc/options b/doc/misc/options
-index 5e35861..69b5307 100644
+index 0544b38..48a25b3 100644
 --- a/doc/misc/options
 +++ b/doc/misc/options
 @@ -568,6 +568,8 @@ view <string> [ <class> ] {

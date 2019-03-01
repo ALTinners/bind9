@@ -7,14 +7,14 @@ Subject: _non-linux
     Addresses-Debian-Bug: 741285, 746540
     Signed-off-by: LaMont Jones <lamont@debian.org>
 ---
- configure.in | 5 ++---
+ configure.ac | 5 ++---
  1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/configure.in b/configure.in
-index 9090939..95b0071 100644
---- a/configure.in
-+++ b/configure.in
-@@ -463,7 +463,7 @@ case "$host" in
+diff --git a/configure.ac b/configure.ac
+index 754c924..e045171 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -424,7 +424,7 @@ case "$host" in
  	# as it breaks how the two halves (Basic and Advanced) of the IPv6
  	# Socket API were designed to be used but we have to live with it.
  	# Define _GNU_SOURCE to pull in the IPv6 Advanced Socket API.
@@ -23,7 +23,7 @@ index 9090939..95b0071 100644
  		STD_CDEFINES="$STD_CDEFINES -D_GNU_SOURCE"
  		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
  		;;
-@@ -1324,7 +1324,7 @@ then
+@@ -1285,7 +1285,7 @@ then
  		# LinuxThreads requires some changes to the way we
  		# deal with signals.
  		#
@@ -32,7 +32,7 @@ index 9090939..95b0071 100644
  			AC_DEFINE(HAVE_LINUXTHREADS)
  			;;
  		#
-@@ -2833,7 +2833,6 @@ case "$host" in
+@@ -2800,7 +2800,6 @@ case "$host" in
  		;;
  	*)
  		AC_CHECK_LIB(socket, socket)

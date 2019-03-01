@@ -8,7 +8,6 @@ Add_--install-layout=deb_to_setup.py_call.patch
 skip-rtld-deepbind-for-dyndb.diff
 0009-Add-min-cache-ttl-and-min-ncache-ttl-keywords.patch
 0010-Add-min-n-cache-ttl-tests-for-checkconf.patch
-0011-Use-abs_top_builddir-to-define-BIND-9-top-build-dire.patch
 0012-Add-system-tests-for-min-max-cache-ncache-ttl.patch
 0013-Fix-the-max-ncache-ttl-tests.patch
 0014-Add-documentation-for-min-ncache-cache-ttl.patch
