@@ -1,4 +1,4 @@
-libdns-pkcs11.so.1104 libdns1104 #MINVER#
+libdns-pkcs11.so.1105 libdns1105 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
@@ -1580,7 +1580,7 @@ libdns-pkcs11.so.1104 libdns1104 #MINVER#
  isc__rdatalist_next@Base 1:9.11.3+dfsg
  isc__rdatalist_setownercase@Base 1:9.11.3+dfsg
  ishex@Base 1:9.11.3+dfsg
-libdns.so.1104 libdns1104 #MINVER#
+libdns.so.1105 libdns1105 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
