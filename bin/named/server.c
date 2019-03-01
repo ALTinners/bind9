@@ -307,6 +307,13 @@ typedef struct catz_chgzone_event {
 	bool mod;
 } catz_chgzone_event_t;
 
+typedef struct {
+	unsigned int magic;
+#define DZARG_MAGIC		ISC_MAGIC('D', 'z', 'a', 'r')
+	isc_buffer_t **text;
+	isc_result_t result;
+} ns_dzarg_t;
+
 /*
  * These zones should not leak onto the Internet.
  */
@@ -1147,6 +1154,7 @@ get_view_querysource_dispatch(const cfg_obj_t **maps, int af,
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	sa = *(cfg_obj_assockaddr(obj));
@@ -1168,6 +1176,7 @@ get_view_querysource_dispatch(const cfg_obj_t **maps, int af,
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_SUCCESS);
@@ -1275,20 +1284,22 @@ configure_order(dns_order_t *order, const cfg_obj_t *ent) {
 	obj = cfg_tuple_get(ent, "ordering");
 	INSIST(cfg_obj_isstring(obj));
 	str = cfg_obj_asstring(obj);
-	if (!strcasecmp(str, "fixed"))
+	if (!strcasecmp(str, "fixed")) {
 #if DNS_RDATASET_FIXED
 		mode = DNS_RDATASETATTR_FIXEDORDER;
 #else
 		mode = DNS_RDATASETATTR_CYCLIC;
 #endif /* DNS_RDATASET_FIXED */
-	else if (!strcasecmp(str, "random"))
+	} else if (!strcasecmp(str, "random")) {
 		mode = DNS_RDATASETATTR_RANDOMIZE;
-	else if (!strcasecmp(str, "cyclic"))
+	} else if (!strcasecmp(str, "cyclic")) {
 		mode = DNS_RDATASETATTR_CYCLIC;
-	else if (!strcasecmp(str, "none"))
+	} else if (!strcasecmp(str, "none")) {
 		mode = DNS_RDATASETATTR_NONE;
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	/*
 	 * "*" should match everything including the root (BIND 8 compat).
@@ -1420,14 +1431,16 @@ configure_peer(const cfg_obj_t *cpeer, isc_mem_t *mctx, dns_peer_t **peerp) {
 	(void)cfg_map_get(cpeer, "transfer-format", &obj);
 	if (obj != NULL) {
 		str = cfg_obj_asstring(obj);
-		if (strcasecmp(str, "many-answers") == 0)
+		if (strcasecmp(str, "many-answers") == 0) {
 			CHECK(dns_peer_settransferformat(peer,
 							 dns_many_answers));
-		else if (strcasecmp(str, "one-answer") == 0)
+		} else if (strcasecmp(str, "one-answer") == 0) {
 			CHECK(dns_peer_settransferformat(peer,
 							 dns_one_answer));
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	obj = NULL;
@@ -2540,7 +2553,15 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 		}
 
 	} else {
-		if (result != ISC_R_NOTFOUND && result != DNS_R_PARTIALMATCH) {
+		if (result == ISC_R_SUCCESS) {
+			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
+				      "catz: zone \"%s\" is overridden "
+				      "by explicitly configured zone",
+				      nameb);
+			goto cleanup;
+		} else if (result != ISC_R_NOTFOUND &&
+			   result != DNS_R_PARTIALMATCH) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_WARNING,
 				      "catz: error \"%s\" while trying to "
@@ -2720,7 +2741,7 @@ catz_create_chg_task(dns_catz_entry_t *entry, dns_catz_zone_t *origin,
 	catz_chgzone_event_t *event;
 	isc_task_t *task;
 	isc_result_t result;
-	isc_taskaction_t action;
+	isc_taskaction_t action = NULL;
 
 	switch (type) {
 	case DNS_EVENT_CATZADDZONE:
@@ -3941,8 +3962,10 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 		view->checknames = false;
 	} else if (strcasecmp(str, "ignore") == 0) {
 		view->checknames = false;
-	} else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	obj = NULL;
 	result = named_config_get(maps, "zero-no-soa-ttl-cache", &obj);
@@ -4332,14 +4355,16 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 		obj2 = cfg_tuple_get(obj, "response");
 		if (!cfg_obj_isvoid(obj2)) {
 			const char *resp = cfg_obj_asstring(obj2);
-			isc_result_t r;
+			isc_result_t r = DNS_R_SERVFAIL;
 
-			if (strcasecmp(resp, "drop") == 0)
+			if (strcasecmp(resp, "drop") == 0) {
 				r = DNS_R_DROP;
-			else if (strcasecmp(resp, "fail") == 0)
+			} else if (strcasecmp(resp, "fail") == 0) {
 				r = DNS_R_SERVFAIL;
-			else
+			} else {
 				INSIST(0);
+				ISC_UNREACHABLE();
+			}
 
 			dns_resolver_setquotaresponse(view->resolver,
 						      dns_quotatype_server, r);
@@ -4669,20 +4694,24 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 			view->minimalresponses = dns_minimal_noauth;
 		} else if (strcasecmp(str, "no-auth-recursive") == 0) {
 			view->minimalresponses = dns_minimal_noauthrec;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	obj = NULL;
 	result = named_config_get(maps, "transfer-format", &obj);
 	INSIST(result == ISC_R_SUCCESS);
 	str = cfg_obj_asstring(obj);
-	if (strcasecmp(str, "many-answers") == 0)
+	if (strcasecmp(str, "many-answers") == 0) {
 		view->transfer_format = dns_many_answers;
-	else if (strcasecmp(str, "one-answer") == 0)
+	} else if (strcasecmp(str, "one-answer") == 0) {
 		view->transfer_format = dns_one_answer;
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	obj = NULL;
 	result = named_config_get(maps, "trust-anchor-telemetry", &obj);
@@ -4953,14 +4982,16 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 	obj2 = cfg_tuple_get(obj, "response");
 	if (!cfg_obj_isvoid(obj2)) {
 		const char *resp = cfg_obj_asstring(obj2);
-		isc_result_t r;
+		isc_result_t r = DNS_R_SERVFAIL;
 
-		if (strcasecmp(resp, "drop") == 0)
+		if (strcasecmp(resp, "drop") == 0) {
 			r = DNS_R_DROP;
-		else if (strcasecmp(resp, "fail") == 0)
+		} else if (strcasecmp(resp, "fail") == 0) {
 			r = DNS_R_SERVFAIL;
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 
 		dns_resolver_setquotaresponse(view->resolver,
 					      dns_quotatype_zone, r);
@@ -4976,10 +5007,12 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 			view->v4_aaaa = dns_aaaa_ok;
 	} else {
 		const char *v4_aaaastr = cfg_obj_asstring(obj);
-		if (strcasecmp(v4_aaaastr, "break-dnssec") == 0)
+		if (strcasecmp(v4_aaaastr, "break-dnssec") == 0) {
 			view->v4_aaaa = dns_aaaa_break_dnssec;
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	obj = NULL;
@@ -4992,10 +5025,12 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 			view->v6_aaaa = dns_aaaa_ok;
 	} else {
 		const char *v6_aaaastr = cfg_obj_asstring(obj);
-		if (strcasecmp(v6_aaaastr, "break-dnssec") == 0)
+		if (strcasecmp(v6_aaaastr, "break-dnssec") == 0) {
 			view->v6_aaaa = dns_aaaa_break_dnssec;
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	CHECK(configure_view_acl(vconfig, config, named_g_config,
@@ -5203,7 +5238,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 		const char *empty_dbtype[4] =
 				    { "_builtin", "empty", NULL, NULL };
 		int empty_dbtypec = 4;
-		dns_zonestat_level_t statlevel;
+		dns_zonestat_level_t statlevel = dns_zonestat_none;
 
 		name = dns_fixedname_initname(&fixed);
 
@@ -5241,14 +5276,16 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 				statlevel = dns_zonestat_none;
 		} else {
 			const char *levelstr = cfg_obj_asstring(obj);
-			if (strcasecmp(levelstr, "full") == 0)
+			if (strcasecmp(levelstr, "full") == 0) {
 				statlevel = dns_zonestat_full;
-			else if (strcasecmp(levelstr, "terse") == 0)
+			} else if (strcasecmp(levelstr, "terse") == 0) {
 				statlevel = dns_zonestat_terse;
-			else if (strcasecmp(levelstr, "none") == 0)
+			} else if (strcasecmp(levelstr, "none") == 0) {
 				statlevel = dns_zonestat_none;
-			else
+			} else {
 				INSIST(0);
+				ISC_UNREACHABLE();
+			}
 		}
 
 		for (empty = empty_zones[empty_zone];
@@ -5565,16 +5602,18 @@ configure_forward(const cfg_obj_t *config, dns_view_t *view,
 				    "forwarding");
 		fwdpolicy = dns_fwdpolicy_none;
 	} else {
-		if (forwardtype == NULL)
+		if (forwardtype == NULL) {
 			fwdpolicy = dns_fwdpolicy_first;
-		else {
+		} else {
 			const char *forwardstr = cfg_obj_asstring(forwardtype);
-			if (strcasecmp(forwardstr, "first") == 0)
+			if (strcasecmp(forwardstr, "first") == 0) {
 				fwdpolicy = dns_fwdpolicy_first;
-			else if (strcasecmp(forwardstr, "only") == 0)
+			} else if (strcasecmp(forwardstr, "only") == 0) {
 				fwdpolicy = dns_fwdpolicy_only;
-			else
+			} else {
 				INSIST(0);
+				ISC_UNREACHABLE();
+			}
 		}
 	}
 
@@ -7454,11 +7493,11 @@ data_to_cfg(dns_view_t *view, MDB_val *key, MDB_val *data,
 		goto cleanup;
 	}
 
-	putstr(text, "zone ");
-	putmem(text, (const void *) zone_name, zone_name_len);
-	putstr(text, " ");
-	putmem(text, (const void *) zone_config, zone_config_len);
-	putstr(text, ";\n");
+	CHECK(putstr(text, "zone "));
+	CHECK(putmem(text, (const void *) zone_name, zone_name_len));
+	CHECK(putstr(text, " "));
+	CHECK(putmem(text, (const void *) zone_config, zone_config_len));
+	CHECK(putstr(text, ";\n"));
 
 	cfg_parser_reset(named_g_addparser);
 	result = cfg_parse_buffer3(named_g_addparser, *text, zone_name, 0,
@@ -8854,7 +8893,8 @@ load_configuration(const char *filename, named_server_t *server,
 	{
 		named_g_memstatistics = cfg_obj_asboolean(obj);
 	} else {
-		named_g_memstatistics = (isc_mem_debugging & ISC_MEM_DEBUGRECORD);
+		named_g_memstatistics =
+			((isc_mem_debugging & ISC_MEM_DEBUGRECORD) != 0);
 	}
 
 	obj = NULL;
@@ -8946,6 +8986,7 @@ load_configuration(const char *filename, named_server_t *server,
 		server->sctx->cookiealg = ns_cookiealg_aes;
 #else
 		INSIST(0);
+		ISC_UNREACHABLE();
 #endif
 	} else if (strcasecmp(cfg_obj_asstring(obj), "sha1") == 0) {
 		server->sctx->cookiealg = ns_cookiealg_sha1;
@@ -8953,6 +8994,7 @@ load_configuration(const char *filename, named_server_t *server,
 		server->sctx->cookiealg = ns_cookiealg_sha256;
 	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	obj = NULL;
@@ -9206,6 +9248,14 @@ view_loaded(void *arg) {
 		   "forcing zone maintenance");
 
 	named_os_started();
+
+#ifdef HAVE_FIPS_MODE
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_SERVER, ISC_LOG_NOTICE,
+			      "FIPS mode is %s",
+			      FIPS_mode() ? "enabled" : "disabled");
+#endif
+
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_NOTICE, "running");
 
@@ -10747,10 +10797,10 @@ named_server_dumpdb(named_server_t *server, isc_lex_t *lex,
 	}
 	if (ptr != NULL) {
 		if (!found) {
-			putstr(text, "view '");
-			putstr(text, ptr);
-			putstr(text, "' not found");
-			putnull(text);
+			CHECK(putstr(text, "view '"));
+			CHECK(putstr(text, ptr));
+			CHECK(putstr(text, "' not found"));
+			CHECK(putnull(text));
 			result = ISC_R_NOTFOUND;
 			dumpdone(dctx, result);
 			return (result);
@@ -12043,9 +12093,15 @@ nzd_setkey(MDB_val *key, dns_name_t *name, char *namebuf, size_t buflen) {
 
 static void
 dumpzone(void *arg, const char *buf, int len) {
-	isc_buffer_t **text = arg;
+	ns_dzarg_t *dzarg = arg;
+	isc_result_t result;
 
-	putmem(text, buf, len);
+	REQUIRE(dzarg != NULL && ISC_MAGIC_VALID(dzarg, DZARG_MAGIC));
+
+	result = putmem(dzarg->text, buf, len);
+	if (result != ISC_R_SUCCESS && dzarg->result == ISC_R_SUCCESS) {
+		dzarg->result = result;
+	}
 }
 
 static isc_result_t
@@ -12059,6 +12115,7 @@ nzd_save(MDB_txn **txnp, MDB_dbi dbi, dns_zone_t *zone,
 	isc_buffer_t *text = NULL;
 	char namebuf[1024];
 	MDB_val key, data;
+	ns_dzarg_t dzarg;
 
 	view = dns_zone_getview(zone);
 
@@ -12110,7 +12167,21 @@ nzd_save(MDB_txn **txnp, MDB_dbi dbi, dns_zone_t *zone,
 			goto cleanup;
 		}
 
-		cfg_printx(zoptions, CFG_PRINTER_ONELINE, dumpzone, &text);
+		dzarg.magic = DZARG_MAGIC;
+		dzarg.text = &text;
+		dzarg.result = ISC_R_SUCCESS;
+		cfg_printx(zoptions, CFG_PRINTER_ONELINE, dumpzone, &dzarg);
+		if (dzarg.result != ISC_R_SUCCESS) {
+			isc_log_write(named_g_lctx,
+				      NAMED_LOGCATEGORY_GENERAL,
+				      NAMED_LOGMODULE_SERVER,
+				      ISC_LOG_ERROR,
+				      "Error writing zone config to "
+				      "buffer in nzd_save(): %s",
+				      isc_result_totext(result));
+			result = dzarg.result;
+			goto cleanup;
+		}
 
 		data.mv_data = isc_buffer_base(text);
 		data.mv_size = isc_buffer_usedlength(text);
@@ -12389,6 +12460,7 @@ migrate_nzf(dns_view_t *view) {
 	MDB_txn *txn = NULL;
 	MDB_dbi dbi;
 	MDB_val key, data;
+	ns_dzarg_t dzarg;
 
 	/*
 	 * If NZF file doesn't exist, or NZD DB exists and already
@@ -12478,7 +12550,21 @@ migrate_nzf(dns_view_t *view) {
 		}
 
 		isc_buffer_clear(text);
-		cfg_printx(zoptions, CFG_PRINTER_ONELINE, dumpzone, &text);
+		dzarg.magic = DZARG_MAGIC;
+		dzarg.text = &text;
+		dzarg.result = ISC_R_SUCCESS;
+		cfg_printx(zoptions, CFG_PRINTER_ONELINE, dumpzone, &dzarg);
+		if (dzarg.result != ISC_R_SUCCESS) {
+			isc_log_write(named_g_lctx,
+				      NAMED_LOGCATEGORY_GENERAL,
+				      NAMED_LOGMODULE_SERVER,
+				      ISC_LOG_ERROR,
+				      "Error writing zone config to "
+				      "buffer in migrate_nzf(): %s",
+				      isc_result_totext(result));
+			result = dzarg.result;
+			goto cleanup;
+		}
 
 		data.mv_data = isc_buffer_base(text);
 		data.mv_size = isc_buffer_usedlength(text);
@@ -12548,7 +12634,7 @@ newzone_parse(named_server_t *server, char *command, dns_view_t **viewp,
 	const char *viewname = NULL;
 	dns_rdataclass_t rdclass;
 	dns_view_t *view = NULL;
-	const char *bn;
+	const char *bn = NULL;
 
 	REQUIRE(viewp != NULL && *viewp == NULL);
 	REQUIRE(zoneobjp != NULL && *zoneobjp == NULL);
@@ -12559,12 +12645,14 @@ newzone_parse(named_server_t *server, char *command, dns_view_t **viewp,
 	isc_buffer_init(&argbuf, command, (unsigned int) strlen(command));
 	isc_buffer_add(&argbuf, strlen(command));
 
-	if (strncasecmp(command, "add", 3) == 0)
+	if (strncasecmp(command, "add", 3) == 0) {
 		bn = "addzone";
-	else if (strncasecmp(command, "mod", 3) == 0)
+	} else if (strncasecmp(command, "mod", 3) == 0) {
 		bn = "modzone";
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	/*
 	 * Convert the "addzone" or "modzone" to just "zone", for
@@ -13579,8 +13667,14 @@ find_name_in_list_from_map(const cfg_obj_t *config,
 
 static void
 emitzone(void *arg, const char *buf, int len) {
-	isc_buffer_t **tpp = arg;
-	putmem(tpp, buf, len);
+	ns_dzarg_t *dzarg = arg;
+	isc_result_t result;
+
+	REQUIRE(dzarg != NULL && ISC_MAGIC_VALID(dzarg, DZARG_MAGIC));
+	result = putmem(dzarg->text, buf, len);
+	if (result != ISC_R_SUCCESS && dzarg->result == ISC_R_SUCCESS) {
+		dzarg->result = result;
+	}
 }
 
 /*
@@ -13602,6 +13696,7 @@ named_server_showzone(named_server_t *server, isc_lex_t *lex,
 	cfg_obj_t *nzconfig = NULL;
 #endif /* HAVE_LMDB */
 	bool added, redirect;
+	ns_dzarg_t dzarg;
 
 	/* Parse parameters */
 	CHECK(zone_from_args(server, lex, NULL, &zone, zonename,
@@ -13661,9 +13756,14 @@ named_server_showzone(named_server_t *server, isc_lex_t *lex,
 	if (zconfig == NULL)
 		CHECK(ISC_R_NOTFOUND);
 
-	putstr(text, "zone ");
-	cfg_printx(zconfig, CFG_PRINTER_ONELINE, emitzone, text);
-	putstr(text, ";");
+	CHECK(putstr(text, "zone "));
+	dzarg.magic = DZARG_MAGIC;
+	dzarg.text = text;
+	dzarg.result = ISC_R_SUCCESS;
+	cfg_printx(zconfig, CFG_PRINTER_ONELINE, emitzone, &dzarg);
+	CHECK(dzarg.result);
+
+	CHECK(putstr(text, ";"));
 
 	result = ISC_R_SUCCESS;
 
@@ -14046,8 +14146,8 @@ named_server_zonestatus(named_server_t *server, isc_lex_t *lex,
 
 	/* Security */
 	secure = dns_db_issecure(db);
-	allow = (dns_zone_getkeyopts(zone) & DNS_ZONEKEY_ALLOW);
-	maintain = (dns_zone_getkeyopts(zone) & DNS_ZONEKEY_MAINTAIN);
+	allow = ((dns_zone_getkeyopts(zone) & DNS_ZONEKEY_ALLOW) != 0);
+	maintain = ((dns_zone_getkeyopts(zone) & DNS_ZONEKEY_MAINTAIN) != 0);
 
 	/* Master files */
 	file = dns_zone_getfile(mayberaw);
@@ -14494,7 +14594,7 @@ named_server_nta(named_server_t *server, isc_lex_t *lex,
 		}
 	}
 
-	CHECK(putnull(text));
+	(void) putnull(text);
 
  cleanup:
 	if (msg != NULL) {
@@ -14708,7 +14808,7 @@ mkey_dumpzone(dns_view_t *view, isc_buffer_t **text) {
 			snprintf(buf, sizeof(buf), "\n\talgorithm: %s", alg);
 			CHECK(putstr(text, buf));
 
-			revoked = (kd.flags & DNS_KEYFLAG_REVOKE);
+			revoked = ((kd.flags & DNS_KEYFLAG_REVOKE) != 0);
 			snprintf(buf, sizeof(buf), "\n\tflags:%s%s%s",
 				 revoked ? " REVOKE" : "",
 				 ((kd.flags & DNS_KEYFLAG_KSK) != 0)
@@ -14830,29 +14930,17 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 	/* Look for the optional class name. */
 	classtxt = next_token(lex, text);
 	if (classtxt != NULL) {
-		/* Look for the optional view name. */
-		viewtxt = next_token(lex, text);
-	}
-
-	if (classtxt == NULL) {
-		rdclass = dns_rdataclass_in;
-	} else {
 		isc_textregion_t r;
 		r.base = classtxt;
 		r.length = strlen(classtxt);
 		result = dns_rdataclass_fromtext(&rdclass, &r);
 		if (result != ISC_R_SUCCESS) {
-			if (viewtxt == NULL) {
-				rdclass = dns_rdataclass_in;
-				viewtxt = classtxt;
-				result = ISC_R_SUCCESS;
-			} else {
-				snprintf(msg, sizeof(msg),
-					 "unknown class '%s'", classtxt);
-				(void) putstr(text, msg);
-				goto cleanup;
-			}
+			snprintf(msg, sizeof(msg),
+				 "unknown class '%s'", classtxt);
+			(void) putstr(text, msg);
+			goto cleanup;
 		}
+		viewtxt = next_token(lex, text);
 	}
 
 	for (view = ISC_LIST_HEAD(server->viewlist);
@@ -14881,6 +14969,9 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 
 		switch (opt) {
 		case REFRESH:
+			if (!first) {
+				CHECK(putstr(text, "\n"));
+			}
 			CHECK(mkey_refresh(view, text));
 			break;
 		case STATUS:
@@ -14888,21 +14979,25 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 				CHECK(putstr(text, "\n\n"));
 			}
 			CHECK(mkey_status(view, text));
-			first = false;
 			break;
 		case SYNC:
 			CHECK(dns_zone_flush(view->managed_keys));
 			break;
 		case DESTROY:
+			if (!first) {
+				CHECK(putstr(text, "\n"));
+			}
 			CHECK(mkey_destroy(server, view, text));
 			break;
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 
 		if (viewtxt != NULL) {
 			break;
 		}
+		first = false;
 	}
 
 	if (!found) {

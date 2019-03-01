@@ -888,13 +888,16 @@ unknown_fromtext(dns_rdataclass_t rdclass, dns_rdatatype_t type,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	result = isc_hex_tobuffer(lexer, buf,
-				  (unsigned int)token.value.as_ulong);
-	if (result != ISC_R_SUCCESS)
-	       goto failure;
-	if (isc_buffer_usedlength(buf) != token.value.as_ulong) {
-		result = ISC_R_UNEXPECTEDEND;
-		goto failure;
+	if (token.value.as_ulong != 0U) {
+		result = isc_hex_tobuffer(lexer, buf,
+					  (unsigned int)token.value.as_ulong);
+		if (result != ISC_R_SUCCESS) {
+		       goto failure;
+		}
+		if (isc_buffer_usedlength(buf) != token.value.as_ulong) {
+			result = ISC_R_UNEXPECTEDEND;
+			goto failure;
+		}
 	}
 
 	if (dns_rdatatype_isknown(type)) {
@@ -953,7 +956,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		callback = default_fromtext_callback;
 
 	result = isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-					false);
+					true);
 	if (result != ISC_R_SUCCESS) {
 		name = isc_lex_getsourcename(lexer);
 		line = isc_lex_getsourceline(lexer);
@@ -2304,6 +2307,14 @@ dns_rdatatype_questiononly(dns_rdatatype_t type) {
 }
 
 bool
+dns_rdatatype_atcname(dns_rdatatype_t type) {
+	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATCNAME) != 0) {
+		return (true);
+	}
+	return (false);
+}
+
+bool
 dns_rdatatype_atparent(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATPARENT) != 0)
 		return (true);
@@ -2330,10 +2341,11 @@ dns_rdatatype_isdnssec(dns_rdatatype_t type) {
 
 bool
 dns_rdatatype_iszonecutauth(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type)
-	     & (DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH))
+	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ZONECUTAUTH)
 	    != 0)
+	{
 		return (true);
+	}
 	return (false);
 }
 

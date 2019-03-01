@@ -1,4 +1,4 @@
-Release Notes for BIND Version 9.12.3-P4
+Release Notes for BIND Version 9.12.4
 
 Introduction
 
@@ -91,6 +91,12 @@ New Features
     name space at or below the machine names identified in the respective
     principals.
 
+  * The new configure option --enable-fips-mode can be used to make BIND
+    enable and enforce FIPS mode in the OpenSSL library. When compiled
+    with such option the BIND will refuse to run if FIPS mode can't be
+    enabled, thus this option must be only enabled for the systems where
+    FIPS mode is available.
+
 Feature Changes
 
   * BIND now can be compiled against libidn2 library to add IDNA2008
@@ -103,6 +109,12 @@ Feature Changes
   * The rndc nta command could not differentiate between views of the same
     name but different class; this has been corrected with the addition of
     a -class option. [GL #105]
+
+  * When compiled with IDN support, the dig and the nslookup commands now
+    disable IDN processing when the standard output is not a tty (e.g. not
+    used by human). The command line options +idnin and +idnout need to be
+    used to enable IDN processing when dig or nslookup is used from the
+    shell scripts.
 
 Bug Fixes
 

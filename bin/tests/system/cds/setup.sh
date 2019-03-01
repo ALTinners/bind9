@@ -16,7 +16,7 @@ SYSTEMTESTTOP=..
 
 $SHELL clean.sh
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
+test -r $RANDFILE || $GENRANDOM $RANDOMSIZE $RANDFILE
 
 touch empty
 
@@ -40,11 +40,12 @@ id2=$id2
 EOF
 
 tac() {
-	perl -e 'print reverse <>' "$@"
+	$PERL -e 'print reverse <>' "$@"
 }
 
 convert() {
-	local key=$1 n=$2
+	key=$1
+	n=$2
 	$DSFROMKEY $key >DS.$n
 	grep ' 8 1 ' DS.$n >DS.$n-1
 	grep ' 8 2 ' DS.$n >DS.$n-2

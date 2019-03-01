@@ -128,6 +128,12 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #include <isc/app.h>
 #include <isc/buffer.h>
 #include <isc/lib.h>
@@ -182,6 +188,47 @@ static void _freeaddrinfo(struct addrinfo *ai);
 #define FOUND_IPV4	0x1
 #define FOUND_IPV6	0x2
 #define FOUND_MAX	2
+
+/*%
+ * Try converting the scope identifier in 'src' to a network interface index.
+ * Upon success, return true and store the resulting index in 'dst'.  Upon
+ * failure, return false.
+ */
+static bool
+parse_scopeid(const char *src, uint32_t *dst) {
+	uint32_t scopeid = 0;
+
+	REQUIRE(src != NULL);
+	REQUIRE(dst != NULL);
+
+#ifdef HAVE_IF_NAMETOINDEX
+	/*
+	 * Try using if_nametoindex() first if it is available.  As it does not
+	 * handle numeric scopes, we do not simply return if it fails.
+	 */
+	scopeid = (uint32_t)if_nametoindex(src);
+#endif
+
+	/*
+	 * Fall back to numeric scope processing if if_nametoindex() either
+	 * fails or is unavailable.
+	 */
+	if (scopeid == 0) {
+		char *endptr = NULL;
+		scopeid = (uint32_t)strtoul(src, &endptr, 10);
+		/*
+		 * The scope identifier must not be empty and no trailing
+		 * characters are allowed after it.
+		 */
+		if (src == endptr || endptr == NULL || *endptr != '\0') {
+			return (false);
+		}
+	}
+
+	*dst = scopeid;
+
+	return (true);
+}
 
 #define ISC_AI_MASK (AI_PASSIVE|AI_CANONNAME|AI_NUMERICHOST)
 /*%
@@ -300,25 +347,45 @@ getaddrinfo(const char *hostname, const char *servname,
 
 		port = strtol(servname, &e, 10);
 		if (*e == '\0') {
-			if (socktype == 0)
+			if (socktype == 0) {
 				return (EAI_SOCKTYPE);
-			if (port < 0 || port > 65535)
+			}
+			if (port < 0 || port > 65535) {
 				return (EAI_SERVICE);
+			}
 			port = htons((unsigned short) port);
 		} else {
+#ifdef _WIN32
+			WORD wVersionRequested;
+			WSADATA wsaData;
+
+			wVersionRequested = MAKEWORD(2, 0);
+
+			err = WSAStartup(wVersionRequested, &wsaData );
+			if (err != 0) {
+				return (EAI_FAIL);
+			}
+#endif
 			sp = getservbyname(servname, proto);
-			if (sp == NULL)
+			if (sp != NULL)
+				port = sp->s_port;
+#ifdef _WIN32
+			WSACleanup();
+#endif
+			if (sp == NULL) {
 				return (EAI_SERVICE);
-			port = sp->s_port;
+			}
 			if (socktype == 0) {
-				if (strcmp(sp->s_proto, "tcp") == 0)
+				if (strcmp(sp->s_proto, "tcp") == 0) {
 					socktype = SOCK_STREAM;
-				else if (strcmp(sp->s_proto, "udp") == 0)
+				} else if (strcmp(sp->s_proto, "udp") == 0) {
 					socktype = SOCK_DGRAM;
+				}
 			}
 		}
-	} else
+	} else {
 		port = 0;
+	}
 
 	/*
 	 * Next, deal with just a service name, and no hostname.
@@ -367,39 +434,24 @@ getaddrinfo(const char *hostname, const char *servname,
 		char abuf[sizeof(struct in6_addr)];
 		char nbuf[NI_MAXHOST];
 		int addrsize, addroff;
-#ifdef IRS_HAVE_SIN6_SCOPE_ID
-		char *p, *ep;
 		char ntmp[NI_MAXHOST];
-		uint32_t scopeid;
-#endif
+		uint32_t scopeid = 0;
 
-#ifdef IRS_HAVE_SIN6_SCOPE_ID
 		/*
 		 * Scope identifier portion.
 		 */
 		ntmp[0] = '\0';
 		if (strchr(hostname, '%') != NULL) {
+			char *p;
 			strlcpy(ntmp, hostname, sizeof(ntmp));
 			p = strchr(ntmp, '%');
-			ep = NULL;
 
-			/*
-			 * Vendors may want to support non-numeric
-			 * scopeid around here.
-			 */
-
-			if (p != NULL)
-				scopeid = (uint32_t)strtoul(p + 1,
-								&ep, 10);
-			if (p != NULL && ep != NULL && ep[0] == '\0')
+			if (p != NULL && parse_scopeid(p + 1, &scopeid)) {
 				*p = '\0';
-			else {
+			} else {
 				ntmp[0] = '\0';
-				scopeid = 0;
 			}
-		} else
-			scopeid = 0;
-#endif
+		}
 
 		if (inet_pton(AF_INET, hostname, (struct in_addr *)abuf)
 		    == 1) {
@@ -417,7 +469,6 @@ getaddrinfo(const char *hostname, const char *servname,
 			addroff = offsetof(struct sockaddr_in, sin_addr);
 			family = AF_INET;
 			goto common;
-#ifdef IRS_HAVE_SIN6_SCOPE_ID
 		} else if (ntmp[0] != '\0' &&
 			   inet_pton(AF_INET6, ntmp, abuf) == 1) {
 			if (family && family != AF_INET6)
@@ -426,7 +477,6 @@ getaddrinfo(const char *hostname, const char *servname,
 			addroff = offsetof(struct sockaddr_in6, sin6_addr);
 			family = AF_INET6;
 			goto common;
-#endif
 		} else if (inet_pton(AF_INET6, hostname, abuf) == 1) {
 			if (family != 0 && family != AF_INET6)
 				return (EAI_NONAME);
@@ -446,12 +496,10 @@ getaddrinfo(const char *hostname, const char *servname,
 			ai->ai_socktype = socktype;
 			SIN(ai->ai_addr)->sin_port = port;
 			memmove((char *)ai->ai_addr + addroff, abuf, addrsize);
+			if (ai->ai_family == AF_INET6) {
+				SIN6(ai->ai_addr)->sin6_scope_id = scopeid;
+			}
 			if ((flags & AI_CANONNAME) != 0) {
-#ifdef IRS_HAVE_SIN6_SCOPE_ID
-				if (ai->ai_family == AF_INET6)
-					SIN6(ai->ai_addr)->sin6_scope_id =
-						scopeid;
-#endif
 				if (getnameinfo(ai->ai_addr,
 						(socklen_t)ai->ai_addrlen,
 						nbuf, sizeof(nbuf), NULL, 0,
@@ -728,7 +776,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 		goto done;
 	}
 
-	wantcname = (resstate->head->ai_flags & AI_CANONNAME);
+	wantcname = ((resstate->head->ai_flags & AI_CANONNAME) != 0);
 
 	/* Parse the response and construct the addrinfo chain */
 	for (name = ISC_LIST_HEAD(rev->answerlist); name != NULL;

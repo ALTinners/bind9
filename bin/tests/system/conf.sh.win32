@@ -26,7 +26,18 @@ TOP=`cd $TOP && pwd`
 # Visual Studio build configurations are Release and Debug
 VSCONF=Debug
 
+# Default algorithm for testing
+DEFAULT_ALGORITHM=RSASHA256
+DEFAULT_ALGORITHM_NUMBER=8
+DEFAULT_BITS=1280
+
+# must be different from DEFAULT_ALGORITHM
+ALTERNATIVE_ALGORITHM=RSASHA1
+ALTERNATIVE_ALGORITHM_NUMBER=5
+ALTERNATIVE_BITS=1280
+
 ARPANAME=$TOP/Build/$VSCONF/arpaname@EXEEXT@
+CDS=$TOP/Build/$VSCONF/dnssec-cds@EXEEXT@
 CHECKCONF=$TOP/Build/$VSCONF/named-checkconf@EXEEXT@
 CHECKDS="$PYTHON `cygpath -w $TOP/bin/python/dnssec-checkds.py`"
 CHECKZONE=$TOP/Build/$VSCONF/named-checkzone@EXEEXT@
@@ -46,6 +57,7 @@ KEYGEN=$TOP/Build/$VSCONF/dnssec-keygen@EXEEXT@
 KEYMGR="$PYTHON `cygpath -w $TOP/bin/python/dnssec-keymgr.py`"
 MDIG=$TOP/Build/$VSCONF/mdig@EXEEXT@
 NAMED=$TOP/Build/$VSCONF/named@EXEEXT@
+NSEC3HASH=$TOP/Build/$VSCONF/nsec3hash@EXEEXT@
 NSLOOKUP=$TOP/Build/$VSCONF/nslookup@EXEEXT@
 NSUPDATE=$TOP/Build/$VSCONF/nsupdate@EXEEXT@
 NZD2NZF=$TOP/Build/$VSCONF/named-nzd2nzf@EXEEXT@
@@ -79,6 +91,10 @@ PIPEQUERIES=$TOP/Build/$VSCONF/pipequeries@EXEEXT@
 # we don't want a KRB5_CONFIG setting breaking the tests
 KRB5_CONFIG=NUL
 
+# the amount of fake "entropy" to generate with GENRANDOM in
+# system tests
+RANDOMSIZE=4096
+
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # The "dialup", "delzone", and "dupsigs" tests are also not run by
@@ -86,32 +102,38 @@ KRB5_CONFIG=NUL
 #
 # List of tests that use ports 5300 and 9953.  For this reason, these must
 # be run sequentially.
-SEQUENTIALDIRS="acl additional addzone autosign builtin \
-	 cacheclean case \
-	 checkconf @CHECKDS@ checknames checkzone cookie @COVERAGE@ \
-	 database digdelv dlv dlvauto dlz dlzexternal dname \
-	 dns64 dnssec @DNSTAP@ dscp dsdigest dyndb ecdsa eddsa \
-	 ednscompliance emptyzones \
-	 fetchlimit filter-aaaa formerr forward geoip glue gost idna inline ixfr \
-	 keepalive @KEYMGR@ legacy limits logfileconfig masterfile \
-	 masterformat metadata mkeys names notify nslookup nsupdate \
-	 nzd2nzf padding pending pipelined @PKCS11_TEST@ reclimit \
-	 redirect resolver rndc rpz rrchecker rrl \
-	 rrsetorder rsabigexponent runtime sfcache smartsign sortlist \
-	 spf staticstub statistics statschannel stub tcp tkey tsig \
-	 tsiggss unknown upforwd verify views wildcard xfer xferquota \
-	 zero zonechecks"
+SEQUENTIALDIRS="ecdsa eddsa gost @PKCS11_TEST@ tkey"
 
 # List of tests that use unique ports (other than 5300 and 9953). These
 # tests can be run in parallel.
 #
-# This symbol must be kept in step with the PARALLEL macro in Makefile.in
-PARALLELDIRS="allow_query catz rpzrecurse serve-stale"
+# XXX: Note that tests are not currently run in parallel on Windows, so it
+# isn't strictly necessary to maintain these as separate lists in this file,
+# but using the same variable names as in conf.sh.in may simplify keeping the
+# lists in sync.
+#
+# XXX: removed logfileconfig as it doesn't currently work on windows.
+PARALLELDIRS="acl additional addzone allow-query auth autosign \
+	builtin cacheclean case catz cds chain \
+	checkconf checknames checkzone \
+	@CHECKDS@ @COVERAGE@ @KEYMGR@ \
+	cookie database digdelv dlv dlz dlzexternal \
+	dns64 dnssec @DNSTAP@ dscp dsdigest dyndb \
+	ednscompliance emptyzones \
+	fetchlimit filter-aaaa formerr forward \
+	geoip glue idna inline integrity ixfr keepalive \
+	legacy limits masterfile masterformat metadata mkeys \
+	names notify nslookup nsupdate nzd2nzf \
+	padding pending pipelined \
+	reclimit redirect resolver rndc rootkeysentinel rpz rpzrecurse \
+	rrchecker rrl rrsetorder rsabigexponent runtime \
+	serve-stale sfcache smartsign sortlist \
+	spf staticstub statistics statschannel stub synthfromdnssec \
+	tcp tools tsig tsiggss \
+	unknown upforwd verify views wildcard \
+	xfer xferquota zero zonechecks"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
-
-# missing: chain integrity
-# extra: dname ednscompliance forward 
 
 #Things that are different on Windows
 KILL="/bin/kill -f"
@@ -121,7 +143,7 @@ DOS2UNIX=dos2unix
 TP=
 
 # Configure is launched from native environment, but tests are run in Cygwin -
-# so any detection is unreliable. 
+# so any detection is unreliable.
 SHELL="/bin/bash -o igncr"
 CURL=/usr/bin/curl
 XMLLINT=/usr/bin/xmllint
@@ -204,17 +226,23 @@ echoend () {
         printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
 }
 
-TESTNAME="`basename $PWD`"
+SYSTESTDIR="`basename $PWD`"
 
 echo_i() {
-    echo "$@" | while read LINE ; do
-       echoinfo "I:$TESTNAME:$LINE"
+    echo "$@" | while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:$__LINE"
+    done
+}
+
+echo_ic() {
+    echo "$@" | while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:  $__LINE"
     done
 }
 
 cat_i() {
-    while read LINE ; do
-       echoinfo "I:$SYSTESTDIR:$LINE"
+    while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:$__LINE"
     done
 }
 
@@ -299,7 +327,14 @@ copy_setports() {
         -e "s/${atsign}EXTRAPORT6${atsign}/${EXTRAPORT6}/g" \
         -e "s/${atsign}EXTRAPORT7${atsign}/${EXTRAPORT7}/g" \
         -e "s/${atsign}EXTRAPORT8${atsign}/${EXTRAPORT8}/g" \
-        -e "s/${atsign}CONTROLPORT${atsign}/${CONTROLPORT}/g" $1 > $2
+        -e "s/${atsign}CONTROLPORT${atsign}/${CONTROLPORT}/g" \
+	-e "s/${atsign}DEFAULT_ALGORITHM${atsign}/${DEFAULT_ALGORITHM}/g" \
+	-e "s/${atsign}DEFAULT_ALGORITHM_NUMBER${atsign}/${DEFAULT_ALGORITHM_NUMBER}/g" \
+	-e "s/${atsign}DEFAULT_BITS${atsign}/${DEFAULT_BITS}/g" \
+	-e "s/${atsign}ALTERNATIVE_ALGORITHM${atsign}/${ALTERNATIVE_ALGORITHM}/g" \
+	-e "s/${atsign}ALTERNATIVE_ALGORITHM_NUMBER${atsign}/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
+	-e "s/${atsign}ALTERNATIVE_BITS${atsign}/${ALTERNATIVE_BITS}/g" \
+	$1 > $2
 }
 
 #

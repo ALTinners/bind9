@@ -41,14 +41,12 @@ showprivate () {
 
 # check that signing records are marked as complete
 checkprivate () {
-    ret=0
-    x=`showprivate "$@"`
-    echo $x | grep incomplete >/dev/null 2>&1 && ret=1
-    [ $ret = 1 ] && {
-        echo "$x"
-        echo_i "failed"
-    }
-    return $ret
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        showprivate "$@" | grep -q incomplete || return 0
+	sleep 1
+    done
+    echo_d "$1 signing incomplete"
+    return 1
 }
 
 # check that a zone file is raw format, version 0
@@ -1650,9 +1648,9 @@ echo_i "checking dnssec-signzone -N date ($n)"
 ret=0
 (
 cd signer
-$SIGNER -O full -f signer.out.9 -S -N date -o example example2.db > /dev/null 2>&1
+TZ=UTC $SIGNER -O full -f signer.out.9 -S -N date -o example example2.db > /dev/null 2>&1
 ) || ret=1
-now=`$PERL -e '@lt=localtime(); printf "%.4d%0.2d%0.2d00\n",$lt[5]+1900,$lt[4]+1,$lt[3];'`
+now=`TZ=UTC $PERL -e '@lt=localtime(); printf "%.4d%0.2d%0.2d00\n",$lt[5]+1900,$lt[4]+1,$lt[3];'`
 serial=`awk '/^;/ { next; } $4 == "SOA" { print $7 }' signer/signer.out.9`
 [ "$now" -eq "$serial" ] || ret=1
 n=`expr $n + 1`
@@ -1980,7 +1978,7 @@ echo_i "waiting till 14s have passed since NTAs were added before restarting ns4
 $PERL -e 'my $delay = '$start' + 14 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2048,7 +2046,7 @@ echo "secure.example. regular $future" > ns4/_default.nta
 start=`$PERL -e 'print time()."\n";'`
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2105,7 +2103,7 @@ echo "secure.example. forced $future" > ns4/_default.nta
 start=`$PERL -e 'print time()."\n";'`
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2154,7 +2152,7 @@ echo "secure.example. forced $future" > ns4/_default.nta
 added=`$PERL -e 'print time()."\n";'`
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2653,7 +2651,7 @@ awk '{
 	for (i=7;i<=NF;i++) printf("%s", $i);
 	printf("\n");
 }' < ns1/dsset-algroll$TP > canonical2.$n || ret=1
-diff -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
+$DIFF -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -2700,7 +2698,7 @@ ret=0
 $DIG $ANSWEROPTS +nottlid nosign.example ns @10.53.0.3 | \
         grep RRSIG | sed 's/[ 	][ 	]*/ /g' > dig.out.ns3.test$n 2>&1
 # the NS RRSIG should not be changed
-cmp -s nosign.before dig.out.ns3.test$n || ret=1
+$DIFF nosign.before dig.out.ns3.test$n > /dev/null|| ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -3338,6 +3336,26 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking that unsupported DNSKEY algorithm validates as insecure ($n)"
+ret=0
+$DIG $DIGOPTS +noauth +noadd +nodnssec +adflag @10.53.0.3 dnskey-unsupported.example A > dig.out.ns3.test$n
+$DIG $DIGOPTS +noauth +noadd +nodnssec +adflag @10.53.0.4 dnskey-unsupported.example A > dig.out.ns4.test$n
+grep "status: NOERROR," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR," dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+test "$ret" -eq 0 || echo_i "failed"
+status=`expr $status + $ret`
+
+echo_i "checking that unsupported DNSKEY algorithm is in DNSKEY RRset ($n)"
+ret=0
+$DIG $DIGOPTS +noauth +noadd +nodnssec +adflag @10.53.0.3 dnskey-unsupported-2.example DNSKEY > dig.out.test$n
+grep "status: NOERROR," dig.out.test$n > /dev/null || ret=1
+grep "dnskey-unsupported-2\.example\..*IN.*DNSKEY.*257 3 255" dig.out.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+test "$ret" -eq 0 || echo_i "failed"
+status=`expr $status + $ret`
+
 echo_i "check that a lone non matching CDNSKEY record is rejected ($n)"
 ret=0
 (
@@ -3530,17 +3548,35 @@ ret=0
 $DIG $DIGOPTS . dnskey +ednsopt=KEY-TAG:fffe +ednsopt=KEY-TAG:fffd @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "trust-anchor-telemetry './IN' from .* 65534" ns1/named.run > /dev/null || ret=1
 grep "trust-anchor-telemetry './IN' from .* 65533" ns1/named.run > /dev/null && ret=1
-$PERL $SYSTEMTESTTOP/stop.pl . ns1 || ret=1
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns1 || ret=1
-n=$(($n+1))
+$PERL $SYSTEMTESTTOP/stop.pl dnssec ns1 || ret=1
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns1 || ret=1
+n=`expr $n + 1`
 test "$ret" -eq 0 || echo_i "failed"
-status=$((status+ret))
+status=`expr $status + $ret`
 
 echo_i "check that the view is logged in messages from the validator when using views ($n)"
 ret=0
 grep "view rec: *validat" ns4/named.run > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "check that DNAME at apex with NSEC3 is correctly signed (dnssec-signzone) ($n)"
+ret=0
+$DIG $DIGOPTS txt dname-at-apex-nsec3.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
+grep "RRSIG.NSEC3 8 3 3600" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "check that DNSKEY and other occluded data are excluded from the delegating bitmap ($n)"
+ret=0
+$DIG $DIGOPTS axfr occluded.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
+grep "^delegation.occluded.example..*NSEC.*NS KEY DS RRSIG NSEC$" dig.out.ns3.test$n > /dev/null || ret=1
+grep "^delegation.occluded.example..*DNSKEY.*" dig.out.ns3.test$n > /dev/null || ret=1
+grep "^delegation.occluded.example..*AAAA.*" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+test "$ret" -eq 0 || echo_i "failed"
 status=`expr $status + $ret`
 
 echo_i "exit status: $status"

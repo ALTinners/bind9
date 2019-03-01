@@ -289,6 +289,7 @@ static const char *ids[DNS_R_NRESULTS] = {
 	"DNS_R_BADDNSTAP",
 	"DNS_R_BADTSIG",
 	"DNS_R_BADSIG0",
+	"DNS_R_TOOMANYRECORDS",
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {
@@ -404,7 +405,6 @@ dns_result_torcode(isc_result_t result) {
 		rcode = dns_rcode_noerror;
 		break;
 	case ISC_R_BADBASE64:
-	case ISC_R_NOSPACE:
 	case ISC_R_RANGE:
 	case ISC_R_UNEXPECTEDEND:
 	case DNS_R_BADAAAA:

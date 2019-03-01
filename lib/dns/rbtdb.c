@@ -3316,6 +3316,8 @@ bind_rdataset(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 		rdataset->attributes |= DNS_RDATASETATTR_PREFETCH;
 	if (STALE(header)) {
 		rdataset->attributes |= DNS_RDATASETATTR_STALE;
+		rdataset->stale_ttl =
+			(rbtdb->serve_stale_ttl + header->rdh_ttl) - now;
 		rdataset->ttl = 0;
 	}
 	rdataset->private1 = rbtdb;
@@ -5742,7 +5744,8 @@ createiterator(dns_db_t *db, unsigned int options, dns_dbiterator_t **iteratorp)
 	rbtdbiter->common.methods = &dbiterator_methods;
 	rbtdbiter->common.db = NULL;
 	dns_db_attach(db, &rbtdbiter->common.db);
-	rbtdbiter->common.relative_names = (options & DNS_DB_RELATIVENAMES);
+	rbtdbiter->common.relative_names =
+		((options & DNS_DB_RELATIVENAMES) != 0);
 	rbtdbiter->common.magic = DNS_DBITERATOR_MAGIC;
 	rbtdbiter->common.cleaning = false;
 	rbtdbiter->paused = true;
@@ -5752,8 +5755,8 @@ createiterator(dns_db_t *db, unsigned int options, dns_dbiterator_t **iteratorp)
 	dns_fixedname_init(&rbtdbiter->origin);
 	rbtdbiter->node = NULL;
 	rbtdbiter->delcnt = 0;
-	rbtdbiter->nsec3only = (options & DNS_DB_NSEC3ONLY);
-	rbtdbiter->nonsec3 = (options & DNS_DB_NONSEC3);
+	rbtdbiter->nsec3only = ((options & DNS_DB_NSEC3ONLY) != 0);
+	rbtdbiter->nonsec3 = ((options & DNS_DB_NONSEC3) != 0);
 	memset(rbtdbiter->deletions, 0, sizeof(rbtdbiter->deletions));
 	dns_rbtnodechain_init(&rbtdbiter->chain, db->mctx);
 	dns_rbtnodechain_init(&rbtdbiter->nsec3chain, db->mctx);

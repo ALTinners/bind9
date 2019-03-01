@@ -10939,17 +10939,6 @@ example.com                 CNAME   rpz-tcp-only.
 	</para>
 
 	<para>
-	  Applications that depend on a particular XML schema
-	  can request
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v2">http://127.0.0.1:8888/xml/v2</link> for version 2
-	  of the statistics XML schema or
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3">http://127.0.0.1:8888/xml/v3</link> for version 3.
-	  If the requested schema is supported by the server, then
-	  it will respond; if not, it will return a "page not found"
-	  error.
-	</para>
-
-	<para>
 	  Broken-out subsets of the statistics can be viewed at
 	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/status">http://127.0.0.1:8888/xml/v3/status</link>
 	  (server uptime and last reconfiguration time),
@@ -13212,6 +13201,20 @@ view external {
 		  <row rowsep="0">
 		    <entry colname="1">
 		      <para>
+			AMTRELAY
+		      </para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Automatic Multicast Tunneling Relay
+			discovery record.
+			Work in progress draft-ietf-mboned-driad-amt-discovery.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
 			APL
 		      </para>
 		    </entry>
@@ -14163,6 +14166,19 @@ view external {
 		      <para>
 			Representation of X.25 network addresses.
 			Experimental.  Described in RFC 1183.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			ZONEMD
+		      </para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Zone Message Digest.
+			Work in progress draft-wessels-dns-zone-digest.
 		      </para>
 		    </entry>
 		  </row>
