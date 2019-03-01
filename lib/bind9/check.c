@@ -554,7 +554,7 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 				continue;
 			}
 			nbytes = prefixlen / 8 + 4;
-			if (prefixlen >= 32 && prefixlen <= 64)
+			if (prefixlen <= 64)
 				nbytes++;
 			if (memcmp(sa.type.in6.s6_addr, zeros, nbytes) != 0) {
 				char netaddrbuf[ISC_NETADDR_FORMATSIZE];
@@ -1765,6 +1765,7 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 			break;
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 
 		for (element2 = cfg_list_first(typelist);
@@ -2020,6 +2021,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 	}
 
@@ -2274,10 +2276,10 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	if (ztype == CFG_ZONE_MASTER || ztype == CFG_ZONE_SLAVE ||
 	    ztype == CFG_ZONE_STUB)
 	{
-		const cfg_obj_t *dialup = NULL;
-		(void)cfg_map_get(zoptions, "dialup", &dialup);
-		if (dialup != NULL && cfg_obj_isstring(dialup)) {
-			const char *str = cfg_obj_asstring(dialup);
+		obj = NULL;
+		(void)cfg_map_get(zoptions, "dialup", &obj);
+		if (obj != NULL && cfg_obj_isstring(obj)) {
+			const char *str = cfg_obj_asstring(obj);
 			for (i = 0;
 			     i < sizeof(dialups) / sizeof(dialups[0]);
 			     i++)
@@ -2358,13 +2360,6 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			obj = cfg_listelt_value(element);
 			sa = *cfg_obj_assockaddr(obj);
 
-			if (isc_sockaddr_getport(&sa) != 0) {
-				result = ISC_R_FAILURE;
-				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-					    "port is not configurable for "
-					    "static stub server-addresses");
-			}
-
 			isc_netaddr_fromsockaddr(&na, &sa);
 			if (isc_netaddr_getzone(&na) != 0) {
 				result = ISC_R_FAILURE;
@@ -2423,14 +2418,16 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	(void)cfg_map_get(zoptions, "masterfile-format", &obj);
 	if (obj != NULL) {
 		const char *masterformatstr = cfg_obj_asstring(obj);
-		if (strcasecmp(masterformatstr, "text") == 0)
+		if (strcasecmp(masterformatstr, "text") == 0) {
 			masterformat = dns_masterformat_text;
-		else if (strcasecmp(masterformatstr, "raw") == 0)
+		} else if (strcasecmp(masterformatstr, "raw") == 0) {
 			masterformat = dns_masterformat_raw;
-		else if (strcasecmp(masterformatstr, "map") == 0)
+		} else if (strcasecmp(masterformatstr, "map") == 0) {
 			masterformat = dns_masterformat_map;
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	if (masterformat == dns_masterformat_map) {

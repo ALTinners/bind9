@@ -15,8 +15,8 @@ SYSTEMTESTTOP=../..
 SYSTESTDIR=autosign
 
 dumpit () {
-	echo "D:${debug}: dumping ${1}"
-	cat "${1}" | sed 's/^/D:/'
+	echo_d "${debug}: dumping ${1}"
+	cat "${1}" | cat_d
 }
 
 setup () {
@@ -316,3 +316,12 @@ ksk=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -fk $zone 2> kg.out` || 
 $KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
 zsk=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -3 -q -r $RANDFILE -I now-1w $zone 2>kg.out` || dumpit kg.out
 echo $zsk > ../delzsk.key
+
+#
+#  Check that NSEC3 are correctly signed and returned from below a DNAME
+#
+setup dname-at-apex-nsec3.example
+cp $infile $zonefile
+ksk=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -3 -fk $zone 2> kg.out` || dumpit kg.out
+$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -3 $zone > kg.out 2>&1 || dumpit kg.out
+$DSFROMKEY $ksk.key > dsset-${zone}$TP

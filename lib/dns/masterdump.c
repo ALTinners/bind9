@@ -1022,7 +1022,7 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 
 	for (i = 0; i < n; i++) {
 		dns_rdataset_t *rds = sorted[i];
-		if (ctx->style.flags & DNS_STYLEFLAG_TRUST) {
+		if ((ctx->style.flags & DNS_STYLEFLAG_TRUST) != 0) {
 			if ((ctx->style.flags & DNS_STYLEFLAG_INDENT) != 0 ||
 			    (ctx->style.flags & DNS_STYLEFLAG_YAML) != 0)
 			{
@@ -1044,8 +1044,8 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 			if ((ctx->style.flags & DNS_STYLEFLAG_OMIT_OWNER) != 0)
 				name = NULL;
 		}
-		if (ctx->style.flags & DNS_STYLEFLAG_RESIGN &&
-		    rds->attributes & DNS_RDATASETATTR_RESIGN) {
+		if (((ctx->style.flags & DNS_STYLEFLAG_RESIGN) != 0) &&
+		    ((rds->attributes & DNS_RDATASETATTR_RESIGN) != 0)) {
 			isc_buffer_t b;
 			char buf[sizeof("YYYYMMDDHHMMSS")];
 			memset(buf, 0, sizeof(buf));
@@ -1190,19 +1190,25 @@ dump_rdataset_raw(isc_mem_t *mctx, dns_name_t *name, dns_rdataset_t *rdataset,
 }
 
 static isc_result_t
-dump_rdatasets_raw(isc_mem_t *mctx, dns_name_t *name,
+dump_rdatasets_raw(isc_mem_t *mctx, dns_name_t *owner_name,
 		   dns_rdatasetiter_t *rdsiter, dns_totext_ctx_t *ctx,
 		   isc_buffer_t *buffer, FILE *f)
 {
 	isc_result_t result;
 	dns_rdataset_t rdataset;
+	dns_fixedname_t fixed;
+	dns_name_t *name;
 
+	name = dns_fixedname_initname(&fixed);
+	dns_name_copy(owner_name, name, NULL);
 	for (result = dns_rdatasetiter_first(rdsiter);
 	     result == ISC_R_SUCCESS;
 	     result = dns_rdatasetiter_next(rdsiter)) {
 
 		dns_rdataset_init(&rdataset);
 		dns_rdatasetiter_current(rdsiter, &rdataset);
+
+		dns_rdataset_getownercase(&rdataset, name);
 
 		if (((rdataset.attributes & DNS_RDATASETATTR_NEGATIVE) != 0) &&
 		    (ctx->style.flags & DNS_STYLEFLAG_NCACHE) == 0) {
@@ -1484,7 +1490,7 @@ dumpctx_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 		break;
 	default:
 		INSIST(0);
-		break;
+		ISC_UNREACHABLE();
 	}
 
 	result = totext_ctx_init(style, &dctx->tctx);
@@ -1569,24 +1575,7 @@ writeheader(dns_dumpctx_t *dctx) {
 		r.base = (unsigned char *)&rawheader;
 		r.length = sizeof(rawheader);
 		isc_buffer_region(&buffer, &r);
-#if !defined(STDTIME_ON_32BITS) || (STDTIME_ON_32BITS + 0) != 1
-		/*
-		 * We assume isc_stdtime_t is a 32-bit integer,
-		 * which should be the case on most platforms.
-		 * If it turns out to be uncommon, we'll need
-		 * to bump the version number and revise the
-		 * header format.
-		 */
-		isc_log_write(dns_lctx,
-			      ISC_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_MASTERDUMP,
-			      ISC_LOG_INFO,
-			      "dumping master file in raw "
-			      "format: stdtime is not 32bits");
-		now32 = 0;
-#else
 		now32 = dctx->now;
-#endif
 		rawversion = 1;
 		if ((dctx->header.flags & DNS_MASTERRAW_COMPAT) != 0)
 			rawversion = 0;
@@ -1612,6 +1601,7 @@ writeheader(dns_dumpctx_t *dctx) {
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	isc_mem_put(dctx->mctx, buffer.base, buffer.length);

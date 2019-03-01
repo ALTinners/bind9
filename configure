@@ -677,10 +677,11 @@ BIND9_ISCCFG_BUILDINCLUDE
 BIND9_ISCCC_BUILDINCLUDE
 BIND9_ISC_BUILDINCLUDE
 BIND9_TOP_BUILDDIR
+LD_WRAP_TESTS
+KYUA
 UNITTESTS
-ATFLIBS
-ATFBIN
-ATFBUILD
+CMOCKA_LIBS
+CMOCKA_CFLAGS
 LIBIDN2_LIBS
 LIBIDN2_CFLAGS
 IDNKIT_LIBS
@@ -899,6 +900,9 @@ ETAGS
 LN
 ARFLAGS
 XTARGETS
+PKG_CONFIG_LIBDIR
+PKG_CONFIG_PATH
+PKG_CONFIG
 BACKTRACECFLAGS
 CCNOOPT
 CCOPT
@@ -1067,7 +1071,7 @@ with_libiconv
 with_iconv
 with_idnlib
 with_libidn2
-with_atf
+with_cmocka
 with_tuning
 enable_querytrace
 with_dlopen
@@ -1090,7 +1094,13 @@ LDFLAGS
 LIBS
 CPPFLAGS
 LT_SYS_LIBRARY_PATH
-CPP'
+CPP
+PKG_CONFIG
+PKG_CONFIG_PATH
+PKG_CONFIG_LIBDIR
+CMOCKA_CFLAGS
+CMOCKA_LIBS
+KYUA'
 
 
 # Initialize some variables set by options.
@@ -1688,9 +1698,6 @@ _ACEOF
 
   cat <<\_ACEOF
 
-  NOTE: If PREFIX is not set, then the default values for --sysconfdir
-  and --localstatedir are /etc and /var, respectively.
-
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
   --host=HOST       cross-compile to build programs to run on HOST [BUILD]
@@ -1759,7 +1766,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
-  --with-python=PATH      specify path to python interpreter
+  --with-python=PATH      specify path to Python interpreter
   --with-python-install-dir=PATH
                           installation directory for Python modules
   --with-geoip=PATH       Build with GeoIP support (yes|no|path)
@@ -1797,7 +1804,7 @@ Optional Packages:
   --with-iconv=LIBSPEC    specify iconv library [default -liconv]
   --with-idnlib=ARG       specify libidnkit
   --with-libidn2=PATH     enable IDN support using GNU libidn2 [yes|no|path]
-  --with-atf              support Automated Test Framework
+  --with-cmocka=no        enable cmocka based tests (default is no)
   --with-tuning=ARG       Specify server tuning (large or default)
   --with-dlopen=ARG       support dynamically loadable DLZ drivers
   --with-dlz-postgres=PATH
@@ -1829,17 +1836,18 @@ Some influential environment variables:
   LT_SYS_LIBRARY_PATH
               User-defined run-time library search path.
   CPP         C preprocessor
+  PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config's search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config's built-in search path
+  CMOCKA_CFLAGS
+              C compiler flags for CMOCKA, overriding pkg-config
+  CMOCKA_LIBS linker flags for CMOCKA, overriding pkg-config
+  KYUA        path to kyua execution engine
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
-
-Professional support for BIND is provided by Internet Systems Consortium,
-Inc.  Information about paid support and training options is available at
-https://www.isc.org/support.
-
-Help can also often be found on the BIND Users mailing list
-(https://lists.isc.org/mailman/listinfo/bind-users) or in the #bind
-channel of the Freenode IRC service.
 
 Report bugs to <info@isc.org>.
 BIND home page: <https://www.isc.org/downloads/BIND/>.
@@ -11951,6 +11959,131 @@ fi
 
 
 
+#
+# Use pkg-config
+#
+
+
+
+
+
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+fi
+
 # Warn if the user specified libbind, which is now deprecated
 # Check whether --enable-libbind was given.
 if test "${enable_libbind+set}" = set; then :
@@ -12004,8 +12137,8 @@ yes)
 	STD_CDEFINES="$STD_CDEFINES -DISC_LIST_CHECKINIT=1"
 	test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
 	test "${enable_querytrace+set}" = set || enable_querytrace=yes
-	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
+	test "${with_cmocka+set}" = set || with_cmocka=yes
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
 	test "${enable_symtable+set}" = set || enable_symtable=all
 	test "${enable_warn_error+set}" = set || enable_warn_error=yes
@@ -12366,54 +12499,59 @@ done
 
 
 #
-# Python is also optional; it is used by the tools in bin/python.
-# If python is unavailable, we simply don't build those.
+# Python is also optional but required by default so that dnssec-keymgr gets
+# installed unless explicitly prevented by the user using --without-python.
 #
+testminvers='import sys
+if (sys.version_info < (2,7)) or (sys.version_info < (3,2) and sys.version_info >= (3,0)):
+   exit(1)'
+
+testargparse='try: import argparse
+except: exit(1)'
+
+testply='try: import ply
+except: exit(1)'
+
+default_with_python="python python3 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
+
 
 # Check whether --with-python was given.
 if test "${with_python+set}" = set; then :
-  withval=$with_python; use_python="$withval"
+  withval=$with_python;
 else
-  use_python="unspec"
+  with_python=$default_with_python
 fi
 
 
 # Check whether --with-python-install-dir was given.
 if test "${with_python_install_dir+set}" = set; then :
-  withval=$with_python_install_dir; use_python_install_dir="$withval"
+  withval=$with_python_install_dir;
 else
-  use_python_install_dir="unspec"
+  with_python_install_dir=""
 fi
 
 
-python="python python3 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
+if test "$with_python" = "yes"; then :
+  with_python=$default_with_python
+fi
 
-testargparse='try: import argparse
-except: exit(1)'
-
-testply='try: from ply import *
-except: exit(1)'
-
-testminvers='import sys
-if (sys.version_info < (2,7)) or (sys.version_info < (3,2) and sys.version_info >= (3,0)):
-   exit(1)'
-
-case "$use_python" in
-	no)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for python support" >&5
-$as_echo_n "checking for python support... " >&6; }
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+if test "$with_python" = "no"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python support" >&5
+$as_echo_n "checking for Python support... " >&6; }
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
-		;;
-	unspec|yes|*)
-		case "$use_python" in
-		unspec|yes|'')
-			for p in $python
-			do
-				for ac_prog in $p
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
+else
+  for p in $with_python
+       do
+	 case $p in #(
+  /*) :
+    PYTHON="$p" ;; #(
+  *) :
+     ;;
+esac
+
+	 # Extract the first word of "$p", so it can be a program name with args.
+set dummy $p; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_PYTHON+:} false; then :
@@ -12452,167 +12590,80 @@ $as_echo "no" >&6; }
 fi
 
 
-  test -n "$PYTHON" && break
-done
+	 # Do not cache the result of the check from the previous line.  If the
+	 # first found Python interpreter has missing module dependencies and
+	 # the result of the above check is cached, subsequent module checks
+	 # will erroneously keep on using the cached path to the first found
+	 # Python interpreter instead of different ones.
+	 unset ac_cv_path_PYTHON
 
-				if test "X$PYTHON" = "X"; then
-					continue;
-				fi
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python2 version >= 2.7 or python3 version >= 3.2" >&5
-$as_echo_n "checking python2 version >= 2.7 or python3 version >= 3.2... " >&6; }
-				if ${PYTHON:-false} -c "$testminvers"; then
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
-$as_echo "found" >&6; }
-				else
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-					unset ac_cv_path_PYTHON
-					unset PYTHON
-					continue
-				fi
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
-$as_echo_n "checking python module 'argparse'... " >&6; }
-				if ${PYTHON:-false} -c "$testargparse"; then
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
-$as_echo "found" >&6; }
-				else
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-					unset ac_cv_path_PYTHON
-					unset PYTHON
-					continue
-				fi
-
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'ply'" >&5
-$as_echo_n "checking python module 'ply'... " >&6; }
-				if ${PYTHON:-false} -c "$testply"; then
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
-$as_echo "found" >&6; }
-					break
-				else
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-					unset ac_cv_path_PYTHON
-					unset PYTHON
-				fi
-			done
-			if test "X$PYTHON" != "X"
-			then
-				case "$use_python_install_dir" in
-				unspec)
-					PYTHON_INSTALL_DIR=""
-					PYTHON_INSTALL_LIB=""
-					;;
-				*)
-					PYTHON_INSTALL_DIR="$use_python_install_dir"
-					PYTHON_INSTALL_LIB="--install-lib=$use_python_install_dir"
-					;;
-				esac
-			else
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for python support" >&5
-$as_echo_n "checking for python support... " >&6; }
-				case "$use_python" in
-				unspec)
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-					;;
-				yes)
-					as_fn_error $? "missing python" "$LINENO" 5
-					;;
-				esac
-			fi
-			;;
-		*)
-			case "$use_python" in
-			/*)
-				PYTHON="$use_python"
-				;;
-			*)
-				for ac_prog in $use_python
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PYTHON+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PYTHON in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
+	 if test -z "$PYTHON"; then :
+  continue
 fi
-PYTHON=$ac_cv_path_PYTHON
-if test -n "$PYTHON"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON" >&5
-$as_echo "$PYTHON" >&6; }
+
+	 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if $PYTHON is python2 version >= 2.7 or python3 version >= 3.2" >&5
+$as_echo_n "checking if $PYTHON is python2 version >= 2.7 or python3 version >= 3.2... " >&6; }
+	 if "$PYTHON" -c "$testminvers" 2>/dev/null; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+		unset PYTHON
+		continue
 fi
 
+	 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python module 'argparse'" >&5
+$as_echo_n "checking Python module 'argparse'... " >&6; }
+	 if "$PYTHON" -c "$testargparse" 2>/dev/null; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		unset PYTHON
+		continue
+fi
 
-  test -n "$PYTHON" && break
-done
+	 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python module 'ply'" >&5
+$as_echo_n "checking Python module 'ply'... " >&6; }
+	 if "$PYTHON" -c "$testply" 2>/dev/null; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		unset PYTHON
+		continue
+fi
 
-				;;
-			esac
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python2 version >= 2.7 or python3 version >= 3.2" >&5
-$as_echo_n "checking python2 version >= 2.7 or python3 version >= 3.2... " >&6; }
-			if ${PYTHON:-false} -c "$testminvers"; then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
-$as_echo "found" >&6; }
-			else
-				as_fn_error $? "not found" "$LINENO" 5
-			fi
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
-$as_echo_n "checking python module 'argparse'... " >&6; }
-			if ${PYTHON:-false} -c "$testargparse"; then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
-$as_echo "found, using $PYTHON" >&6; }
-			else
-				as_fn_error $? "not found" "$LINENO" 5
-			fi
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'ply'" >&5
-$as_echo_n "checking python module 'ply'... " >&6; }
-			if ${PYTHON:-false} -c "$testply"; then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
-$as_echo "found, using $PYTHON" >&6; }
-			else
-				as_fn_error $? "not found" "$LINENO" 5
-			fi
-			;;
-		esac
-		;;
-esac
+	 # Stop looking any further once we find a Python interpreter
+	 # satisfying all requirements.
+	 break
+       done
+
+       if test "X$PYTHON" = "X"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python support" >&5
+$as_echo_n "checking for Python support... " >&6; }
+	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	      as_fn_error $? "Python required for dnssec-keymgr" "$LINENO" 5
+fi
+fi
 
 PYTHON_TOOLS=''
 CHECKDS=''
 COVERAGE=''
 KEYMGR=''
-if test "X$PYTHON" != "X"; then
-	PYTHON_TOOLS=python
-	CHECKDS=checkds
-	COVERAGE=coverage
-	KEYMGR=keymgr
+if test "X$PYTHON" != "X"; then :
+  PYTHON_TOOLS=python
+       CHECKDS=checkds
+       COVERAGE=coverage
+       KEYMGR=keymgr
+       PYTHON_INSTALL_DIR="$with_python_install_dir"
+       if test -n "$with_python_install_dir"; then :
+  PYTHON_INSTALL_LIB="--install-lib=$with_python_install_dir"
+fi
 fi
 
 
@@ -15404,10 +15455,12 @@ case $host in
 	use_threads=false ;;
 *-netbsd*)
 	use_threads=true ;;
-*-openbsd*)
-	# OpenBSD users have reported that named dumps core on
+*-openbsd[12345].*|*-openbsd6.[01])
+	# OpenBSD users reported that named dumps core on
 	# startup when built with threads.
 	use_threads=false ;;
+*-openbsd*)
+	use_threads=true ;;
 *-freebsd[1234567].*)
 	# Threads are broken at least up to FreeBSD 4.11.
 	# FreeBSD 5, 6 and 7 we have never officially supported threads
@@ -17148,9 +17201,9 @@ int main() {
 
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		have_ed448="yes"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: broken" >&5
+$as_echo "broken" >&6; }
+		have_ed448="no"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -17638,6 +17691,12 @@ $as_echo "Cryptech" >&6; }
 				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: AEP Keyper" >&5
 $as_echo "AEP Keyper" >&6; }
 				pk11_flavor="PK11_AEP_FLAVOR"
+				set_pk11_flavor="yes"
+				;;
+			*libcs*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Utimaco HSM" >&5
+$as_echo "Utimaco HSM" >&6; }
+				pk11_flavor="PK11_UTIMACO_FLAVOR"
 				set_pk11_flavor="yes"
 				;;
 			undefined)
@@ -19743,7 +19802,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #include <sys/socket.h>
 #include <netdb.h>
 int getnameinfo(const struct sockaddr *, socklen_t, char *,
-		socklen_t, char *, socklen_t, unsigned int);
+		socklen_t, char *, socklen_t, int);
 int
 main ()
 {
@@ -19753,8 +19812,8 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: socklen_t for buflen; u_int for flags" >&5
-$as_echo "socklen_t for buflen; u_int for flags" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: socklen_t for buflen; int for flags" >&5
+$as_echo "socklen_t for buflen; int for flags" >&6; }
 
 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
 
@@ -19762,7 +19821,7 @@ $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
 
 
-$as_echo "#define IRS_GETNAMEINFO_FLAGS_T unsigned int" >>confdefs.h
+$as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
 
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -19817,13 +19876,13 @@ $as_echo "size_t for buflen; int for flags" >&6; }
 	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
 
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not match any subspecies; assume standard definition" >&5
-$as_echo "not match any subspecies; assume standard definition" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not match any subspecies; socklen_t for buflen; u_int for flags" >&5
+$as_echo "not match any subspecies; socklen_t for buflen; u_int for flags" >&6; }
 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
 
 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
 
-$as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
+$as_echo "#define IRS_GETNAMEINFO_FLAGS_T unsigned int" >>confdefs.h
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -20986,7 +21045,11 @@ int
 main ()
 {
 
-atomic_int_fast32_t val = 0; atomic_fetch_add_explicit(&val, 1, memory_order_relaxed);
+  #if ATOMIC_INT_LOCK_FREE == 2 && ATOMIC_LONG_LOCK_FREE == 2
+  atomic_int_fast32_t val = 0; atomic_fetch_add_explicit(&val, 1, memory_order_relaxed);
+  #else
+  #error stdatomic not lock free
+  #endif
 
   ;
   return 0;
@@ -21385,6 +21448,38 @@ fi
 
 ISC_ARCH_DIR=$arch
 
+
+#
+# Check for __builtin_unreachable
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler support for __builtin_unreachable()" >&5
+$as_echo_n "checking compiler support for __builtin_unreachable()... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+__builtin_unreachable();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_BUILTIN_UNREACHABLE 1" >>confdefs.h
+
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 
 #
 # Check for __builtin_expect
@@ -23044,41 +23139,148 @@ $as_echo "#define WITH_IDN_OUT_SUPPORT 1" >>confdefs.h
 fi
 
 #
-# Check whether to build Automated Test Framework unit tests
+# Check whether to build with cmocka unit testing framework
 #
 
-# Check whether --with-atf was given.
-if test "${with_atf+set}" = set; then :
-  withval=$with_atf; atf="$withval"
+
+# Check whether --with-cmocka was given.
+if test "${with_cmocka+set}" = set; then :
+  withval=$with_cmocka; :
 else
-  atf="no"
+  with_cmocka=no
 fi
 
-if test "yes" = "$atf"; then
-	atf=`pwd`/unit/atf
-	ATFBUILD=atf-src
 
-	ac_config_commands="$ac_config_commands atf-config"
+case $with_cmocka in #(
+  no) :
+    : ;; #(
+  yes) :
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: building ATF from bind9/unit/atf-src" >&5
-$as_echo "building ATF from bind9/unit/atf-src" >&6; }
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmocka >= 1.0.0" >&5
+$as_echo_n "checking for cmocka >= 1.0.0... " >&6; }
+
+if test -n "$CMOCKA_CFLAGS"; then
+    pkg_cv_CMOCKA_CFLAGS="$CMOCKA_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.0.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.0.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_CMOCKA_CFLAGS=`$PKG_CONFIG --cflags "cmocka >= 1.0.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$CMOCKA_LIBS"; then
+    pkg_cv_CMOCKA_LIBS="$CMOCKA_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.0.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.0.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_CMOCKA_LIBS=`$PKG_CONFIG --libs "cmocka >= 1.0.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
 fi
 
-ATFLIBS=
-if test "no" != "$atf"; then
 
-$as_echo "#define ATF_TEST 1" >>confdefs.h
 
-	STD_CINCLUDES="$STD_CINCLUDES -I$atf/include"
-	ATFBIN="$atf/bin"
-	ATFLIBS="-L$atf/lib -latf-c"
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for exp in -lm" >&5
-$as_echo_n "checking for exp in -lm... " >&6; }
-if ${ac_cv_lib_m_exp+:} false; then :
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cmocka >= 1.0.0" 2>&1`
+        else
+	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cmocka >= 1.0.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$CMOCKA_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (cmocka >= 1.0.0) were not met:
+
+$CMOCKA_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables CMOCKA_CFLAGS
+and CMOCKA_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables CMOCKA_CFLAGS
+and CMOCKA_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	CMOCKA_CFLAGS=$pkg_cv_CMOCKA_CFLAGS
+	CMOCKA_LIBS=$pkg_cv_CMOCKA_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_CMOCKA 1" >>confdefs.h
+
+fi
+            UNITTESTS=tests
+             ;; #(
+  *) :
+
+	    save_CFLAGS="$CFLAGS"
+	    save_LIBS="$LIBS"
+	    CFLAGS="$CFLAGS -I$with_cmocka/include"
+	    LIBS="$LIBS -L$with_cmocka/lib"
+	    for ac_header in cmocka.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "cmocka.h" "ac_cv_header_cmocka_h" "#include <stdarg.h>
+			      #include <stddef.h>
+			      #include <setjmp.h>
+
+"
+if test "x$ac_cv_header_cmocka_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CMOCKA_H 1
+_ACEOF
+ :
+else
+  as_fn_error $? "cmocka.h not found" "$LINENO" 5
+fi
+
+done
+
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing cmocka_set_message_output" >&5
+$as_echo_n "checking for library containing cmocka_set_message_output... " >&6; }
+if ${ac_cv_search_cmocka_set_message_output+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -23088,41 +23290,167 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char exp ();
+char cmocka_set_message_output ();
 int
 main ()
 {
-return exp ();
+return cmocka_set_message_output ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' cmocka; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_cmocka_set_message_output=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_cmocka_set_message_output+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_cmocka_set_message_output+:} false; then :
+
+else
+  ac_cv_search_cmocka_set_message_output=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_cmocka_set_message_output" >&5
+$as_echo "$ac_cv_search_cmocka_set_message_output" >&6; }
+ac_res=$ac_cv_search_cmocka_set_message_output
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+			       CMOCKA_CFLAGS="-Iwith_cmocka/include"
+			       CMOCKA_LIBS="-L$with_cmocka/lib -lcmocka"
+                               UNITTESTS=tests
+
+$as_echo "#define HAVE_CMOCKA 1" >>confdefs.h
+
+
+else
+  as_fn_error $? "cmocka unit testing framework not found in $with_cmocka path" "$LINENO" 5
+fi
+
+	     ;; #(
+  *) :
+     ;;
+esac
+
+
+
+
+#
+# Check for kyua execution engine if CMocka was requested
+# and bail out if execution engine was not found
+#
+
+if test "$with_cmocka" != "no"; then :
+  for ac_prog in kyua
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_KYUA+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $KYUA in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_KYUA="$KYUA" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_KYUA="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+KYUA=$ac_cv_path_KYUA
+if test -n "$KYUA"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $KYUA" >&5
+$as_echo "$KYUA" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$KYUA" && break
+done
+
+       if test -z "$KYUA"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: kyua test execution engine not found" >&5
+$as_echo "$as_me: WARNING: kyua test execution engine not found" >&2;}
+fi
+fi
+
+
+
+#
+# Check for -Wl,--wrap= support
+#
+
+save_LDFLAGS=$LDFLAGS
+LDFLAGS="--wrap=printf"
+
+LD_WRAP_TESTS=false
+enable_ld_wrap=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for linker support for --wrap option" >&5
+$as_echo_n "checking for linker support for --wrap option... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdio.h>
+int
+main ()
+{
+__wrap_printf("success"); return (0);
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_exp=yes
+  enable_ld_wrap=yes
+     LD_WRAP_TESTS=true
+
+$as_echo "#define LD_WRAP 1" >>confdefs.h
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 else
-  ac_cv_lib_m_exp=no
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_exp" >&5
-$as_echo "$ac_cv_lib_m_exp" >&6; }
-if test "x$ac_cv_lib_m_exp" = xyes; then :
-  libm=yes
-else
-  libm=no
-fi
-
-	if test "yes" = "$libm"; then
-		ATFLIBS="$ATFLIBS -lm"
-	fi
-	UNITTESTS=tests
-fi
+# AM_CONDITIONAL([LD_WRAP], [test $enable_ld_wrap = yes])
 
 
+LDFLAGS=$save_LDFLAGS
 
-
+#
+# Check for i18n
+#
 for ac_header in locale.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "locale.h" "ac_cv_header_locale_h" "$ac_includes_default"
@@ -23421,6 +23749,7 @@ if test "yes" = "$dlopen"; then
 	case $host in
 		*-linux*|*-gnu*)
 			SO_CFLAGS="-fPIC"
+                        LDFLAGS="${LDFLAGS} -Wl,--export-dynamic"
 			SO_LDFLAGS=""
 			if test "yes" = "$have_dl"
 			then
@@ -24555,7 +24884,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/isc/Makefile bin/python/isc/utils.py bin/python/isc/tests/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/python/dnssec-keymgr.py bin/python/isc/__init__.py bin/python/isc/checkds.py bin/python/isc/coverage.py bin/python/isc/dnskey.py bin/python/isc/eventlist.py bin/python/isc/keydict.py bin/python/isc/keyevent.py bin/python/isc/keymgr.py bin/python/isc/keyseries.py bin/python/isc/keyzone.py bin/python/isc/policy.py bin/python/isc/rndc.py bin/python/isc/tests/dnskey_test.py bin/python/isc/tests/policy_test.py bin/rndc/Makefile bin/tests/Makefile bin/tests/headerdep_test.sh bin/tests/optional/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/dlzs.conf bin/tests/system/dyndb/Makefile bin/tests/system/dyndb/driver/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/pipelined/Makefile bin/tests/system/rndc/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/arm/noteversion.xml doc/arm/pkgversion.xml doc/arm/releaseinfo.xml doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/tex/Makefile doc/tex/armstyle.sty doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-manpage.xsl doc/xsl/isc-notes-html.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/irs/tests/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/isccfg/tests/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/Makefile unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/isc/Makefile bin/python/isc/utils.py bin/python/isc/tests/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/python/dnssec-keymgr.py bin/python/isc/__init__.py bin/python/isc/checkds.py bin/python/isc/coverage.py bin/python/isc/dnskey.py bin/python/isc/eventlist.py bin/python/isc/keydict.py bin/python/isc/keyevent.py bin/python/isc/keymgr.py bin/python/isc/keyseries.py bin/python/isc/keyzone.py bin/python/isc/policy.py bin/python/isc/rndc.py bin/python/isc/tests/dnskey_test.py bin/python/isc/tests/policy_test.py bin/rndc/Makefile bin/tests/Makefile bin/tests/headerdep_test.sh bin/tests/optional/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/dlzs.conf bin/tests/system/dyndb/Makefile bin/tests/system/dyndb/driver/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/pipelined/Makefile bin/tests/system/rndc/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/arm/noteversion.xml doc/arm/pkgversion.xml doc/arm/releaseinfo.xml doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/tex/Makefile doc/tex/armstyle.sty doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-manpage.xsl doc/xsl/isc-notes-html.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/irs/tests/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccc/tests/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/isccfg/tests/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/unittest.sh"
 
 
 #
@@ -25537,7 +25866,6 @@ fi
 
 
 
-atfdir=`pwd`/unit/atf
 
 _ACEOF
 
@@ -25551,7 +25879,6 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "make/rules") CONFIG_FILES="$CONFIG_FILES make/rules" ;;
     "make/includes") CONFIG_FILES="$CONFIG_FILES make/includes" ;;
-    "atf-config") CONFIG_COMMANDS="$CONFIG_COMMANDS atf-config" ;;
     "contrib/dlz/bin/dlzbdb/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/dlz/bin/dlzbdb/Makefile" ;;
     "$DLZ_DRIVER_RULES") CONFIG_FILES="$CONFIG_FILES $DLZ_DRIVER_RULES" ;;
     "contrib/dlz/modules/mysql/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/dlz/modules/mysql/Makefile" ;;
@@ -25669,6 +25996,7 @@ do
     "lib/isccc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/Makefile" ;;
     "lib/isccc/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/include/Makefile" ;;
     "lib/isccc/include/isccc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/include/isccc/Makefile" ;;
+    "lib/isccc/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/tests/Makefile" ;;
     "lib/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/Makefile" ;;
     "lib/isccfg/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/include/Makefile" ;;
     "lib/isccfg/include/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/include/isccfg/Makefile" ;;
@@ -25685,7 +26013,6 @@ do
     "lib/lwres/unix/include/lwres/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/lwres/Makefile" ;;
     "lib/samples/Makefile") CONFIG_FILES="$CONFIG_FILES lib/samples/Makefile" ;;
     "lib/samples/Makefile-postinstall") CONFIG_FILES="$CONFIG_FILES lib/samples/Makefile-postinstall" ;;
-    "unit/Makefile") CONFIG_FILES="$CONFIG_FILES unit/Makefile" ;;
     "unit/unittest.sh") CONFIG_FILES="$CONFIG_FILES unit/unittest.sh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -26824,15 +27151,6 @@ ltmain=$ac_aux_dir/ltmain.sh
   chmod +x "$ofile"
 
  ;;
-    "atf-config":C) (
-		 mkdir -p unit/atf-src;
-		 cd unit/atf-src;
-		 case "$srcdir" in
-		 /*) ;;
-		 *) srcdir="../../$srcdir";;
-		 esac
-		 ${SHELL} "${srcdir}${srcdir:+/unit/atf-src/}./configure" --enable-tools --disable-shared MISSING=: --prefix $atfdir;
-		) || as_fn_error $? "Failed to configure ATF." "$LINENO" 5  ;;
     "chmod":C) chmod a+x isc-config.sh doc/doxygen/doxygen-input-filter ;;
 
   esac
@@ -26968,7 +27286,7 @@ report() {
     test "no" = "$use_libtool" || echo "    Use GNU libtool (--with-libtool)"
     test "yes" = "$want_querytrace" && \
 	echo "    Very verbose query trace logging (--enable-querytrace)"
-    test "no" = "$atf" || echo "    Automated Testing Framework (--with-atf)"
+    test "no" = "$with_cmocka" || echo "    CMocka Unit Testing Framework (--with-cmocka)"
 
     echo "    Dynamically loadable zone (DLZ) drivers:"
     test "no" = "$use_dlz_bdb" || \
@@ -27026,7 +27344,7 @@ report() {
 	echo "    Very verbose query trace logging (--enable-querytrace)"
 
     test "yes" = "$use_libtool" || echo "    Use GNU libtool (--with-libtool)"
-    test "no" = "$atf" && echo "    Automated Testing Framework (--with-atf)"
+    test "no" = "$with_cmocka" && echo "    CMocka Unit Testng Framework (--with-cmocka)"
 
     test "X$PYTHON" = "X" && echo "    Python tools (--with-python)"
     test "X$XMLSTATS" = "X" && echo "    XML statistics (--with-libxml2)"

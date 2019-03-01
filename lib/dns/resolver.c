@@ -253,7 +253,8 @@ typedef enum {
 typedef enum {
 	badns_unreachable = 0,
 	badns_response,
-	badns_validation
+	badns_validation,
+	badns_forwarder,
 } badnstype_t;
 
 struct fetchctx {
@@ -960,6 +961,18 @@ fctx_cancelquery(resquery_t **queryp, dns_dispatchevent_t **deventp,
 				dns_adb_timeout(fctx->adb, query->addrinfo);
 
 			/*
+			 * If "forward first;" is used and a forwarder timed
+			 * out, do not attempt to query it again in this fetch
+			 * context.
+			 */
+			if (fctx->fwdpolicy == dns_fwdpolicy_first &&
+			    ISFORWARDER(query->addrinfo))
+			{
+				add_bad(fctx, query->addrinfo, ISC_R_TIMEDOUT,
+					badns_forwarder);
+			}
+
+			/*
 			 * We don't have an RTT for this query.  Maybe the
 			 * packet was lost, or maybe this server is very
 			 * slow.  We don't know.  Increase the RTT.
@@ -1650,6 +1663,15 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 	srtt = addrinfo->srtt;
 
 	/*
+	 * Allow an additional second for the kernel to resend the SYN (or
+	 * SYN without ECN in the case of stupid firewalls blocking ECN
+	 * negotiation) over the current RTT estimate.
+	 */
+	if ((options & DNS_FETCHOPT_TCP) != 0) {
+		srtt += 1000000;
+	}
+
+	/*
 	 * A forwarder needs to make multiple queries. Give it at least
 	 * a second to do these in.
 	 */
@@ -2126,7 +2148,7 @@ resquery_send(resquery_t *query) {
 	bool cleanup_cctx = false;
 	bool secure_domain;
 	bool connecting = false;
-	bool tcp = (query->options & DNS_FETCHOPT_TCP);
+	bool tcp = ((query->options & DNS_FETCHOPT_TCP) != 0);
 	dns_ednsopt_t ednsopts[DNS_EDNSOPTIONS];
 	unsigned ednsopt = 0;
 	uint16_t hint = 0, udpsize = 0;	/* No EDNS */
@@ -2214,7 +2236,7 @@ resquery_send(resquery_t *query) {
 	else if (res->view->enablevalidation &&
 		 ((fctx->qmessage->flags & DNS_MESSAGEFLAG_RD) != 0))
 	{
-		bool checknta = !(query->options & DNS_FETCHOPT_NONTA);
+		bool checknta = ((query->options & DNS_FETCHOPT_NONTA) == 0);
 		result = issecuredomain(res->view, &fctx->name, fctx->type,
 					isc_time_seconds(&query->start),
 					checknta, &secure_domain);
@@ -2957,6 +2979,12 @@ add_bad(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_result_t reason,
 			break;
 		case badns_validation:
 			break;	/* counted as 'valfail' */
+		case badns_forwarder:
+			/*
+			 * We were called to prevent the given forwarder from
+			 * being used again for this fetch context.
+			 */
+			break;
 		}
 	}
 
@@ -3096,7 +3124,7 @@ findname(fetchctx_t *fctx, dns_name_t *name, in_port_t port,
 	isc_result_t result;
 
 	res = fctx->res;
-	unshared = (fctx->options & DNS_FETCHOPT_UNSHARED);
+	unshared = ((fctx->options & DNS_FETCHOPT_UNSHARED) != 0);
 	/*
 	 * If this name is a subdomain of the query domain, tell
 	 * the ADB to start looking using zone/hint data. This keeps us
@@ -3258,6 +3286,18 @@ fctx_getaddresses(fetchctx_t *fctx, bool badcache) {
 	INSIST(ISC_LIST_EMPTY(fctx->altaddrs));
 
 	/*
+	 * If we have DNS_FETCHOPT_NOFORWARD set and forwarding policy
+	 * allows us to not forward - skip forwarders and go straight
+	 * to NSes. This is currently used to make sure that priming query
+	 * gets root servers' IP addresses in ADDITIONAL section.
+	 */
+	if ((fctx->options & DNS_FETCHOPT_NOFORWARD) != 0 &&
+	    (fctx->fwdpolicy != dns_fwdpolicy_only))
+	{
+		goto normal_nses;
+	}
+
+	/*
 	 * If this fctx has forwarders, use them; otherwise use any
 	 * selective forwarders specified in the view; otherwise use the
 	 * resolver's forwarders (if any).
@@ -3342,7 +3382,7 @@ fctx_getaddresses(fetchctx_t *fctx, bool badcache) {
 	/*
 	 * Normal nameservers.
 	 */
-
+ normal_nses:
 	stdoptions = DNS_ADBFIND_WANTEVENT | DNS_ADBFIND_EMPTYEVENT;
 	if (fctx->restarts == 1) {
 		/*
@@ -4846,7 +4886,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 
 	negative = (vevent->rdataset == NULL);
 
-	sentresponse = (fctx->options & DNS_FETCHOPT_NOVALIDATE);
+	sentresponse = ((fctx->options & DNS_FETCHOPT_NOVALIDATE) != 0);
 
 	/*
 	 * If shutting down, ignore the results.  Check to see if we're
@@ -5441,7 +5481,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 	/*
 	 * Cache or validate each cacheable rdataset.
 	 */
-	fail = (fctx->res->options & DNS_RESOLVER_CHECKNAMESFAIL);
+	fail = ((fctx->res->options & DNS_RESOLVER_CHECKNAMESFAIL) != 0);
 	for (rdataset = ISC_LIST_HEAD(name->list);
 	     rdataset != NULL;
 	     rdataset = ISC_LIST_NEXT(rdataset, link))
@@ -6365,6 +6405,7 @@ is_answertarget_allowed(fetchctx_t *fctx, dns_name_t *qname, dns_name_t *rname,
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	if (chainingp != NULL)
@@ -8888,8 +8929,11 @@ dns_resolver_create(dns_view_t *view,
 	res->algorithms = NULL;
 	res->digests = NULL;
 	res->badcache = NULL;
-	dns_badcache_init(res->mctx, DNS_RESOLVER_BADCACHESIZE,
-			  &res->badcache);
+	result = dns_badcache_init(res->mctx, DNS_RESOLVER_BADCACHESIZE,
+				   &res->badcache);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup_res;
+	}
 	res->mustbesecure = NULL;
 	res->spillatmin = res->spillat = 10;
 	res->spillatmax = 100;
@@ -8910,7 +8954,7 @@ dns_resolver_create(dns_view_t *view,
 				   ntasks * sizeof(fctxbucket_t));
 	if (res->buckets == NULL) {
 		result = ISC_R_NOMEMORY;
-		goto cleanup_res;
+		goto cleanup_badcache;
 	}
 	for (i = 0; i < ntasks; i++) {
 		result = isc_mutex_init(&res->buckets[i].lock);
@@ -9079,6 +9123,9 @@ dns_resolver_create(dns_view_t *view,
 	isc_mem_put(view->mctx, res->buckets,
 		    res->nbuckets * sizeof(fctxbucket_t));
 
+ cleanup_badcache:
+	dns_badcache_destroy(&res->badcache);
+
  cleanup_res:
 	isc_mem_put(view->mctx, res, sizeof(*res));
 
@@ -9180,7 +9227,8 @@ dns_resolver_prime(dns_resolver_t *res) {
 		LOCK(&res->primelock);
 		result = dns_resolver_createfetch(res, dns_rootname,
 						  dns_rdatatype_ns,
-						  NULL, NULL, NULL, 0,
+						  NULL, NULL, NULL,
+						  DNS_FETCHOPT_NOFORWARD,
 						  res->buckets[0].task,
 						  prime_done,
 						  res, rdataset, NULL,

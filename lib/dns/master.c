@@ -548,8 +548,6 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 
 	lctx->format = format;
 	switch (format) {
-	default:
-		INSIST(0);
 	case dns_masterformat_text:
 		lctx->openfile = openfile_text;
 		lctx->load = load_text;
@@ -562,6 +560,9 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 		lctx->openfile = openfile_map;
 		lctx->load = load_map;
 		break;
+	default:
+		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	if (lex != NULL) {
@@ -582,7 +583,7 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 		isc_lex_setcomments(lctx->lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 	}
 
-	lctx->ttl_known = (options & DNS_MASTER_NOTTL);
+	lctx->ttl_known = ((options & DNS_MASTER_NOTTL) != 0);
 	lctx->ttl = 0;
 	lctx->default_ttl_known = lctx->ttl_known;
 	lctx->default_ttl = 0;
@@ -1458,7 +1459,7 @@ load_text(dns_loadctx_t *lctx) {
 			 * state.  Linked lists are undone by commit().
 			 */
 			if (ictx->glue != NULL &&
-			    dns_name_compare(ictx->glue, new_name) != 0) {
+			    !dns_name_caseequal(ictx->glue, new_name)) {
 				result = commit(callbacks, lctx, &glue_list,
 						ictx->glue, source,
 						ictx->glue_line);
@@ -1484,7 +1485,7 @@ load_text(dns_loadctx_t *lctx) {
 			 * have.
 			 */
 			if ((ictx->glue == NULL) && (ictx->current == NULL ||
-			    dns_name_compare(ictx->current, new_name) != 0)) {
+			    !dns_name_caseequal(ictx->current, new_name))) {
 				if (current_has_delegation &&
 					is_glue(&current_list, new_name)) {
 					rdcount_save = rdcount;
@@ -1716,15 +1717,15 @@ load_text(dns_loadctx_t *lctx) {
 		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
 		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
 		    (type == dns_rdatatype_md || type == dns_rdatatype_mf)) {
-			char typename[DNS_RDATATYPE_FORMATSIZE];
+			char typebuf[DNS_RDATATYPE_FORMATSIZE];
 
 			result = DNS_R_OBSOLETE;
 
-			dns_rdatatype_format(type, typename, sizeof(typename));
+			dns_rdatatype_format(type, typebuf, sizeof(typebuf));
 			(*callbacks->error)(callbacks,
 					    "%s:%lu: %s '%s': %s",
 					    source, line,
-					    "type", typename,
+					    "type", typebuf,
 					    dns_result_totext(result));
 			if (MANYERRS(lctx, result)) {
 				SETRESULT(lctx, result);
@@ -1740,15 +1741,15 @@ load_text(dns_loadctx_t *lctx) {
 		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
 		    dns_rdatatype_ismeta(type))
 		{
-			char typename[DNS_RDATATYPE_FORMATSIZE];
+			char typebuf[DNS_RDATATYPE_FORMATSIZE];
 
 			result = DNS_R_METATYPE;
 
-			dns_rdatatype_format(type, typename, sizeof(typename));
+			dns_rdatatype_format(type, typebuf, sizeof(typebuf));
 			(*callbacks->error)(callbacks,
 					    "%s:%lu: %s '%s': %s",
 					    source, line,
-					    "type", typename,
+					    "type", typebuf,
 					    dns_result_totext(result));
 			if (MANYERRS(lctx, result)) {
 				SETRESULT(lctx, result);
@@ -1855,7 +1856,7 @@ load_text(dns_loadctx_t *lctx) {
 
 		if (type == dns_rdatatype_soa &&
 		    (lctx->options & DNS_MASTER_ZONE) != 0 &&
-		    dns_name_compare(ictx->current, lctx->top) != 0) {
+		    !dns_name_equal(ictx->current, lctx->top)) {
 			char namebuf[DNS_NAME_FORMATSIZE];
 			dns_name_format(ictx->current, namebuf,
 					sizeof(namebuf));
@@ -3184,8 +3185,9 @@ is_glue(rdatalist_head_t *head, dns_name_t *owner) {
 		dns_name_init(&name, NULL);
 		dns_rdata_toregion(rdata, &region);
 		dns_name_fromregion(&name, &region);
-		if (dns_name_compare(&name, owner) == 0)
+		if (dns_name_equal(&name, owner)) {
 			return (true);
+		}
 		rdata = ISC_LIST_NEXT(rdata, link);
 	}
 	return (false);

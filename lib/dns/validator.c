@@ -1304,15 +1304,16 @@ get_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo) {
 		 * the same name.
 		 */
 		if (val->event->rdataset->type == dns_rdatatype_soa ||
-		    val->event->rdataset->type == dns_rdatatype_ns) {
-			const char *typename;
+		    val->event->rdataset->type == dns_rdatatype_ns)
+		{
+			const char *type;
 
 			if (val->event->rdataset->type == dns_rdatatype_soa)
-				typename = "SOA";
+				type = "SOA";
 			else
-				typename = "NS";
+				type = "NS";
 			validator_log(val, ISC_LOG_DEBUG(3),
-				      "%s signer mismatch", typename);
+				      "%s signer mismatch", type);
 			return (DNS_R_CONTINUE);
 		}
 	}
@@ -3703,10 +3704,8 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 			val->attributes |= VALATTR_NEEDNODATA;
 		result = nsecvalidate(val, false);
 	} else {
-		/*
-		 * This shouldn't happen.
-		 */
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	if (result != DNS_R_WAIT) {
