@@ -128,14 +128,11 @@ add_name(struct dlz_example_data *state, struct record *list,
 	    strlen(data) >= sizeof(list[i].data))
 		return (ISC_R_NOSPACE);
 
-	strncpy(list[i].name, name, sizeof(list[i].name));
-	list[i].name[sizeof(list[i].name) - 1] = '\0';
+	strlcpy(list[i].name, name, sizeof(list[i].name));
 
-	strncpy(list[i].type, type, sizeof(list[i].type));
-	list[i].type[sizeof(list[i].type) - 1] = '\0';
+	strlcpy(list[i].type, type, sizeof(list[i].type));
 
-	strncpy(list[i].data, data, sizeof(list[i].data));
-	list[i].data[sizeof(list[i].data) - 1] = '\0';
+	strlcpy(list[i].data, data, sizeof(list[i].data));
 
 	list[i].ttl = ttl;
 
@@ -550,9 +547,15 @@ dlz_allowzonexfr(void *dbdata, const char *name, const char *client) {
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
+
+	/*
+	 * Exception for 10.53.0.5 so we can test that allow-transfer
+	 * is effective.
+	 */
 	if (strcmp(client, "10.53.0.5") == 0) {
 		return (ISC_R_NOPERM);
 	}
+
 	return (ISC_R_SUCCESS);
 }
 

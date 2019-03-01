@@ -1,4 +1,4 @@
-Release Notes for BIND Version 9.11.5-P4
+Release Notes for BIND Version 9.11.6
 
 Introduction
 
@@ -120,6 +120,12 @@ Feature Changes
   * The rndc nta command could not differentiate between views of the same
     name but different class; this has been corrected with the addition of
     a -class option. [GL #105]
+
+  * When compiled with IDN support, the dig and the nslookup commands now
+    disable IDN processing when the standard output is not a tty (e.g. not
+    used by human). The command line options +idnin and +idnout need to be
+    used to enable IDN processing when dig or nslookup is used from the
+    shell scripts.
 
 Bug Fixes
 

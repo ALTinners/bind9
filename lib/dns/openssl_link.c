@@ -160,9 +160,11 @@ mem_alloc(size_t size FLARG) {
 
 static void
 mem_free(void *ptr FLARG) {
-	INSIST(dst__memory_pool != NULL);
-	if (ptr != NULL)
+	if (ptr != NULL) {
+		INSIST(dst__memory_pool != NULL);
+
 		isc__mem_free(dst__memory_pool, ptr FLARG_PASS);
+	}
 }
 
 static void *
@@ -432,7 +434,7 @@ dst__openssl_toresult3(isc_logcategory_t *category,
 		isc_log_write(dns_lctx, category,
 			      DNS_LOGMODULE_CRYPTO, ISC_LOG_INFO,
 			      "%s:%s:%d:%s", buf, file, line,
-			      (flags & ERR_TXT_STRING) ? data : "");
+			      ((flags & ERR_TXT_STRING) != 0) ? data : "");
 	}
 
     done:

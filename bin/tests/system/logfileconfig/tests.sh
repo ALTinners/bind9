@@ -30,7 +30,7 @@ DLFILE="named_deflog"
 
 PIDFILE="${THISDIR}/${CONFDIR}/named.pid"
 myRNDC="$RNDC -c ${THISDIR}/${CONFDIR}/rndc.conf"
-myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -T nosyslog -d 99 -X named.lock -U 4"
+myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -T nosyslog -d 99 -D logfileconfig-ns1 -X named.lock -U 4"
 
 # Test given condition.  If true, test again after a second.  Used for testing
 # filesystem-dependent conditions in order to prevent false negatives caused by
@@ -57,6 +57,7 @@ status=0
 n=0
 
 cd $CONFDIR
+export SYSTEMTESTTOP=../..
 
 echo_i "testing log file validity (named -g + only plain files allowed)"
 
@@ -73,7 +74,7 @@ then
 else
 	echo_i "testing plain file failed (unexpected)"
 	echo_i "exit status: 1"
-	exit 1 
+	exit 1
 fi
 
 # Now try directory, expect failure
@@ -124,7 +125,7 @@ else
 	echo_i "skipping pipe test (unable to create pipe)"
 fi
 
-# Now try symlink file to plain file, expect success 
+# Now try symlink file to plain file, expect success
 n=`expr $n + 1`
 echo_i "testing symlink to plain file as log file (named -g) ($n)"
 # Assume success
@@ -153,7 +154,7 @@ fi
 # files while controlling the stop/start of the server.
 # Have to stop the stock server because it uses "-g"
 #
-$PERL ../../stop.pl .. ns1
+$PERL ../../stop.pl logfileconfig ns1
 
 $myNAMED > /dev/null 2>&1
 
@@ -181,7 +182,7 @@ then
 else
 	echo_i "testing plain file failed (unexpected)"
 	echo_i "exit status: 1"
-	exit 1 
+	exit 1
 fi
 
 # Now try directory, expect failure
@@ -232,7 +233,7 @@ else
 	echo_i "skipping pipe test (unable to create pipe)"
 fi
 
-# Now try symlink file to plain file, expect success 
+# Now try symlink file to plain file, expect success
 n=`expr $n + 1`
 echo_i "testing symlink to plain file as log file ($n)"
 # Assume success
@@ -265,7 +266,7 @@ n=`expr $n + 1`
 echo_i "testing default logfile using named -L file ($n)"
 # Now stop the server again and test the -L option
 rm -f $DLFILE
-$PERL ../../stop.pl .. ns1
+$PERL ../../stop.pl logfileconfig ns1
 if ! test -f $PIDFILE; then
 	copy_setports $PLAINCONF named.conf
 	$myNAMED -L $DLFILE > /dev/null 2>&1
@@ -307,7 +308,7 @@ if test ${t:-1000} -gt 5
 then
         echo_i "testing explicit versions failed: cleanup of old entries took too long ($t secs)"
 	status=`expr $status + 1`
-fi 
+fi
 if ! grep "status: NOERROR" dig.out.test$n > /dev/null
 then
 	echo_i "testing explicit versions failed: DiG lookup failed"
@@ -343,7 +344,7 @@ if test ${t:-1000} -gt 5
 then
         echo_i "testing unlimited versions failed: took too long ($t secs)"
 	status=`expr $status + 1`
-fi 
+fi
 if ! grep "status: NOERROR" dig.out.test$n > /dev/null
 then
 	echo_i "testing unlimited versions failed: DiG lookup failed"

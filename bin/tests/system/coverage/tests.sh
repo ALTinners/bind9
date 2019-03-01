@@ -32,9 +32,9 @@ ret=0
 for dir in [0-9][0-9]-*; do
         ret=0
         echo_i "$dir"
-        args= warn= error= ok= retcode= match=
+        args= warn= error= ok= retcode= match= zones=
         . $dir/expect
-        $COVERAGE $args -K $dir example.com > coverage.$n 2>&1
+        $COVERAGE $args -K $dir ${zones:-example.com} > coverage.$n 2>&1
 
         # check that return code matches expectations
         found=$?
@@ -67,6 +67,12 @@ for dir in [0-9][0-9]-*; do
         found=`matchall coverage.$n "$match"`
         if [ "$found" = "FAIL" ]; then
             echo "no match on '$match'"
+            ret=1
+        fi
+
+        found=`grep Traceback coverage.$n | wc -l`
+        if [ $found -ne 0 ]; then
+            echo "python exception detected"
             ret=1
         fi
 

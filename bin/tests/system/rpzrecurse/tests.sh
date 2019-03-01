@@ -20,13 +20,13 @@ run_server() {
     TESTNAME=$1
 
     echo_i "stopping resolver"
-    $PERL $SYSTEMTESTTOP/stop.pl . ns2
+    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpzrecurse ns2
 
     sleep 1
 
     echo_i "starting resolver using named.$TESTNAME.conf"
     cp -f ns2/named.$TESTNAME.conf ns2/named.conf
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns2
+    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpzrecurse ns2
 }
 
 run_query() {
@@ -122,7 +122,7 @@ expect_recurse 3f 2
 # Group 4
 testlist="aa ap bf"
 values="1 16 32"
-# Uncomment the following to test every skip value instead of 
+# Uncomment the following to test every skip value instead of
 # only a sample of values
 #
 #testlist="aa ab ac ad ae af ag ah ai aj ak al am an ao ap \
@@ -168,17 +168,16 @@ echo_i "running dig to cache CNAME record (${t})"
 $DIG $DIGOPTS @10.53.0.2 -p ${PORT} www.test.example.org CNAME > dig.out.${t}
 sleep 1
 echo_i "suspending authority server"
+PID=`cat ns1/named.pid`
 if [ "$CYGWIN" ]; then
-    WINPID=`cat ns1/named.pid`
-    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+    $PSSUSPEND $PID
 else
-    PID=`cat ns1/named.pid`
+    kill -TSTP $PID
 fi
-kill -TSTP $PID
 echo_i "adding an NSDNAME policy"
 cp ns2/db.6a.00.policy.local ns2/saved.policy.local
 cp ns2/db.6b.00.policy.local ns2/db.6a.00.policy.local
-$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /'
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /' | cat_i
 sleep 1
 t=`expr $t + 1`
 echo_i "running dig to follow CNAME (blocks, so runs in the background) (${t})"
@@ -186,16 +185,15 @@ $DIG $DIGOPTS @10.53.0.2 -p ${PORT} www.test.example.org A > dig.out.${t} &
 sleep 1
 echo_i "removing the NSDNAME policy"
 cp ns2/db.6c.00.policy.local ns2/db.6a.00.policy.local
-$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /'
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /' | cat_i
 sleep 1
 echo_i "resuming authority server"
+PID=`cat ns1/named.pid`
 if [ "$CYGWIN" ]; then
-    WINPID=`cat ns1/named.pid`
-    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+    $PSSUSPEND -r $PID
 else
-    PID=`cat ns1/named.pid`
+    kill -CONT $PID
 fi
-kill -CONT $PID
 for n in 1 2 3 4 5 6 7 8 9; do
     sleep 1
     [ -s dig.out.${t} ] || continue
@@ -215,16 +213,15 @@ echo_i "running dig to cache CNAME record (${t})"
 $DIG $DIGOPTS @10.53.0.2 -p ${PORT} www.test.example.org CNAME > dig.out.${t}
 sleep 1
 echo_i "suspending authority server"
+PID=`cat ns1/named.pid`
 if [ "$CYGWIN" ]; then
-    WINPID=`cat ns1/named.pid`
-    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+    $PSSUSPEND $PID
 else
-    PID=`cat ns1/named.pid`
+    kill -TSTP $PID
 fi
-kill -TSTP $PID
 echo_i "adding an NSDNAME policy"
 cp ns2/db.6b.00.policy.local ns2/db.6a.00.policy.local
-$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /'
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /' | cat_i
 sleep 1
 t=`expr $t + 1`
 echo_i "running dig to follow CNAME (blocks, so runs in the background) (${t})"
@@ -232,16 +229,15 @@ $DIG $DIGOPTS @10.53.0.2 -p ${PORT} www.test.example.org A > dig.out.${t} &
 sleep 1
 echo_i "removing the policy zone"
 cp ns2/named.default.conf ns2/named.conf
-$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/I:ns2 /'
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/I:ns2 /' | cat_i
 sleep 1
 echo_i "resuming authority server"
+PID=`cat ns1/named.pid`
 if [ "$CYGWIN" ]; then
-    WINPID=`cat ns1/named.pid`
-    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+    $PSSUSPEND -r $PID
 else
-    PID=`cat ns1/named.pid`
+    kill -CONT $PID
 fi
-kill -CONT $PID
 for n in 1 2 3 4 5 6 7 8 9; do
     sleep 1
     [ -s dig.out.${t} ] || continue
@@ -303,15 +299,24 @@ cur=`awk 'BEGIN {l=0} /^/ {l++} END { print l }' ns2/named.run`
 $DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p ${PORT} -b 10.53.0.4 > dig.out.${t}
 $DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p ${PORT} -b 10.53.0.3 >> dig.out.${t}
 $DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p ${PORT} -b 10.53.0.2 >> dig.out.${t}
-sed -n "$cur,"'$p' < ns2/named.run | grep "view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0 via 32.4.0.53.10.rpz-client-ip.log1" > /dev/null && {
+if $FEATURETEST --rpz-log-qtype-qclass
+then
+  AIN="/A/IN"
+else
+  AIN=
+fi
+expected4="view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0${AIN} via 32.4.0.53.10.rpz-client-ip.log1"
+expected3="view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0${AIN} via 32.3.0.53.10.rpz-client-ip.log2"
+expected2="view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0${AIN} via 32.2.0.53.10.rpz-client-ip.log3"
+sed -n "$cur,"'$p' < ns2/named.run | grep "$expected4" > /dev/null && {
     echo_i " failed: unexpected rewrite message for policy zone log1 was logged"
     status=1
 }
-sed -n "$cur,"'$p' < ns2/named.run | grep "view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0 via 32.3.0.53.10.rpz-client-ip.log2" > /dev/null || {
+sed -n "$cur,"'$p' < ns2/named.run | grep "$expected3" > /dev/null || {
     echo_i " failed: expected rewrite message for policy zone log2 was not logged"
     status=1
 }
-sed -n "$cur,"'$p' < ns2/named.run | grep "view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0 via 32.2.0.53.10.rpz-client-ip.log3" > /dev/null || {
+sed -n "$cur,"'$p' < ns2/named.run | grep "$expected2" > /dev/null || {
     echo_i " failed: expected rewrite message for policy zone log3 was not logged"
     status=1
 }

@@ -765,7 +765,14 @@ setup_dnsseckeys(dns_client_t *client) {
 	if (dlv_validation)
 		dns_client_setdlv(client, dns_rdataclass_in, dlv_anchor);
 
+
  cleanup:
+	if (bindkeys != NULL) {
+		cfg_obj_destroy(parser, &bindkeys);
+	}
+	if (parser != NULL) {
+		cfg_parser_destroy(&parser);
+	}
 	if (result != ISC_R_SUCCESS)
 		delv_log(ISC_LOG_ERROR, "setup_dnsseckeys: %s",
 			  isc_result_totext(result));
@@ -1179,6 +1186,8 @@ plus_option(char *option) {
  * options: "46a:b:c:d:himp:q:t:vx:";
  */
 static const char *single_dash_opts = "46himv";
+static const char *dash_opts = "46abcdhimpqtvx";
+
 static bool
 dash_option(char *option, char *next, bool *open_type_class) {
 	char opt, *value;
@@ -1236,6 +1245,7 @@ dash_option(char *option, char *next, bool *open_type_class) {
 			/* NOTREACHED */
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 		if (strlen(option) > 1U)
 			option = &option[1];
@@ -1379,8 +1389,10 @@ preparse_args(int argc, char **argv) {
 	char *option;
 
 	for (argc--, argv++; argc > 0; argc--, argv++) {
-		if (argv[0][0] != '-')
+		if (argv[0][0] != '-') {
 			continue;
+		}
+
 		option = &argv[0][1];
 		while (strpbrk(option, single_dash_opts) == &option[0]) {
 			switch (option[0]) {
@@ -1402,6 +1414,27 @@ preparse_args(int argc, char **argv) {
 				break;
 			}
 			option = &option[1];
+		}
+
+		if (strlen(option) == 0U) {
+			continue;
+		}
+
+		/* Look for dash value option. */
+		if (strpbrk(option, dash_opts) != &option[0] ||
+		    strlen(option) > 1U)
+		{
+			/* Error or value in option. */
+			continue;
+		}
+
+		/* Dash value is next argument so we need to skip it. */
+		argc--;
+		argv++;
+
+		/* Handle missing argument */
+		if (argc == 0) {
+			break;
 		}
 	}
 }

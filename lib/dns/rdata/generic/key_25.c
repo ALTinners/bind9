@@ -16,7 +16,8 @@
 
 #include <dst/dst.h>
 
-#define RRTYPE_KEY_ATTRIBUTES (0)
+#define RRTYPE_KEY_ATTRIBUTES \
+	( DNS_RDATATYPEATTR_ATCNAME | DNS_RDATATYPEATTR_ZONECUTAUTH )
 
 static inline isc_result_t
 generic_fromtext_key(ARGS_FROMTEXT) {
@@ -54,7 +55,7 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	if ((flags & 0xc000) == 0xc000)
 		return (ISC_R_SUCCESS);
 
-	result = isc_base64_tobuffer(lexer, target, -1);
+	result = isc_base64_tobuffer(lexer, target, -2);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
