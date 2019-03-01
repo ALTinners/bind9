@@ -882,6 +882,7 @@ libdns-pkcs11.so.1105 libdns1105 #MINVER#
  dns_rdataslab_size@Base 1:9.11.3+dfsg
  dns_rdataslab_subtract@Base 1:9.11.3+dfsg
  dns_rdataslab_tordataset@Base 1:9.11.3+dfsg
+ dns_rdatatype_atcname@Base 1:9.11.6+dfsg-1
  dns_rdatatype_atparent@Base 1:9.11.3+dfsg
  dns_rdatatype_attributes@Base 1:9.11.3+dfsg
  dns_rdatatype_format@Base 1:9.11.3+dfsg
@@ -2464,6 +2465,7 @@ libdns.so.1105 libdns1105 #MINVER#
  dns_rdataslab_size@Base 1:9.11.3+dfsg
  dns_rdataslab_subtract@Base 1:9.11.3+dfsg
  dns_rdataslab_tordataset@Base 1:9.11.3+dfsg
+ dns_rdatatype_atcname@Base 1:9.11.6+dfsg-1
  dns_rdatatype_atparent@Base 1:9.11.3+dfsg
  dns_rdatatype_attributes@Base 1:9.11.3+dfsg
  dns_rdatatype_format@Base 1:9.11.3+dfsg
@@ -3069,7 +3071,7 @@ libdns.so.1105 libdns1105 #MINVER#
  dst__openssldh_init@Base 1:9.11.3+dfsg
  dst__openssldsa_init@Base 1:9.11.3+dfsg
  dst__opensslecdsa_init@Base 1:9.11.3+dfsg
- (optional)dst__openssleddsa_init@Base 1:9.11.4.P1+dfsg
+#MISSING: 1:9.11.6+dfsg-1# (optional)dst__openssleddsa_init@Base 1:9.11.4.P1+dfsg
  dst__opensslrsa_init@Base 1:9.11.3+dfsg
  dst__privstruct_free@Base 1:9.11.3+dfsg
  dst__privstruct_parse@Base 1:9.11.3+dfsg
