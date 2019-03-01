@@ -1,3 +1,9 @@
+bind9 (1:9.11.6+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 9.11.6+dfsg
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 01 Mar 2019 10:18:22 +0000
+
 bind9 (1:9.11.5.P4+dfsg-4) unstable; urgency=medium
 
   [ Bernhard Schmidt ]
