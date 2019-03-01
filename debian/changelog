@@ -1,8 +1,11 @@
 bind9 (1:9.11.6+dfsg-1) unstable; urgency=medium
 
   * New upstream version 9.11.6+dfsg
+  * Update d/gbp.conf for DEP-14
+  * Fix the checkapi script
+  * Bump libdns SOVERSION from 1104 to 1105
 
- -- Ondřej Surý <ondrej@debian.org>  Fri, 01 Mar 2019 10:18:22 +0000
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 01 Mar 2019 10:42:17 +0000
 
 bind9 (1:9.11.5.P4+dfsg-4) unstable; urgency=medium
 
