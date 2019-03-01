@@ -7,7 +7,7 @@ Subject: _reproducible_build
  1 file changed, 33 insertions(+), 2 deletions(-)
 
 diff --git a/lib/dns/gen.c b/lib/dns/gen.c
-index 2a3b94b..b26a509 100644
+index b3691f9..f5a5d36 100644
 --- a/lib/dns/gen.c
 +++ b/lib/dns/gen.c
 @@ -32,6 +32,8 @@
@@ -19,7 +19,7 @@ index 2a3b94b..b26a509 100644
  
  #ifdef WIN32
  #include "gen-win32.h"
-@@ -528,6 +530,9 @@ main(int argc, char **argv) {
+@@ -544,6 +546,9 @@ main(int argc, char **argv) {
  	char *prefix = NULL;
  	char *suffix = NULL;
  	char *file = NULL;
@@ -29,7 +29,7 @@ index 2a3b94b..b26a509 100644
  	isc_dir_t dir;
  
  	for (i = 0; i < TYPENAMES; i++)
-@@ -618,8 +623,34 @@ main(int argc, char **argv) {
+@@ -640,8 +645,34 @@ main(int argc, char **argv) {
  	INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
  	sd(0, "", buf, filetype);
  

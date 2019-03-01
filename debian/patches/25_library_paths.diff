@@ -17,7 +17,7 @@ Subject: _library_paths
  5 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/lib/dns/Makefile.in b/lib/dns/Makefile.in
-index 4a8549e..e0fcca4 100644
+index 068bbac..a18c848 100644
 --- a/lib/dns/Makefile.in
 +++ b/lib/dns/Makefile.in
 @@ -37,7 +37,7 @@ ISCLIBS =	../../lib/isc/libisc.@A@
@@ -96,10 +96,10 @@ index ba53ef1..ba3f013 100644
  	libisc-nosymtbl.la timestamp
 +	rm -f libisc.so libisc-nosymtbl.so
 diff --git a/lib/isccc/Makefile.in b/lib/isccc/Makefile.in
-index ca88e98..8d875bc 100644
+index e7b6f04..3668490 100644
 --- a/lib/isccc/Makefile.in
 +++ b/lib/isccc/Makefile.in
-@@ -31,7 +31,7 @@ ISCCCLIBS =	../../lib/isccc/libisccc.@A@
+@@ -29,7 +29,7 @@ ISCCCLIBS =	../../lib/isccc/libisccc.@A@
  ISCDEPLIBS =	../../lib/isc/libisc.@A@
  ISCCCDEPLIBS =	libisccc.@A@
  
@@ -108,7 +108,7 @@ index ca88e98..8d875bc 100644
  
  SUBDIRS =	include
  
-@@ -67,6 +67,7 @@ libisccc.la: ${OBJS}
+@@ -66,6 +66,7 @@ libisccc.la: ${OBJS}
  		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccc.la -rpath ${libdir} \
  		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
  		${OBJS} ${ISCLIBS} ${LIBS}
@@ -116,7 +116,7 @@ index ca88e98..8d875bc 100644
  
  timestamp: libisccc.@A@
  	touch timestamp
-@@ -82,3 +83,4 @@ uninstall::
+@@ -83,3 +84,4 @@ uninstall::
  
  clean distclean::
  	rm -f libisccc.@A@ timestamp
