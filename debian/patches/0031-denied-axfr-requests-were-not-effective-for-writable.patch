@@ -1,0 +1,58 @@
+From: Mark Andrews <marka@isc.org>
+Date: Fri, 4 Jan 2019 16:53:00 +1100
+Subject: denied axfr requests were not effective for writable DLZ zones
+
+(cherry picked from commit 048e3acfdd19189bf927cb3431a28d4da2d09ac7)
+(cherry picked from commit bf045b387c2eef0cdb9b89526c8d281f76f754db)
+(cherry picked from commit 5a1ae8e14a7f43ce21d891001c626c6be9f589da)
+(cherry picked from commit f8748d00dd866d47174d8650e6ef30539f2411ef)
+---
+ bin/named/xfrout.c                    |  8 ++++----
+ bin/tests/system/dlzexternal/driver.c | 12 +++++++++---
+ 2 files changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/bin/named/xfrout.c b/bin/named/xfrout.c
+index 2fa495d..b88721d 100644
+--- a/bin/named/xfrout.c
++++ b/bin/named/xfrout.c
+@@ -807,12 +807,12 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
+ 	result = dns_zt_find(client->view->zonetable, question_name, 0, NULL,
+ 			     &zone);
+ 
+-	if (result != ISC_R_SUCCESS) {
++	if (result != ISC_R_SUCCESS || dns_zone_gettype(zone) == dns_zone_dlz) {
+ 		/*
+-		 * Normal zone table does not have a match.
+-		 * Try the DLZ database
++		 * The normal zone table does not have a match, or this is
++		 * marked in the zone table as a DLZ zone. Check the DLZ
++		 * databases for a match.
+ 		 */
+-		// Temporary: only searching the first DLZ database
+ 		if (! ISC_LIST_EMPTY(client->view->dlz_searched)) {
+ 			result = dns_dlzallowzonexfr(client->view,
+ 						     question_name,
+diff --git a/bin/tests/system/dlzexternal/driver.c b/bin/tests/system/dlzexternal/driver.c
+index ff06df5..be5b15a 100644
+--- a/bin/tests/system/dlzexternal/driver.c
++++ b/bin/tests/system/dlzexternal/driver.c
+@@ -478,10 +478,16 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
+  */
+ isc_result_t
+ dlz_allowzonexfr(void *dbdata, const char *name, const char *client) {
+-	UNUSED(client);
++	isc_result_t result;
+ 
+-	/* Just say yes for all our zones */
+-	return (dlz_findzonedb(dbdata, name, NULL, NULL));
++	result = dlz_findzonedb(dbdata, name, NULL, NULL);
++	if (result != ISC_R_SUCCESS) {
++		return (result);
++	}
++	if (strcmp(client, "10.53.0.5") == 0) {
++		return (ISC_R_NOPERM);
++	}
++	return (ISC_R_SUCCESS);
+ }
+ 
+ /*
