@@ -1,3 +1,14 @@
+bind9 (1:9.10.3.dfsg.P4-12.3+deb9u5) stretch; urgency=medium
+
+  * Sync Maintainer and Uploaders with unstable
+  * [CVE-2019-6465]: Zone transfer for DLZs are executed though not
+    permitted by ACLs.
+  * [CVE-2018-5745]: Avoid assertion and thus causing named to
+    deliberately exit when a trust anchor's key is replaced with a key
+    which uses an unsupported algorithm.
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 05 Mar 2019 10:13:38 +0000
+
 bind9 (1:9.10.3.dfsg.P4-12.3+deb9u4) stretch-security; urgency=high
 
   * Non-maintainer upload by the Security Team.
