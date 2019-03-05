@@ -1,0 +1,93 @@
+From: Matthijs Mekking <matthijs@isc.org>
+Date: Wed, 19 Dec 2018 18:47:43 +0100
+Subject: Update keyfetch_done compute_tag check
+
+If in keyfetch_done the compute_tag fails (because for example the
+algorithm is not supported), don't crash, but instead ignore the
+key.
+
+(cherry picked from commit b1d5411569ae10830b63f07560091193646cc739)
+(cherry picked from commit ebe76bbaaf57a0dfb1666eb12c7266411c778580)
+(cherry picked from commit 5ce2709dca32055c9f7985ee24acf27d58cba9f9)
+(cherry picked from commit 5ebf5035ad550711ae3507cd791d18340011e4a9)
+---
+ lib/dns/include/dst/dst.h |  3 +--
+ lib/dns/zone.c            | 32 ++++++++++++++++++++++++++++++++
+ 2 files changed, 33 insertions(+), 2 deletions(-)
+
+diff --git a/lib/dns/include/dst/dst.h b/lib/dns/include/dst/dst.h
+index c2ff306..423d8b1 100644
+--- a/lib/dns/include/dst/dst.h
++++ b/lib/dns/include/dst/dst.h
+@@ -73,8 +73,7 @@ typedef struct dst_context 	dst_context_t;
+ #define DST_ALG_HMACSHA512	165	/* XXXMPA */
+ #define DST_ALG_INDIRECT	252
+ #define DST_ALG_PRIVATE		254
+-#define DST_ALG_EXPAND		255
+-#define DST_MAX_ALGS		255
++#define DST_MAX_ALGS		256
+ 
+ /*% A buffer of this size is large enough to hold any key */
+ #define DST_KEY_MAXSIZE		1280
+diff --git a/lib/dns/zone.c b/lib/dns/zone.c
+index afe17f6..c0852cb 100644
+--- a/lib/dns/zone.c
++++ b/lib/dns/zone.c
+@@ -8848,11 +8848,28 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
+ 	for (result = dns_rdataset_first(&kfetch->keydataset);
+ 	     result == ISC_R_SUCCESS;
+ 	     result = dns_rdataset_next(&kfetch->keydataset)) {
++                dns_keytag_t keytag;
++
+ 		dns_rdata_reset(&keydatarr);
+ 		dns_rdataset_current(&kfetch->keydataset, &keydatarr);
+ 		result = dns_rdata_tostruct(&keydatarr, &keydata, NULL);
+ 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+ 
++		dns_keydata_todnskey(&keydata, &dnskey, NULL);
++		result = compute_tag(keyname, &dnskey, mctx, &keytag);
++		if (result != ISC_R_SUCCESS) {
++			/*
++			 * Skip if we cannot compute the key tag.
++			 * This may happen if the algorithm is unsupported
++			 */
++			dns_zone_log(zone, ISC_LOG_ERROR,
++				"Cannot compute tag for key in zone %s: %s "
++				"(skipping)",
++				namebuf, dns_result_totext(result));
++			continue;
++		}
++		RUNTIME_CHECK(result == ISC_R_SUCCESS);
++
+ 		/*
+ 		 * If any keydata record has a nonzero add holddown, then
+ 		 * there was a pre-existing trust anchor for this domain;
+@@ -8942,6 +8959,7 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
+ 		isc_boolean_t updatekey = ISC_FALSE;
+ 		isc_boolean_t deletekey = ISC_FALSE;
+ 		isc_boolean_t trustkey = ISC_FALSE;
++		dns_keytag_t keytag;
+ 
+ 		dns_rdata_reset(&dnskeyrr);
+ 		dns_rdataset_current(&kfetch->dnskeyset, &dnskeyrr);
+@@ -8952,6 +8970,20 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
+ 		if (!ISC_TF(dnskey.flags & DNS_KEYFLAG_KSK))
+ 			continue;
+ 
++		result = compute_tag(keyname, &dnskey, mctx, &keytag);
++		if (result != ISC_R_SUCCESS) {
++			/*
++			 * Skip if we cannot compute the key tag.
++			 * This may happen if the algorithm is unsupported
++			 */
++			dns_zone_log(zone, ISC_LOG_ERROR,
++				"Cannot compute tag for key in zone %s: %s "
++				"(skipping)",
++				namebuf, dns_result_totext(result));
++			continue;
++		}
++		RUNTIME_CHECK(result == ISC_R_SUCCESS);
++
+ 		revoked = ISC_TF(dnskey.flags & DNS_KEYFLAG_REVOKE);
+ 
+ 		if (matchkey(&kfetch->keydataset, &dnskeyrr)) {

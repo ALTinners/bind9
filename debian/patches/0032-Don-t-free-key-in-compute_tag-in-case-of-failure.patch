@@ -1,0 +1,35 @@
+From: Matthijs Mekking <github@pletterpet.nl>
+Date: Wed, 12 Dec 2018 14:06:10 +0100
+Subject: Don't free key in compute_tag in case of failure
+
+If `dns_dnssec_keyfromrdata` failed we don't need to call
+`dst_key_free` because no `dstkey` was created.  Doing so
+nevertheless will result in an assertion failure.
+
+This can happen if the key uses an unsupported algorithm.
+
+(cherry picked from commit 7a1ca39b950b7d5230b605ac60f15a1cb94e3d69)
+(cherry picked from commit f2f688d8240adbb068b0abcb4e504af640f3c69d)
+(cherry picked from commit 5c79917e4d8ba0f14724b33192ba5b86babc43d2)
+(cherry picked from commit 52d5b62818fb4a86e779757cddb154d8a07358f2)
+---
+ lib/dns/zone.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/lib/dns/zone.c b/lib/dns/zone.c
+index 90e558d..afe17f6 100644
+--- a/lib/dns/zone.c
++++ b/lib/dns/zone.c
+@@ -3622,9 +3622,10 @@ compute_tag(dns_name_t *name, dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx,
+ 			     dns_rdatatype_dnskey, dnskey, &buffer);
+ 
+ 	result = dns_dnssec_keyfromrdata(name, &rdata, mctx, &dstkey);
+-	if (result == ISC_R_SUCCESS)
++	if (result == ISC_R_SUCCESS) {
+ 		*tag = dst_key_id(dstkey);
+-	dst_key_free(&dstkey);
++		dst_key_free(&dstkey);
++	}
+ 
+ 	return (result);
+ }

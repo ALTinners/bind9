@@ -29,3 +29,5 @@ CVE-2017-3142_regression.patch
 860794-new-dnssec-keys.patch
 CVE-2017-3145.patch
 0031-denied-axfr-requests-were-not-effective-for-writable.patch
+0032-Don-t-free-key-in-compute_tag-in-case-of-failure.patch
+0033-Update-keyfetch_done-compute_tag-check.patch
