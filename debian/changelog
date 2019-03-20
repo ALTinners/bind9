@@ -1,12 +1,16 @@
-bind9 (1:9.11.6+dfsg-1) unstable; urgency=medium
+bind9 (1:9.11.6+dfsg-1) experimental; urgency=medium
 
-  * New upstream version 9.11.6+dfsg
+  [ Ondřej Surý ]
+  * New upstream version 9.11.6+dfsg (Closes: #923984)
   * Update d/gbp.conf for DEP-14
   * Fix the checkapi script
   * Bump libdns SOVERSION from 1104 to 1105
   * Update libdns1105 symbols
 
- -- Ondřej Surý <ondrej@debian.org>  Fri, 01 Mar 2019 11:49:17 +0000
+  [ Bernhard Schmidt]
+  * Add missing pkg-config build-dep
+
+ -- Bernhard Schmidt <berni@debian.org>  Wed, 20 Mar 2019 11:55:34 +0100
 
 bind9 (1:9.11.5.P4+dfsg-1) unstable; urgency=high
 
