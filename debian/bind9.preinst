@@ -20,7 +20,15 @@ case "$1" in
 	    theirs=$(md5sum /etc/bind/named.conf.options | sed 's/ .*$//')
 	    mine=56919cbc0d819c9a303a8bdeb306b5f1
 	    if [ "$mine" = "$theirs" ]; then
-		mv /etc/bind/named.conf.options /etc/bind/named.conf.options.dpkg-old
+		if [ -n "$(dpkg-query -f '${Conffiles}' -W bind9 | grep /etc/bind/named.conf.options)" ]; then
+		    # dpkg knows /etc/bind/named.conf.options as a conffile (from squeeze or older)
+		    # cannot move the outdated file aside to avoid dpkg noticing deleted-by-local-admin
+		    # therefore edit it in place to make it match the to-be-installed version
+		    cp -p /etc/bind/named.conf.options /etc/bind/named.conf.options.dpkg-old
+		    sed -i '26{/^$/d}; 23{/auth-nxdomain no;/d}' /etc/bind/named.conf.options
+		else
+		    mv /etc/bind/named.conf.options /etc/bind/named.conf.options.dpkg-old
+		fi
 	    fi
 	fi
     ;;
