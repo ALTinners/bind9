@@ -2,7 +2,6 @@
 07_multiarch.diff
 10_min-cache-ttl.diff
 25_library_paths.diff
-33_resource_missing_include.diff
 34_prepare_native_pkcs11.diff
 75_ctxstart_no_sighandling.diff
 80_reproducible_build.diff
