@@ -75,6 +75,12 @@
   /usr/lib/bind/*.so rm,
 
   # Samba DLZ
+  /{usr/,}lib/@{multiarch}/samba/bind9/*.so rm,
+  /{usr/,}lib/@{multiarch}/samba/gensec/*.so rm,
+  /{usr/,}lib/@{multiarch}/samba/ldb/*.so rm,
+  /{usr/,}lib/@{multiarch}/ldb/modules/ldb/*.so rm,
+  /var/lib/samba/bind-dns/dns.keytab r,
+  /var/lib/samba/bind-dns/named.conf r,
   /var/lib/samba/private/dns.keytab r,
   /var/lib/samba/private/named.conf r,
   /var/lib/samba/private/dns/** rwk,
