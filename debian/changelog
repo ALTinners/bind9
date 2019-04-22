@@ -1,3 +1,12 @@
+bind9 (1:9.11.5.P4+dfsg-3) unstable; urgency=medium
+
+  * More fixes to the AppArmor policy for Samba AD DLZ
+    - allow access to /dev/urandom
+    - allow locking for dns.keytab
+    - fix path to smb.conf
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 22 Apr 2019 22:31:06 +0200
+
 bind9 (1:9.11.5.P4+dfsg-2) unstable; urgency=medium
 
   [ Ondřej Surý ]
