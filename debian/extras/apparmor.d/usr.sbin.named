@@ -81,6 +81,7 @@
   /{usr/,}lib/@{multiarch}/ldb/modules/ldb/*.so rm,
   /var/lib/samba/bind-dns/dns.keytab rk,
   /var/lib/samba/bind-dns/named.conf r,
+  /var/lib/samba/bind-dns/dns/** rwk,
   /var/lib/samba/private/dns.keytab rk,
   /var/lib/samba/private/named.conf r,
   /var/lib/samba/private/dns/** rwk,
