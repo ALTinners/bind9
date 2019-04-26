@@ -6,9 +6,10 @@ bind9 (1:9.11.5.P4+dfsg-4) unstable; urgency=medium
   [ Ondřej Surý ]
   * [CVE-2018-5743]: Limiting simultaneous TCP clients is ineffective
     (Closes: #927932)
+  * Update symbols file for new symbol in libisc
   * Enable EDDSA again, but disable broken Ed448 support (Closes: #927962)
 
- -- Ondřej Surý <ondrej@debian.org>  Fri, 26 Apr 2019 07:58:48 +0000
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 26 Apr 2019 08:33:13 +0000
 
 bind9 (1:9.11.5.P4+dfsg-3) unstable; urgency=medium
 
