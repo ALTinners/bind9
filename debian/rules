@@ -102,7 +102,6 @@ override_dh_auto_configure:
 		--with-pkcs11=\$${prefix}/lib/softhsm/libsofthsm2.so \
 		--with-randomdev=/dev/urandom \
 		--enable-dnstap \
-		--with-eddsa=no \
 		$(EXTRA_FEATURES)
 	dh_auto_configure -B build-udeb -- \
 		--sysconfdir=/etc/bind \
@@ -121,7 +120,6 @@ override_dh_auto_configure:
 		--enable-shared \
 		--with-libtool \
 		--with-gssapi=no \
-		--with-eddsa=no \
 		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
 		--includedir=/usr/include/bind-export
 	sh debian/apply-export-patch
