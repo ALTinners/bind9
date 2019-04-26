@@ -1,7 +1,7 @@
 bind9 (1:9.11.6.P1+dfsg-1) experimental; urgency=medium
 
-  [ Ondřej Surý ]
   * New upstream version 9.11.6.P1+dfsg
+  * Add patch for atomic support on non-x86 architectures
 
  -- Ondřej Surý <ondrej@debian.org>  Fri, 26 Apr 2019 08:52:06 +0000
 
