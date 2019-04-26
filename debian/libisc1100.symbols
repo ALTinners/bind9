@@ -580,6 +580,7 @@ libisc.so.1100 libisc1100 #MINVER#
  isc_quota_attach@Base 1:9.11.3+dfsg
  isc_quota_destroy@Base 1:9.11.3+dfsg
  isc_quota_detach@Base 1:9.11.3+dfsg
+ isc_quota_force@Base 1:9.11.5.P4+dfsg
  isc_quota_init@Base 1:9.11.3+dfsg
  isc_quota_max@Base 1:9.11.3+dfsg
  isc_quota_release@Base 1:9.11.3+dfsg
@@ -1482,6 +1483,7 @@ libisc-pkcs11.so.1100 libisc1100 #MINVER#
  isc_quota_attach@Base 1:9.11.3+dfsg
  isc_quota_destroy@Base 1:9.11.3+dfsg
  isc_quota_detach@Base 1:9.11.3+dfsg
+ isc_quota_force@Base 1:9.11.5.P4+dfsg
  isc_quota_init@Base 1:9.11.3+dfsg
  isc_quota_max@Base 1:9.11.3+dfsg
  isc_quota_release@Base 1:9.11.3+dfsg
