@@ -7,3 +7,4 @@
 0007-reproducible_build.diff
 0008-Add_--install-layout=deb_to_setup.py_call.patch
 0009-skip-rtld-deepbind-for-dyndb.diff
+0010-Replace-atomic-operations-in-bin-named-client.c-with.patch
