@@ -1,13 +1,18 @@
-bind9 (1:9.10.3.dfsg.P4-12.3+deb9u5) stretch; urgency=medium
+bind9 (1:9.10.3.dfsg.P4-12.3+deb9u5) stretch-security; urgency=high
 
+  [ Marc Deslauriers (Ubuntu) ]
+  * CVE-2018-5743: limiting simultaneous TCP clients is ineffective.
+    Thanks to Marc Deslauriers of Ubuntu (Closes: #927932)
+
+  [ Ondřej Surý ]
   * Sync Maintainer and Uploaders with unstable
   * [CVE-2019-6465]: Zone transfer for DLZs are executed though not
-    permitted by ACLs.
+    permitted by ACLs. (Closes: #922955)
   * [CVE-2018-5745]: Avoid assertion and thus causing named to
     deliberately exit when a trust anchor's key is replaced with a key
-    which uses an unsupported algorithm.
+    which uses an unsupported algorithm. (Closes: #922954)
 
- -- Ondřej Surý <ondrej@debian.org>  Tue, 05 Mar 2019 10:13:38 +0000
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 03 May 2019 22:34:35 +0200
 
 bind9 (1:9.10.3.dfsg.P4-12.3+deb9u4) stretch-security; urgency=high
 
