@@ -1,9 +1,51 @@
-bind9 (1:9.11.5.P4+dfsg-1~bpo9+1) stretch-backports; urgency=high
+bind9 (1:9.11.5.P4+dfsg-5) unstable; urgency=medium
 
-  * Rebuild for stretch-backports.
-  * High Urgency and before testing migration due to CVE-2018-5744
+  * AppArmor: Allow /var/tmp/krb5_* (owner-only) for Samba AD DLZ.
+    Thanks to Steven Monai (Closes: 928398)
 
- -- Bernhard Schmidt <berni@debian.org>  Tue, 26 Feb 2019 21:52:49 +0100
+ -- Bernhard Schmidt <berni@debian.org>  Fri, 03 May 2019 19:44:57 +0200
+
+bind9 (1:9.11.5.P4+dfsg-4) unstable; urgency=medium
+
+  [ Bernhard Schmidt ]
+  * AppArmor: Also add /var/lib/samba/bind-dns/dns/** (Closes: #927827)
+
+  [ Ondřej Surý ]
+  * [CVE-2018-5743]: Limiting simultaneous TCP clients is ineffective
+    (Closes: #927932)
+  * Update symbols file for new symbol in libisc
+  * Enable EDDSA again, but disable broken Ed448 support (Closes: #927962)
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 26 Apr 2019 08:33:13 +0000
+
+bind9 (1:9.11.5.P4+dfsg-3) unstable; urgency=medium
+
+  * More fixes to the AppArmor policy for Samba AD DLZ
+    - allow access to /dev/urandom
+    - allow locking for dns.keytab
+    - fix path to smb.conf
+
+ -- Bernhard Schmidt <berni@debian.org>  Mon, 22 Apr 2019 22:31:06 +0200
+
+bind9 (1:9.11.5.P4+dfsg-2) unstable; urgency=medium
+
+  [ Ondřej Surý ]
+  * Update d/gbp.conf for Debian Buster
+
+  [ Bernhard Schmidt ]
+  * Cherry-Pick upstream commit to prevent dnssec-keymgr from immediately
+    expiring and deleting old DNSSEC keys when being run for the first
+    time (Closes: #923984)
+  * Update AppArmor policy for Samba AD DLZ
+    - Add changed default location for named.conf
+    - Allow read/mmap on some Samba libraries
+    Thanks to Steven Monai (Closes: #920530)
+
+  [ Andreas Beckmann ]
+  * bind9.preinst: cope with ancient conffile named.conf.options
+    (Closes: #905177)
+
+ -- Bernhard Schmidt <berni@debian.org>  Tue, 02 Apr 2019 21:12:50 +0200
 
 bind9 (1:9.11.5.P4+dfsg-1) unstable; urgency=high
 

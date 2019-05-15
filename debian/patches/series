@@ -8,3 +8,7 @@
 80_reproducible_build.diff
 Add_--install-layout=deb_to_setup.py_call.patch
 skip-rtld-deepbind-for-dyndb.diff
+keymgr-dont-immediately-delete.diff
+0012-CVE-2018-5743-Limiting-simultaneous-TCP-clients-is-i.patch
+0013-Replace-atomic-operations-in-bin-named-client.c-with.patch
+0014-Disable-broken-Ed448-support.patch
