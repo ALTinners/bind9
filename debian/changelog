@@ -1,8 +1,9 @@
 bind9 (1:9.11.7+dfsg-1) experimental; urgency=medium
 
   * New upstream version 9.11.7+dfsg
+  * Bump libdns SONAME from 1105 to 1106
 
- -- Ondřej Surý <ondrej@sury.org>  Tue, 21 May 2019 12:22:21 +0200
+ -- Ondřej Surý <ondrej@sury.org>  Tue, 21 May 2019 13:18:10 +0200
 
 bind9 (1:9.11.6.P1+dfsg-1) experimental; urgency=medium
 
