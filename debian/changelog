@@ -1,3 +1,9 @@
+bind9 (1:9.14.2-2) experimental; urgency=medium
+
+  * Fix Debian buster armhf build
+
+ -- Ondřej Surý <ondrej@sury.org>  Tue, 21 May 2019 20:08:59 +0200
+
 bind9 (1:9.14.2-1) experimental; urgency=medium
 
   * Make named.service to be known as bind9.service
