@@ -19,10 +19,13 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
   <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
     <para>
-      This document summarizes changes since the last production
-      release on the BIND 9.11 (Extended Support Version) branch.
-      Please see the <filename>CHANGES</filename> file for a further
-      list of bug fixes and other changes.
+      BIND 9.11 (Extended Support Version) is a stable branch of BIND.
+      This document summarizes significant changes since the last
+      production release on that branch.
+    </para>
+    <para>
+      Please see the file <filename>CHANGES</filename> for a more
+      detailed list of changes and bug fixes.
     </para>
   </section>
 
@@ -66,14 +69,6 @@
     </para>
   </section>
 
-  <section xml:id="win_support"><info><title>Legacy Windows No Longer Supported</title></info>
-    <para>
-      As of BIND 9.11.2, Windows XP and Windows 2003 are no longer supported
-      platforms for BIND; "XP" binaries are no longer available for download
-      from ISC.
-    </para>
-  </section>
-
   <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
     <itemizedlist>
       <listitem>
@@ -101,7 +96,19 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  None.
+	  When <command>trusted-keys</command> and
+	  <command>managed-keys</command> are both configured for the
+	  same name, or when <command>trusted-keys</command> is used to
+	  configure a trust anchor for the root zone and
+	  <command>dnssec-validation</command> is set to
+	  <literal>auto</literal>, automatic RFC 5011 key
+	  rollovers will fail.
+	</para>
+	<para>
+	  This combination of settings was never intended to work,
+	  but there was no check for it in the parser. This has been
+	  corrected; a warning is now logged. (In BIND 9.15 and
+	  higher this error will be fatal.) [GL #868]
 	</para>
       </listitem>
     </itemizedlist>

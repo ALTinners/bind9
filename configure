@@ -705,7 +705,6 @@ W3M
 DBLATEX
 PDFLATEX
 LATEX
-DNSTAP_PB_C_H
 DNSTAPTARGETS
 DNSTAPOBJS
 DNSTAPSRCS
@@ -1772,7 +1771,7 @@ Optional Packages:
   --with-geoip=PATH       Build with GeoIP support (yes|no|path)
   --with-gssapi=PATH|/path/krb5-config
                           Specify path for system-supplied GSSAPI
-                          [default=yes]
+                          [default=auto]
   --with-randomdev=PATH   Specify path for random device
   --with-locktype=ARG     Specify mutex lock type (adaptive or standard)
   --with-libtool          use GNU libtool
@@ -12647,7 +12646,7 @@ fi
 $as_echo_n "checking for Python support... " >&6; }
 	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	      as_fn_error $? "Python required for dnssec-keymgr" "$LINENO" 5
+	      as_fn_error $? "Python >= 2.7 or >= 3.2 and the PLY package are required for dnssec-keymgr and other Python-based tools. PLY may be available from your OS package manager as python-ply or python3-ply; it can also be installed via pip. To build without Python/PLY, use --disable-python." "$LINENO" 5
 fi
 fi
 
@@ -14871,7 +14870,7 @@ $as_echo_n "checking for GSSAPI library... " >&6; }
 if test "${with_gssapi+set}" = set; then :
   withval=$with_gssapi; use_gssapi="$withval"
 else
-  use_gssapi="yes"
+  use_gssapi="auto"
 fi
 
 
@@ -15011,7 +15010,7 @@ esac
 
 case "$host" in
 *darwin*)
-	if test "yes" = "$use_gssapi"
+	if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 	then
 		use_gssapi=framework
 	fi
@@ -15024,7 +15023,7 @@ esac
 # for the specification of gssapi and krb5 headers in different locations,
 # which probably ought to be fixed although fixing might raise the issue of
 # trying to build with incompatible versions of gssapi and krb5.
-if test "yes" = "$use_gssapi"
+if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 then
 	# first, deal with the obvious
 	if test \( -f /usr/include/kerberosv5/krb5.h -o \
@@ -15048,8 +15047,11 @@ then
 				break
 			fi
 		fi
-		use_gssapi="no"
 	    done
+	    if test "auto" = "$use_gssapi"
+	    then
+		use_gssapi="no"
+	    fi
 	fi
 fi
 
@@ -21771,7 +21773,6 @@ DNSTAP=
 DNSTAPSRCS=
 DNSTAPOBJS=
 DNSTAPTARGETS=
-DNSTAP_PB_C_H=
 if test "x$use_dnstap" != "xno"; then
 	if ! $use_threads; then
 		as_fn_error $? "Dnstap requires threads." "$LINENO" 5
@@ -22107,9 +22108,7 @@ $as_echo "#define HAVE_DNSTAP 1" >>confdefs.h
 	DNSTAPSRCS='${DNSTAPSRCS}'
 	DNSTAPOBJS='${DNSTAPOBJS}'
 	DNSTAPTARGETS='${DNSTAPTARGETS}'
-	DNSTAP_PB_C_H="dnstap.pb-c.h"
 fi
-
 
 
 
@@ -23672,25 +23671,45 @@ SO_STRIP="cat"
 
 # Check whether --with-dlopen was given.
 if test "${with_dlopen+set}" = set; then :
-  withval=$with_dlopen; dlopen="$withval"
+  withval=$with_dlopen;
 else
-  dlopen="yes"
+  with_dlopen="auto"
 fi
 
 
-case $host in
-	*-sunos*) dlopen="no"
-		;;
+#
+# Disable for SunOS
+#
+case $host in #(
+  *-sunos*) :
+    with_dlopen="no" ;; #(
+  *) :
+     ;;
 esac
 
-if test "yes" = "$dlopen"; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
-$as_echo_n "checking for dlopen in -ldl... " >&6; }
-if ${ac_cv_lib_dl_dlopen+:} false; then :
+#
+# If PIC is disabled, dlopen must also be
+#
+if test "$pic_mode" = "no"; then :
+  case $with_dlopen in #(
+  auto) :
+    with_dlopen="no" ;; #(
+  yes) :
+    as_fn_error $? "--with-dlopen requires PIC" "$LINENO" 5 ;; #(
+  *) :
+     ;;
+esac
+fi
+
+case $with_dlopen in #(
+  auto|yes) :
+
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
+$as_echo_n "checking for library containing dlopen... " >&6; }
+if ${ac_cv_search_dlopen+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ldl  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -23709,27 +23728,39 @@ return dlopen ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_dl_dlopen=yes
-else
-  ac_cv_lib_dl_dlopen=no
+for ac_lib in '' dl; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_dlopen=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+    conftest$ac_exeext
+  if ${ac_cv_search_dlopen+:} false; then :
+  break
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dl_dlopen" >&5
-$as_echo "$ac_cv_lib_dl_dlopen" >&6; }
-if test "x$ac_cv_lib_dl_dlopen" = xyes; then :
-  have_dl=yes
+done
+if ${ac_cv_search_dlopen+:} false; then :
+
 else
-  have_dl=no
+  ac_cv_search_dlopen=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
+$as_echo "$ac_cv_search_dlopen" >&6; }
+ac_res=$ac_cv_search_dlopen
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
 fi
 
-	if test "yes" = "$have_dl"; then
-		LIBS="-ldl $LIBS"
-	fi
-	for ac_func in dlopen dlclose dlsym
+	  for ac_func in dlopen dlclose dlsym
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -23737,91 +23768,108 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
-
+ with_dlopen="yes"
 else
-  dlopen=no
+  with_dlopen="no"
 fi
 done
 
+	 ;; #(
+  *) :
+     ;;
+esac
+
+if test "$with_dlopen" = "yes"; then :
+  case $host in #(
+  *-linux*|*-gnu*) :
+
+		 LDFLAGS="${LDFLAGS} -Wl,--export-dynamic"
+		 SO_CFLAGS="-fPIC"
+		 SO_LDFLAGS=""
+		 if test "$use_libtool" = "yes"; then :
+
+			 SO_LDFLAGS="-Xcompiler -shared"
+			 SO_LD="${CC}"
+
+else
+
+			 SO_LDFLAGS="-shared"
+			 SO_LD="${CC}"
+
+fi
+	        ;; #(
+  *-freebsd*|*-openbsd*|*-netbsd*) :
+
+		 LDFLAGS="${LDFLAGS} -Wl,-E"
+		 SO_CFLAGS="-fpic"
+		 if test "$use_libtool" = "yes"; then :
+
+			 SO_LDFLAGS="-Xcompiler -shared"
+			 SO_LD="${CC}"
+
+else
+
+			 SO_LDFLAGS="-shared"
+			 SO_LD="${CC}"
+
+fi
+	        ;; #(
+  *-darwin*) :
+
+		 SO_CFLAGS="-fPIC"
+                 SO_LD="${CC}"
+		 if test "$use_libtool" = "yes"; then :
+
+			 SO_LDFLAGS="-Xcompiler -dynamiclib -undefined dynamic_lookup"
+
+else
+
+			 SO_LDFLAGS="-dynamiclib -undefined dynamic_lookup"
+
+fi
+	        ;; #(
+  *-solaris*) :
+
+		 SO_CFLAGS="-KPIC"
+		 SO_LDFLAGS="-G -z text"
+		 SO_LD="ld"
+	        ;; #(
+  *) :
+
+		 SO_CFLAGS="-fPIC"
+	        ;;
+esac
+       if test "$GCC" = "yes"; then :
+
+	       SO_CFLAGS="-fPIC"
+	       if test -z "$SO_LD"; then :
+  if test "$use_libtool" = "yes"; then :
+
+			      SO_LDFLAGS="-Xcompiler -shared"
+			      SO_LD="${CC}"
+
+else
+
+			      SO_LDFLAGS="-shared"
+			      SO_LD="${CC}"
+
 fi
 
-if test "yes" = "$dlopen"; then
-	case $host in
-		*-linux*|*-gnu*)
-			SO_CFLAGS="-fPIC"
-                        LDFLAGS="${LDFLAGS} -Wl,--export-dynamic"
-			SO_LDFLAGS=""
-			if test "yes" = "$have_dl"
-			then
-				if test "yes" = "$use_libtool"; then
-					SO_LDFLAGS="-Xcompiler -shared"
-					SO_LD="${CC}"
-				else
-					SO_LDFLAGS="-shared"
-					SO_LD="${CC}"
-				fi
-			else
-				SO_LDFLAGS="-shared"
-				SO_LD="ld"
-			fi
-			;;
-		*-freebsd*|*-openbsd*)
-			LDFLAGS="${LDFLAGS} -Wl,-E"
-			SO_CFLAGS="-fpic"
-			if test "yes" = "$use_libtool"; then
-				SO_LDFLAGS="-Xcompiler -shared"
-				SO_LD="${CC}"
-			else
-				SO_LDFLAGS="-shared"
-				SO_LD="${CC}"
-			fi
-			;;
-		*-netbsd*)
-			SO_CFLAGS="-fpic"
-			SO_LDFLAGS="-Bshareable -x"
-			SO_LD="ld"
-			SO_STRIP="sed -e s/-Wl,//g"
-			;;
-		*-solaris*)
-			SO_CFLAGS="-KPIC"
-			SO_LDFLAGS="-G -z text"
-			SO_LD="ld"
-			;;
-		*-hp-hpux*)
-			SO=sl
-			SO_CFLAGS="+z"
-			SO_LDFLAGS="-b +vnocompatwarnings"
-			SO_LD="ld"
-			;;
-		*)
-			SO_CFLAGS="-fPIC"
-			;;
-	esac
+fi
 
-	if test "X$GCC" = "Xyes"; then
-		SO_CFLAGS="-fPIC"
-		if test -z "$SO_LD"
-		then
-			if test "yes" = "$use_libtool"; then
-				SO_LDFLAGS="-Xcompiler -shared"
-				SO_LD="${CC}"
-			else
-				SO_LDFLAGS="-shared"
-				SO_LD="${CC}"
-			fi
-		fi
-	fi
-
-	# If we still don't know how to make shared objects, don't make any.
-	if test -n "$SO_LD"; then
-		SO_TARGETS="\${SO_TARGETS}"
+fi
+       # If we still don't know how to make shared objects, don't make any.
+       if test -n "$SO_LD"; then :
+  SO_TARGETS="\${SO_TARGETS}"
 
 $as_echo "#define ISC_DLZ_DLOPEN 1" >>confdefs.h
 
-	fi
-fi
-CFLAGS="$CFLAGS $SO_CFLAGS"
 
+fi
+
+fi
+
+CFLAGS="$CFLAGS $SO_CFLAGS"
 
 
 
@@ -24884,7 +24932,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/isc/Makefile bin/python/isc/utils.py bin/python/isc/tests/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/python/dnssec-keymgr.py bin/python/isc/__init__.py bin/python/isc/checkds.py bin/python/isc/coverage.py bin/python/isc/dnskey.py bin/python/isc/eventlist.py bin/python/isc/keydict.py bin/python/isc/keyevent.py bin/python/isc/keymgr.py bin/python/isc/keyseries.py bin/python/isc/keyzone.py bin/python/isc/policy.py bin/python/isc/rndc.py bin/python/isc/tests/dnskey_test.py bin/python/isc/tests/policy_test.py bin/rndc/Makefile bin/tests/Makefile bin/tests/headerdep_test.sh bin/tests/optional/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/dlzs.conf bin/tests/system/dyndb/Makefile bin/tests/system/dyndb/driver/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/pipelined/Makefile bin/tests/system/rndc/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/arm/noteversion.xml doc/arm/pkgversion.xml doc/arm/releaseinfo.xml doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/tex/Makefile doc/tex/armstyle.sty doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-manpage.xsl doc/xsl/isc-notes-html.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/irs/tests/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccc/tests/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/isccfg/tests/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/isc/Makefile bin/python/isc/utils.py bin/python/isc/tests/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/python/dnssec-keymgr.py bin/python/isc/__init__.py bin/python/isc/checkds.py bin/python/isc/coverage.py bin/python/isc/dnskey.py bin/python/isc/eventlist.py bin/python/isc/keydict.py bin/python/isc/keyevent.py bin/python/isc/keymgr.py bin/python/isc/keyseries.py bin/python/isc/keyzone.py bin/python/isc/policy.py bin/python/isc/rndc.py bin/python/isc/tests/dnskey_test.py bin/python/isc/tests/policy_test.py bin/rndc/Makefile bin/tests/Makefile bin/tests/headerdep_test.sh bin/tests/optional/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/dlzs.conf bin/tests/system/dyndb/Makefile bin/tests/system/dyndb/driver/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/pipelined/Makefile bin/tests/system/rndc/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/arm/noteversion.xml doc/arm/pkgversion.xml doc/arm/releaseinfo.xml doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/tex/Makefile doc/tex/armstyle.sty doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-manpage.xsl doc/xsl/isc-notes-html.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/irs/tests/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccc/tests/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/isccfg/tests/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/unittest.sh"
 
 
 #
@@ -25927,7 +25975,6 @@ do
     "bin/tests/pkcs11/benchmarks/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/pkcs11/benchmarks/Makefile" ;;
     "bin/tests/system/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/Makefile" ;;
     "bin/tests/system/conf.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/conf.sh" ;;
-    "bin/tests/system/dlz/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlz/prereq.sh" ;;
     "bin/tests/system/dlzexternal/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/Makefile" ;;
     "bin/tests/system/dlzexternal/ns1/dlzs.conf") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/ns1/dlzs.conf" ;;
     "bin/tests/system/dyndb/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dyndb/Makefile" ;;

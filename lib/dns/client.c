@@ -18,6 +18,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
+#include <isc/portset.h>
 #include <isc/safe.h>
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
@@ -124,10 +125,10 @@ typedef struct resctx {
 	unsigned int		magic;
 	isc_mutex_t		lock;
 	dns_client_t		*client;
-	bool		want_dnssec;
-	bool		want_validation;
-	bool		want_cdflag;
-	bool		want_tcp;
+	bool			want_dnssec;
+	bool			want_validation;
+	bool			want_cdflag;
+	bool			want_tcp;
 
 	/* Locked */
 	ISC_LINK(struct resctx)	link;
@@ -140,7 +141,7 @@ typedef struct resctx {
 	dns_namelist_t		namelist;
 	isc_result_t		result;
 	dns_clientresevent_t	*event;
-	bool		canceled;
+	bool			canceled;
 	dns_rdataset_t		*rdataset;
 	dns_rdataset_t		*sigrdataset;
 } resctx_t;
@@ -159,7 +160,7 @@ typedef struct resarg {
 	isc_result_t		vresult;
 	dns_namelist_t		*namelist;
 	dns_clientrestrans_t	*trans;
-	bool		canceled;
+	bool			canceled;
 } resarg_t;
 
 /*%
@@ -174,7 +175,7 @@ typedef struct reqctx {
 
 	/* Locked */
 	ISC_LINK(struct reqctx)	link;
-	bool		canceled;
+	bool			canceled;
 	dns_tsigkey_t		*tsigkey;
 	dns_request_t		*request;
 	dns_clientreqevent_t	*event;
@@ -192,7 +193,7 @@ typedef struct reqarg {
 	/* Locked */
 	isc_result_t		result;
 	dns_clientreqtrans_t	*trans;
-	bool		canceled;
+	bool			canceled;
 } reqarg_t;
 
 /*%
@@ -207,7 +208,7 @@ typedef struct updatearg {
 	/* Locked */
 	isc_result_t		result;
 	dns_clientupdatetrans_t	*trans;
-	bool		canceled;
+	bool			canceled;
 } updatearg_t;
 
 /*%
@@ -218,14 +219,14 @@ typedef struct updatectx {
 	unsigned int			magic;
 	isc_mutex_t			lock;
 	dns_client_t			*client;
-	bool			want_tcp;
+	bool				want_tcp;
 
 	/* Locked */
 	dns_request_t			*updatereq;
 	dns_request_t			*soareq;
 	dns_clientrestrans_t		*restrans;
 	dns_clientrestrans_t		*restrans2;
-	bool			canceled;
+	bool				canceled;
 
 	/* Task Locked */
 	ISC_LINK(struct updatectx) 	link;
@@ -251,6 +252,48 @@ typedef struct updatectx {
 static isc_result_t request_soa(updatectx_t *uctx);
 static void client_resfind(resctx_t *rctx, dns_fetchevent_t *event);
 static isc_result_t send_update(updatectx_t *uctx);
+
+/*
+ * Try honoring the operating system's preferred ephemeral port range.
+ */
+static isc_result_t
+setsourceports(isc_mem_t *mctx, dns_dispatchmgr_t *manager) {
+	isc_portset_t *v4portset = NULL, *v6portset = NULL;
+	in_port_t udpport_low, udpport_high;
+	isc_result_t result;
+
+	result = isc_portset_create(mctx, &v4portset);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	isc_portset_addrange(v4portset, udpport_low, udpport_high);
+
+	result = isc_portset_create(mctx, &v6portset);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	isc_portset_addrange(v6portset, udpport_low, udpport_high);
+
+	result = dns_dispatchmgr_setavailports(manager, v4portset, v6portset);
+
+ cleanup:
+	if (v4portset != NULL) {
+		isc_portset_destroy(mctx, &v4portset);
+	}
+	if (v6portset != NULL) {
+		isc_portset_destroy(mctx, &v6portset);
+	}
+
+	return (result);
+}
 
 static isc_result_t
 getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
@@ -483,6 +526,7 @@ dns_client_createx2(isc_mem_t *mctx, isc_appctx_t *actx,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	client->dispatchmgr = dispatchmgr;
+	(void)setsourceports(mctx, dispatchmgr);
 
 	/*
 	 * If only one address family is specified, use it.
@@ -1066,6 +1110,12 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 						break;
 					}
 				}
+			}
+			if (rctx->rdataset != NULL) {
+				putrdataset(mctx, &rctx->rdataset);
+			}
+			if (rctx->sigrdataset != NULL) {
+				putrdataset(mctx, &rctx->sigrdataset);
 			}
 			if (n == 0) {
 				/*

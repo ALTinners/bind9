@@ -5171,6 +5171,12 @@ options {
 		by the <command>disable-algorithms</command> will be treated
 		as insecure.
 	      </para>
+	      <para>
+		Configured trust anchors in <command>trusted-keys</command>
+		or <command>managed-keys</command> that match a disabled
+		algorithm will be ignored and treated as if they were not
+		configured at all.
+	      </para>
 	    </listitem>
 	  </varlistentry>
 
@@ -10096,7 +10102,7 @@ deny-answer-aliases { "example.net"; };
 		    The empty set of resource records is specified by
 		    CNAME whose target is the wildcard top-level
 		    domain (*.).
-		    It rewrites the response to NODATA or ANCOUNT=1.
+		    It rewrites the response to NODATA or ANCOUNT=0.
 		  </para>
 		</listitem>
 	      </varlistentry>
