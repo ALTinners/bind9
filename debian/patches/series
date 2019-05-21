@@ -7,3 +7,5 @@
 0007-Add_--install-layout=deb_to_setup.py_call.patch
 0008-skip-rtld-deepbind-for-dyndb.diff
 0009-Use-absolute-srcdir-path-to-protoc-c-invocation.patch
+0010-Include-config.h-from-gen.c-to-get-the-correct-platf.patch
+0011-Exit-the-.-gen-program-on-failed-readdir-call.patch
