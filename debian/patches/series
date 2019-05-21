@@ -6,3 +6,4 @@
 0006-ctxstart_no_sighandling.diff
 0007-Add_--install-layout=deb_to_setup.py_call.patch
 0008-skip-rtld-deepbind-for-dyndb.diff
+0009-Use-absolute-srcdir-path-to-protoc-c-invocation.patch
