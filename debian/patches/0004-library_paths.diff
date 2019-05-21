@@ -17,7 +17,7 @@ Subject: _library_paths
  5 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/lib/dns/Makefile.in b/lib/dns/Makefile.in
-index 068bbac..a18c848 100644
+index 56dd259..6f3c7b7 100644
 --- a/lib/dns/Makefile.in
 +++ b/lib/dns/Makefile.in
 @@ -37,7 +37,7 @@ ISCLIBS =	../../lib/isc/libisc.@A@

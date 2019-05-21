@@ -4,7 +4,5 @@
 0004-library_paths.diff
 0005-prepare_native_pkcs11.diff
 0006-ctxstart_no_sighandling.diff
-0007-reproducible_build.diff
-0008-Add_--install-layout=deb_to_setup.py_call.patch
-0009-skip-rtld-deepbind-for-dyndb.diff
-0010-Replace-atomic-operations-in-bin-named-client.c-with.patch
+0007-Add_--install-layout=deb_to_setup.py_call.patch
+0008-skip-rtld-deepbind-for-dyndb.diff

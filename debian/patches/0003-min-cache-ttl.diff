@@ -35,7 +35,7 @@ index 7584efb..fe70944 100644
  	minimal-any false;\n\
  	minimal-responses false;\n\
 diff --git a/bin/named/server.c b/bin/named/server.c
-index b63a386..90bd536 100644
+index 0abbbed..a132504 100644
 --- a/bin/named/server.c
 +++ b/bin/named/server.c
 @@ -3729,6 +3729,18 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
@@ -99,7 +99,7 @@ index 2942c26..c2e1e7b 100644
  /*%<
   * Convert the authority data from 'message' into a negative cache
 diff --git a/lib/dns/include/dns/view.h b/lib/dns/include/dns/view.h
-index 8e21298..3b3ecc9 100644
+index 335e461..5c05d55 100644
 --- a/lib/dns/include/dns/view.h
 +++ b/lib/dns/include/dns/view.h
 @@ -153,6 +153,8 @@ struct dns_view {
@@ -170,7 +170,7 @@ index d71f0d8..7cfb16e 100644
  						trust = rdataset->trust;
  					/*
 diff --git a/lib/dns/resolver.c b/lib/dns/resolver.c
-index 2c14a0e..f422cf7 100644
+index 3a94536..8996401 100644
 --- a/lib/dns/resolver.c
 +++ b/lib/dns/resolver.c
 @@ -565,7 +565,9 @@ static bool fctx_unlink(fetchctx_t *fctx);
@@ -184,7 +184,7 @@ index 2c14a0e..f422cf7 100644
  				      bool optout,
  				      bool secure,
  				      dns_rdataset_t *ardataset,
-@@ -5055,7 +5057,7 @@ validated(isc_task_t *task, isc_event_t *event) {
+@@ -5065,7 +5067,7 @@ validated(isc_task_t *task, isc_event_t *event) {
  			ttl = 0;
  
  		result = ncache_adderesult(fctx->rmessage, fctx->cache, node,
@@ -193,7 +193,7 @@ index 2c14a0e..f422cf7 100644
  					   vevent->secure, ardataset, &eresult);
  		if (result != ISC_R_SUCCESS)
  			goto noanswer_response;
-@@ -5520,6 +5522,12 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
+@@ -5531,6 +5533,12 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
  			rdataset->ttl = res->view->maxcachettl;
  		}
  
@@ -206,7 +206,7 @@ index 2c14a0e..f422cf7 100644
  		/*
  		 * Mark the rdataset as being prefetch eligible.
  		 */
-@@ -5908,7 +5916,8 @@ cache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_stdtime_t now)
+@@ -5919,7 +5927,8 @@ cache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_stdtime_t now)
   */
  static isc_result_t
  ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
@@ -216,7 +216,7 @@ index 2c14a0e..f422cf7 100644
  		  bool optout, bool secure,
  		  dns_rdataset_t *ardataset, isc_result_t *eresultp)
  {
-@@ -5921,10 +5930,10 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
+@@ -5932,10 +5941,10 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
  	}
  	if (secure)
  		result = dns_ncache_addoptout(message, cache, node, covers,
@@ -229,7 +229,7 @@ index 2c14a0e..f422cf7 100644
  	if (result == DNS_R_UNCHANGED || result == ISC_R_SUCCESS) {
  		/*
  		 * If the cache now contains a negative entry and we
-@@ -6099,7 +6108,8 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
+@@ -6110,7 +6119,8 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
  		ttl = 0;
  
  	result = ncache_adderesult(fctx->rmessage, fctx->cache, node,
