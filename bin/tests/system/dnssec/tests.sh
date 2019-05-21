@@ -23,6 +23,27 @@ ANSWEROPTS="+noall +answer +dnssec -p ${PORT}"
 DELVOPTS="-a ns1/trusted.conf -p ${PORT}"
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
+# TODO: Move wait_for_log and loadkeys_on to conf.sh.common
+wait_for_log() {
+        msg=$1
+        file=$2
+
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+                nextpart "$file" | grep "$msg" > /dev/null && return
+                sleep 1
+        done
+        echo_i "exceeded time limit waiting for '$msg' in $file"
+        ret=1
+}
+
+dnssec_loadkeys_on() {
+	nsidx=$1
+	zone=$2
+	nextpart ns${nsidx}/named.run > /dev/null
+	$RNDCCMD 10.53.0.${nsidx} loadkeys ${zone} | sed "s/^/ns${nsidx} /" | cat_i
+	wait_for_log "next key event" ns${nsidx}/named.run
+}
+
 # convert private-type records to readable form
 showprivate () {
     echo "-- $@ --"
@@ -148,7 +169,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking postive validation NSEC using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.example > delv.out$n || ret=1
    grep "a.example..*10.0.0.1" delv.out$n > /dev/null || ret=1
-   grep "a.example..*.RRSIG.A 3 2 300 .*" delv.out$n > /dev/null || ret=1
+   grep "a.example..*.RRSIG.A [0-9][0-9]* 2 300 .*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -171,7 +192,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking positive validation NSEC3 using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.nsec3.example > delv.out$n || ret=1
    grep "a.nsec3.example..*10.0.0.1" delv.out$n > /dev/null || ret=1
-   grep "a.nsec3.example..*RRSIG.A 7 3 300.*" delv.out$n > /dev/null || ret=1
+   grep "a.nsec3.example..*RRSIG.A [0-9][0-9]* 3 300.*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -194,7 +215,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking positive validation OPTOUT using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.optout.example > delv.out$n || ret=1
    grep "a.optout.example..*10.0.0.1" delv.out$n > /dev/null || ret=1
-   grep "a.optout.example..*RRSIG.A 7 3 300.*" delv.out$n > /dev/null || ret=1
+   grep "a.optout.example..*RRSIG.A [0-9][0-9]* 3 300.*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -220,7 +241,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking positive wildcard validation NSEC using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.wild.example > delv.out$n || ret=1
    grep "a.wild.example..*10.0.0.27" delv.out$n > /dev/null || ret=1
-   grep "a.wild.example..*RRSIG.A 3 2 300.*" delv.out$n > /dev/null || ret=1
+   grep "a.wild.example..*RRSIG.A [0-9][0-9]* 2 300.*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -262,7 +283,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking positive wildcard validation NSEC3 using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.wild.nsec3.example > delv.out$n || ret=1
    grep "a.wild.nsec3.example..*10.0.0.6" delv.out$n > /dev/null || ret=1
-   grep "a.wild.nsec3.example..*RRSIG.A 7 3 300.*" delv.out$n > /dev/null || ret=1
+   grep "a.wild.nsec3.example..*RRSIG.A [0-9][0-9]* 3 300.*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -288,7 +309,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking positive wildcard validation OPTOUT using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.wild.optout.example > delv.out$n || ret=1
    grep "a.wild.optout.example..*10.0.0.6" delv.out$n > /dev/null || ret=1
-   grep "a.wild.optout.example..*RRSIG.A 7 3 300.*" delv.out$n > /dev/null || ret=1
+   grep "a.wild.optout.example..*RRSIG.A [0-9][0-9]* 3 300.*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -1381,6 +1402,62 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+get_rsasha1_key_ids_from_sigs() {
+	tr -d '\r' < signer/example.db.signed | \
+	awk '
+		NF < 8 { next }
+		$(NF-5) != "RRSIG" { next }
+		$(NF-3) != "5" { next }
+		$NF != "(" { next }
+		{
+			getline;
+			print $3;
+		}
+	' | \
+	sort -u
+}
+
+echo_i "checking that a key using an unsupported algorithm cannot be generated ($n)"
+ret=0
+zone=example
+# If dnssec-keygen fails, the test script will exit immediately.  Prevent that
+# from happening, and also trigger a test failure if dnssec-keygen unexpectedly
+# succeeds, by using "&& ret=1".
+$KEYGEN -a 255 $zone > dnssectools.out.test$n 2>&1 && ret=1
+grep -q "unsupported algorithm: 255" dnssectools.out.test$n || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking that a DS record cannot be generated for a key using an unsupported algorithm ($n)"
+ret=0
+zone=example
+# Fake an unsupported algorithm key
+unsupportedkey=`$KEYGEN -q -r $RANDFILE -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
+awk '$3 == "DNSKEY" { $6 = 255 } { print }' ${unsupportedkey}.key > ${unsupportedkey}.tmp
+mv ${unsupportedkey}.tmp ${unsupportedkey}.key
+# If dnssec-dsfromkey fails, the test script will exit immediately.  Prevent
+# that from happening, and also trigger a test failure if dnssec-dsfromkey
+# unexpectedly succeeds, by using "&& ret=1".
+$DSFROMKEY ${unsupportedkey} > dnssectools.out.test$n 2>&1 && ret=1
+grep -q "algorithm is unsupported" dnssectools.out.test$n || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking that a zone cannot be signed with a key using an unsupported algorithm ($n)"
+ret=0
+ret=0
+cat signer/example.db.in "${unsupportedkey}.key" > signer/example.db
+# If dnssec-signzone fails, the test script will exit immediately.  Prevent that
+# from happening, and also trigger a test failure if dnssec-signzone
+# unexpectedly succeeds, by using "&& ret=1".
+$SIGNER -o example signer/example.db ${unsupportedkey} > dnssectools.out.test$n 2>&1 && ret=1
+grep -q "algorithm is unsupported" dnssectools.out.test$n || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
 echo_i "checking that we can sign a zone with out-of-zone records ($n)"
 ret=0
 zone=example
@@ -1481,8 +1558,8 @@ cat example.db.in $key1.key $key3.key > example.db
 echo '$INCLUDE "example.db.signed"' >> example.db
 $SIGNER -D -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 || ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -1493,8 +1570,8 @@ ret=0
 cd signer
 $SIGNER -RD -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 && ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -1511,8 +1588,8 @@ echo '$INCLUDE "example.db.signed"' >> example.db
 $SETTIME -I now $key2 > /dev/null 2>&1
 $SIGNER -SD -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 || ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -1523,8 +1600,8 @@ ret=0
 cd signer
 $SIGNER -SDQ -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 && ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -1688,7 +1765,7 @@ ret=0
 $RNDCCMD 10.53.0.4 secroots 2>&1 | sed 's/^/ns4 /' | cat_i
 keyid=`cat ns1/managed.key.id`
 cp ns4/named.secroots named.secroots.test$n
-linecount=`grep "./RSAMD5/$keyid ; trusted" named.secroots.test$n | wc -l`
+linecount=`grep "./$DEFAULT_ALGORITHM/$keyid ; trusted" named.secroots.test$n | wc -l`
 [ "$linecount" -eq 1 ] || ret=1
 linecount=`cat named.secroots.test$n | wc -l`
 [ "$linecount" -eq 10 ] || ret=1
@@ -1845,8 +1922,8 @@ echo_i "waiting for NTA rechecks/expirations"
 
 #
 # secure.example and badds.example used default nta-duration
-# (configured as 10s in ns4/named1.conf), but nta recheck interval
-# is configured to 7s, so at t=8 the NTAs for secure.example and
+# (configured as 12s in ns4/named1.conf), but nta recheck interval
+# is configured to 9s, so at t=10 the NTAs for secure.example and
 # fakenode.secure.example should both be lifted, but badds.example
 # should still be going.
 #
@@ -1866,9 +1943,9 @@ status=`expr $status + $ret`
 ret=0
 
 #
-# bogus.example was set to expire in 20s, so at t=11
+# bogus.example was set to expire in 20s, so at t=13
 # it should still be NTA'd, but badds.example used the default
-# lifetime of 10s, so it should revert to SERVFAIL now.
+# lifetime of 12s, so it should revert to SERVFAIL now.
 #
 $PERL -e 'my $delay = '$start' + 13 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 # check nta table
@@ -2067,10 +2144,10 @@ else
         exit 1
 fi
 
-# nta-recheck is configured as 7s, so at t=10 the NTAs for
+# nta-recheck is configured as 9s, so at t=12 the NTAs for
 # secure.example. should be lifted as it is not a forced NTA.
-echo_i "waiting till 10s have passed after ns4 was restarted"
-$PERL -e 'my $delay = '$start' + 10 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
+echo_i "waiting till 12s have passed after ns4 was restarted"
+$PERL -e 'my $delay = '$start' + 12 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 
 # secure.example. should now return an AD=1 answer (still validates) as
 # the NTA has been lifted.
@@ -2124,10 +2201,10 @@ else
         exit 1
 fi
 
-# nta-recheck is configured as 7s, but even at t=10 the NTAs for
+# nta-recheck is configured as 9s, but even at t=12 the NTAs for
 # secure.example. should not be lifted as it is a forced NTA.
-echo_i "waiting till 10s have passed after ns4 was restarted"
-$PERL -e 'my $delay = '$start' + 10 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
+echo_i "waiting till 12s have passed after ns4 was restarted"
+$PERL -e 'my $delay = '$start' + 12 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 
 # secure.example. should now return an AD=0 answer (non-authenticated)
 # as the NTA is still there.
@@ -2203,7 +2280,29 @@ $RNDCCMD 10.53.0.4 nta -remove secure.example > rndc.out.ns4.test$n.3 2>/dev/nul
 
 if [ $ret != 0 ]; then echo_i "failed - NTA lifetime clamping failed"; fi
 status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking that NTAs work with 'forward only;' to a validating resolver ($n)"
 ret=0
+# Sanity check behavior without an NTA in place.
+$DIG $DIGOPTS @10.53.0.9 badds.example. SOA > dig.out.ns9.test$n.1 || ret=1
+grep "SERVFAIL" dig.out.ns9.test$n.1 > /dev/null || ret=1
+grep "ANSWER: 0" dig.out.ns9.test$n.1 > /dev/null || ret=1
+grep "flags:[^;]* ad[ ;].*QUERY" dig.out.ns9.test$n.1 > /dev/null && ret=1
+# Add an NTA, expecting that to cause resolution to succeed.
+$RNDCCMD 10.53.0.9 nta badds.example > rndc.out.ns9.test$n.1 2>&1 || ret=1
+$DIG $DIGOPTS @10.53.0.9 badds.example. SOA > dig.out.ns9.test$n.2 || ret=1
+grep "NOERROR" dig.out.ns9.test$n.2 > /dev/null || ret=1
+grep "ANSWER: 2" dig.out.ns9.test$n.2 > /dev/null || ret=1
+grep "flags:[^;]* ad[ ;].*QUERY" dig.out.ns9.test$n.2 > /dev/null && ret=1
+# Remove the NTA, expecting that to cause resolution to fail again.
+$RNDCCMD 10.53.0.9 nta -remove badds.example > rndc.out.ns9.test$n.2 2>&1 || ret=1
+$DIG $DIGOPTS @10.53.0.9 badds.example. SOA > dig.out.ns9.test$n.3 || ret=1
+grep "SERVFAIL" dig.out.ns9.test$n.3 > /dev/null || ret=1
+grep "ANSWER: 0" dig.out.ns9.test$n.3 > /dev/null || ret=1
+grep "flags:[^;]* ad[ ;].*QUERY" dig.out.ns9.test$n.3 > /dev/null && ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 echo_i "completed NTA tests"
 
@@ -2573,7 +2672,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-echo_i "checking dnskey query with no data still gets put in cache ($n)"
+echo_i "checking DNSKEY query with no data still gets put in cache ($n)"
 ret=0
 myDIGOPTS="+noadd +nosea +nostat +noquest +nocomm +nocmd -p ${PORT} @10.53.0.4"
 firstVal=`$DIG $myDIGOPTS insecure.example. dnskey| awk '$1 != ";;" { print $2 }'`
@@ -2630,7 +2729,7 @@ do
 	fi
 	echo_i "sleeping ...."
 	sleep 3
-done;
+done
 grep "ANSWER: 3," dig.out.ns2.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "nsec3 chain generation not complete"; fi
 $DIG $DIGOPTS +noauth +nodnssec soa nsec3chain-test @10.53.0.2 > dig.out.ns2.test$n || ret=1
@@ -2770,10 +2869,10 @@ $DIG $ANSWEROPTS expiring.example soa @10.53.0.4 > dig.out.ns4.2.$n
 ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
 ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
 for ttl in ${ttls:-0}; do
-    [ ${ttl:-0} -eq 300 ] || ret=1
+    [ "${ttl}" -eq 300 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ ${ttl:-0} -le 60 ] || ret=1
+    [ "${ttl}" -le 60 ] || ret=1
 done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -2788,10 +2887,10 @@ $DIG $ADDITIONALOPTS expiring.example ns @10.53.0.4 > dig.out.ns4.2.$n
 ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
 ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
 for ttl in ${ttls:-300}; do
-    [ ${ttl:-0} -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ ${ttl:-0} -le 60 ] || ret=1
+    [ "$ttl" -le 60 ] || ret=1
 done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -2806,10 +2905,10 @@ $DIG $ADDITIONALOPTS expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
 ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
 ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
 for ttl in ${ttls:-300}; do
-    [ ${ttl:-0} -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ ${ttl:-0} -le 60 ] || ret=1
+    [ "$ttl" -le 60 ] || ret=1
 done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -2830,7 +2929,7 @@ for ttl in ${ttls:-0}; do
     [ $ttl -eq 300 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ $ttl -le 120 -a $ttl -gt 60 ] || ret=1
+    [ "$ttl" -eq 120 ] || ret=1
 done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -2846,7 +2945,7 @@ for ttl in ${ttls:-0}; do
     [ $ttl -eq 300 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ $ttl -le 120 -a $ttl -gt 60 ] || ret=1
+    [ "$ttl" -eq 120 ] || ret=1
 done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -2864,7 +2963,7 @@ $DIG $ADDITIONALOPTS  expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
 ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
 ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
 for ttl in ${ttls:-300}; do
-    [ $ttl -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
     [ $ttl -le 120  -a $ttl -gt 60 ] || ret=1
@@ -2881,7 +2980,7 @@ $DIG $ADDITIONALOPTS expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
 ttls=`awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n`
 ttls2=`awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n`
 for ttl in ${ttls:-300}; do
-    [ $ttl -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
     [ $ttl -le 120  -a $ttl -gt 60 ] || ret=1
@@ -3016,11 +3115,11 @@ echo_i "check dig's +nocrypto flag ($n)"
 ret=0
 $DIG $DIGOPTS +norec +nocrypto DNSKEY . \
 	@10.53.0.1 > dig.out.dnskey.ns1.test$n || ret=1
-grep '256 3 1 \[key id = [1-9][0-9]*]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
+grep '256 3 [0-9][0-9]* \[key id = [1-9][0-9]*]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
 grep 'RRSIG.* \[omitted]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +norec +nocrypto DS example \
 	@10.53.0.1 > dig.out.ds.ns1.test$n || ret=1
-grep 'DS.* 3 [12] \[omitted]' dig.out.ds.ns1.test$n > /dev/null || ret=1
+grep 'DS.* [0-9][0-9]* [12] \[omitted]' dig.out.ds.ns1.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -3559,6 +3658,282 @@ grep "^delegation.occluded.example..*AAAA.*" dig.out.ns3.test$n > /dev/null || r
 n=`expr $n + 1`
 test "$ret" -eq 0 || echo_i "failed"
 status=`expr $status + $ret`
+
+###
+### Additional checks for when the KSK is offline.
+###
+
+# Save some useful information
+zone="updatecheck-kskonly.secure"
+KSK=`cat ns2/${zone}.ksk.key`
+ZSK=`cat ns2/${zone}.zsk.key`
+KSK_ID=`cat ns2/${zone}.ksk.id`
+ZSK_ID=`cat ns2/${zone}.zsk.id`
+SECTIONS="+answer +noauthority +noadditional"
+echo_i "testing zone $zone KSK=$KSK_ID ZSK=$ZSK_ID"
+
+# Print IDs of keys used for generating RRSIG records for RRsets of type $1
+# found in dig output file $2.
+get_keys_which_signed() {
+	qtype=$1
+	output=$2
+	# The key ID is the 11th column of the RRSIG record line.
+	awk -v qt="$qtype" '$4 == "RRSIG" && $5 == qt {print $11}' < "$output"
+}
+
+# Basic checks to make sure everything is fine before the KSK is made offline.
+echo_i "checking DNSKEY RRset is signed with KSK only (update-check-ksk, dnssec-ksk-only) ($n)"
+ret=0
+$DIG $DIGOPTS $SECTIONS @10.53.0.2 DNSKEY $zone > dig.out.test$n
+lines=$(get_keys_which_signed "DNSKEY" dig.out.test$n | wc -l)
+test "$lines" -eq 1 || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$KSK_ID$" > /dev/null || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID$" > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking SOA RRset is signed with ZSK only (update-check-ksk, dnssec-ksk-only) ($n)"
+ret=0
+$DIG $DIGOPTS $SECTIONS @10.53.0.2 soa $zone > dig.out.test$n
+lines=$(get_keys_which_signed "SOA" dig.out.test$n | wc -l)
+test "$lines" -eq 1 || ret=1
+get_keys_which_signed "SOA" dig.out.test$n | grep "^$KSK_ID$" > /dev/null && ret=1
+get_keys_which_signed "SOA" dig.out.test$n | grep "^$ZSK_ID$" > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Roll the ZSK.
+zsk2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -K ns2 -n zone $zone`
+echo "$zsk2" | sed -e 's/.*[+]//' -e 's/^0*//' > ns2/$zone.zsk.id2
+ZSK_ID2=`cat ns2/$zone.zsk.id2`
+
+echo_i "load new ZSK $ZSK_ID2 for $zone ($n)"
+ret=0
+dnssec_loadkeys_on 2 $zone || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Wait until new ZSK becomes active.
+echo_i "make ZSK $ZSK_ID inactive and make new ZSK $ZSK_ID2 active for zone $zone ($n)"
+ret=0
+$SETTIME -I now -K ns2 $ZSK > /dev/null
+$SETTIME -A now -K ns2 $zsk2 > /dev/null
+dnssec_loadkeys_on 2 $zone || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Remove the KSK from disk.
+echo_i "remove the KSK $KSK_ID for zone $zone from disk"
+mv ns2/$KSK.key ns2/$KSK.key.bak
+mv ns2/$KSK.private ns2/$KSK.private.bak
+
+# Update the zone that requires a resign of the SOA RRset.
+echo_i "update the zone with $zone IN TXT nsupdate added me"
+(
+echo zone $zone
+echo server 10.53.0.2 "$PORT"
+echo update add $zone. 300 in txt "nsupdate added me"
+echo send
+) | $NSUPDATE
+
+# Redo the tests now that the zone is updated and the KSK is offline.
+echo_i "checking DNSKEY RRset is signed with KSK only, KSK offline (update-check-ksk, dnssec-ksk-only) ($n)"
+ret=0
+$DIG $DIGOPTS $SECTIONS @10.53.0.2 DNSKEY $zone > dig.out.test$n
+lines=$(get_keys_which_signed "DNSKEY" dig.out.test$n | wc -l)
+test "$lines" -eq 1 || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$KSK_ID$" > /dev/null || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID$" > /dev/null && ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID2$" > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+for qtype in "SOA" "TXT"
+do
+  echo_i "checking $qtype RRset is signed with ZSK only, KSK offline (update-check-ksk and dnssec-ksk-only) ($n)"
+  ret=0
+  $DIG $DIGOPTS $SECTIONS @10.53.0.2 $qtype $zone > dig.out.test$n
+  lines=$(get_keys_which_signed $qtype dig.out.test$n | wc -l)
+  test "$lines" -eq 1 || ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$KSK_ID$" > /dev/null && ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$ZSK_ID$" > /dev/null && ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$ZSK_ID2$" > /dev/null || ret=1
+  n=$((n+1))
+  test "$ret" -eq 0 || echo_i "failed"
+  status=$((status+ret))
+done
+
+# Put back the KSK.
+echo_i "put back the KSK $KSK_ID for zone $zone from disk"
+mv ns2/$KSK.key.bak ns2/$KSK.key
+mv ns2/$KSK.private.bak ns2/$KSK.private
+
+# Roll the ZSK again.
+zsk3=`$KEYGEN -q  -r $RANDFILE -a RSASHA1 -b 1024 -K ns2 -n zone $zone`
+echo "$zsk3" | sed -e 's/.*[+]//' -e 's/^0*//' > ns2/$zone.zsk.id3
+ZSK_ID3=`cat ns2/$zone.zsk.id3`
+
+echo_i "load new ZSK $ZSK_ID3 for $zone ($n)"
+ret=0
+dnssec_loadkeys_on 2 $zone || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Wait until new ZSK becomes active.
+echo_i "delete old ZSK $ZSK_ID make ZSK $ZSK_ID2 inactive and make new ZSK $ZSK_ID3 active for zone $zone ($n)"
+$SETTIME -D now -K ns2 $ZSK > /dev/null
+$SETTIME -I +5 -K ns2 $zsk2 > /dev/null
+$SETTIME -A +5 -K ns2 $zsk3 > /dev/null
+dnssec_loadkeys_on 2 $zone || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Remove the KSK from disk.
+echo_i "remove the KSK $KSK_ID for zone $zone from disk"
+mv ns2/$KSK.key ns2/$KSK.key.bak
+mv ns2/$KSK.private ns2/$KSK.private.bak
+
+# Update the zone that requires a resign of the SOA RRset.
+echo_i "update the zone with $zone IN TXT nsupdate added me again"
+(
+echo zone $zone
+echo server 10.53.0.2 "$PORT"
+echo update add $zone. 300 in txt "nsupdate added me again"
+echo send
+) | $NSUPDATE
+
+# Redo the tests now that the ZSK roll has deleted the old key.
+echo_i "checking DNSKEY RRset is signed with KSK only, old ZSK deleted (update-check-ksk, dnssec-ksk-only) ($n)"
+ret=0
+$DIG $DIGOPTS $SECTIONS @10.53.0.2 DNSKEY $zone > dig.out.test$n
+lines=$(get_keys_which_signed "DNSKEY" dig.out.test$n | wc -l)
+test "$lines" -eq 1 || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$KSK_ID$" > /dev/null || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID$" > /dev/null && ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID2$" > /dev/null && ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID3$" > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+for qtype in "SOA" "TXT"
+do
+  echo_i "checking $qtype RRset is signed with ZSK only, old ZSK deleted (update-check-ksk and dnssec-ksk-only) ($n)"
+  ret=0
+  $DIG $DIGOPTS $SECTIONS @10.53.0.2 $qtype $zone > dig.out.test$n
+  lines=$(get_keys_which_signed $qtype dig.out.test$n | wc -l)
+  test "$lines" -eq 1 || ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$KSK_ID$" > /dev/null && ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$ZSK_ID$" > /dev/null && ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$ZSK_ID2$" > /dev/null || ret=1
+  get_keys_which_signed $qtype dig.out.test$n | grep "^$ZSK_ID3$" > /dev/null && ret=1
+  n=$((n+1))
+  test "$ret" -eq 0 || echo_i "failed"
+  status=$((status+ret))
+done
+
+# Wait for newest ZSK to become active.
+echo_i "wait until new ZSK $ZSK_ID3 active and ZSK $ZSK_ID2 inactive"
+for i in 1 2 3 4 5 6 7 8 9 10; do
+    ret=0
+    grep "add re-sign updatecheck-kskonly\.secure\..*RRSIG.*SOA.*$ZSK_ID3.*$zone.*" ns2/named.run > /dev/null || ret=1
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Redo the tests one more time.
+echo_i "checking DNSKEY RRset is signed with KSK only, new ZSK active (update-check-ksk, dnssec-ksk-only) ($n)"
+ret=0
+$DIG $DIGOPTS $SECTIONS @10.53.0.2 DNSKEY $zone > dig.out.test$n
+lines=$(get_keys_which_signed "DNSKEY" dig.out.test$n | wc -l)
+test "$lines" -eq 1 || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$KSK_ID$" > /dev/null || ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID$" > /dev/null && ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID2$" > /dev/null && ret=1
+get_keys_which_signed "DNSKEY" dig.out.test$n | grep "^$ZSK_ID3$" > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+#
+# DNSSEC tests related to unsupported trust anchors.
+#
+
+# This nameserver (ns8) is loaded with a bunch of trust anchors.  Some of them
+# are good (enabled.managed, enabled.trusted, secure.managed, secure.trusted),
+# and some of them are bad (unsupported.managed, unsupported.trusted).  Make
+# sure that the bad trust anchors are ignored.  This is tested by looking for
+# the corresponding lines in the logfile.
+echo_i "checking that keys with unsupported algorithms are ignored ($n)"
+ret=0
+grep "skipping trusted key for 'unsupported\.trusted\.': algorithm is unsupported" ns8/named.run > /dev/null || ret=1
+grep "skipping managed key for 'unsupported\.managed\.': algorithm is unsupported" ns8/named.run > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# The next two tests are fairly normal DNSSEC queries to signed zones with a
+# default algorithm.  First, a query is made against the server that is
+# authoritative for the given zone (ns3).  Second, a query is made against a
+# resolver with trust anchors for the given zone (ns8).  Both are expected to
+# return an authentic data positive response.
+echo_i "checking that a trusted key using a supported algorithm validates as secure ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.3 a.secure.trusted A > dig.out.ns3.test$n
+$DIG $DIGOPTS @10.53.0.8 a.secure.trusted A > dig.out.ns8.test$n
+grep "status: NOERROR," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR," dig.out.ns8.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns8.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking that a managed key using a supported algorithm validates as secure ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.3 a.secure.managed A > dig.out.ns3.test$n
+$DIG $DIGOPTS @10.53.0.8 a.secure.managed A > dig.out.ns8.test$n
+grep "status: NOERROR," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR," dig.out.ns8.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns8.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# The next two queries ensure that a zone signed with a DNSKEY with an unsupported
+# algorithm will yield insecure positive responses.  These trust anchors in ns8 are
+# ignored and so this domain is treated as insecure.  The AD bit should not be set
+# in the response.
+echo_i "checking that a trusted key using an unsupported algorithm validates as insecure ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.3 a.unsupported.trusted A > dig.out.ns3.test$n
+$DIG $DIGOPTS @10.53.0.8 a.unsupported.trusted A > dig.out.ns8.test$n
+grep "status: NOERROR," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR," dig.out.ns8.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns8.test$n > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking that a managed key using an unsupported algorithm validates as insecure ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.3 a.unsupported.managed A > dig.out.ns3.test$n
+$DIG $DIGOPTS @10.53.0.8 a.unsupported.managed A > dig.out.ns8.test$n
+grep "status: NOERROR," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR," dig.out.ns8.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns8.test$n > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

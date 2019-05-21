@@ -12,7 +12,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-rm -f ns1/*.db ns1/*.jnl ns3/*.jnl ns4/*.db ns4/*.jnl
+$SHELL clean.sh
 
 cat <<EOF >ns1/named.conf
 options {
@@ -39,6 +39,7 @@ EOF
 
 copy_setports ns3/named.conf.in ns3/named.conf
 copy_setports ns4/named.conf.in ns4/named.conf
+copy_setports ns5/named.conf.in ns5/named.conf
 
 # Setup initial db files for ns3
 cp ns3/mytest0.db ns3/mytest.db

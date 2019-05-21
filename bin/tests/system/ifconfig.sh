@@ -13,15 +13,15 @@
 # Set up interface aliases for bind9 system tests.
 #
 # IPv4: 10.53.0.{1..10}				RFC 1918
-#       10.53.1.{0..2}
-#       10.53.2.{0..2}
+#       10.53.1.{1..2}
+#       10.53.2.{1..2}
 # IPv6: fd92:7065:b8e:ffff::{1..10}		ULA
 #       fd92:7065:b8e:99ff::{1..2}
 #       fd92:7065:b8e:ff::{1..2}
 #
 
 config_guess=""
-for f in ./config.guess ../../../config.guess
+for f in ./config.guess ../../../config.guess /usr/share/automake*/config.guess
 do
 	if test -f $f
 	then

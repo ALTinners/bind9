@@ -27,11 +27,15 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+#include <limits.h>
 
 #ifdef WIN32
 #include "gen-win32.h"
@@ -133,7 +137,10 @@ static const char copyright[] =
 #define TYPECLASSBUF (TYPECLASSLEN + 1)
 #define TYPECLASSFMT "%" STR(TYPECLASSLEN) "[-0-9a-z]_%d"
 #define ATTRIBUTESIZE 256
-#define DIRNAMESIZE 256
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 static struct cc {
 	struct cc *next;
@@ -143,11 +150,11 @@ static struct cc {
 
 static struct tt {
 	struct tt *next;
-	int rdclass;
-	int type;
+	uint16_t rdclass;
+	uint16_t type;
 	char classbuf[TYPECLASSBUF];
 	char typebuf[TYPECLASSBUF];
-	char dirbuf[DIRNAMESIZE];	/* XXX Should be max path length */
+	char dirbuf[PATH_MAX-30];
 } *types;
 
 static struct ttnam {
@@ -155,7 +162,7 @@ static struct ttnam {
 	char macroname[TYPECLASSBUF];
 	char attr[ATTRIBUTESIZE];
 	unsigned int sorted;
-	int type;
+	uint16_t type;
 } typenames[TYPENAMES];
 
 static int maxtype = -1;
@@ -383,7 +390,7 @@ add(int rdclass, const char *classbuf, int type, const char *typebuf,
 
 	INSIST(strlen(typebuf) < TYPECLASSBUF);
 	INSIST(strlen(classbuf) < TYPECLASSBUF);
-	INSIST(strlen(dirbuf) < DIRNAMESIZE);
+	INSIST(strlen(dirbuf) < PATH_MAX);
 
 	insert_into_typenames(type, typebuf, NULL);
 
@@ -520,15 +527,14 @@ HASH(char *string) {
 
 int
 main(int argc, char **argv) {
-	char buf[DIRNAMESIZE];		/* XXX Should be max path length */
-	char srcdir[DIRNAMESIZE];	/* XXX Should be max path length */
+	char buf[PATH_MAX];
+	char srcdir[PATH_MAX];
 	int rdclass;
 	char classbuf[TYPECLASSBUF];
 	struct tt *tt;
 	struct cc *cc;
 	struct ttnam *ttn, *ttn2;
 	unsigned int hash;
-	struct tm *tm;
 	time_t now;
 	char year[11];
 	int lasttype;
@@ -544,6 +550,9 @@ main(int argc, char **argv) {
 	char *prefix = NULL;
 	char *suffix = NULL;
 	char *file = NULL;
+	char *source_date_epoch;
+	unsigned long long epoch;
+	char *endptr;
 	isc_dir_t dir;
 
 	for (i = 0; i < TYPENAMES; i++)
@@ -586,7 +595,7 @@ main(int argc, char **argv) {
 			break;
 		case 's':
 			if (strlen(isc_commandline_argument) >
-			    DIRNAMESIZE - 2 * TYPECLASSLEN  -
+			    PATH_MAX - 2 * TYPECLASSLEN  -
 			    sizeof("/rdata/_65535_65535"))
 			{
 				fprintf(stderr, "\"%s\" too long\n",
@@ -640,8 +649,46 @@ main(int argc, char **argv) {
 	INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 	sd(0, "", buf, filetype);
 
-	if (time(&now) != -1) {
-		if ((tm = localtime(&now)) != NULL && tm->tm_year > 104) {
+	source_date_epoch = getenv("SOURCE_DATE_EPOCH");
+	if (source_date_epoch) {
+		errno = 0;
+		epoch = strtoull(source_date_epoch, &endptr, 10);
+		if ((errno == ERANGE && (epoch == ULLONG_MAX || epoch == 0))
+				|| (errno != 0 && epoch == 0)) {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: strtoull: %s\n",
+				strerror(errno));
+			exit (EXIT_FAILURE);
+		}
+		if (endptr == source_date_epoch) {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: "
+				"No digits were found: %s\n",
+				endptr);
+			exit (EXIT_FAILURE);
+		}
+		if (*endptr != '\0') {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: Trailing garbage: %s\n",
+				endptr);
+			exit (EXIT_FAILURE);
+		}
+		if (epoch > ULONG_MAX) {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: value must be "
+				"smaller than or equal to: %lu but "
+				"was found to be: %llu \n",
+				ULONG_MAX, epoch);
+			exit (EXIT_FAILURE);
+		}
+		now = epoch;
+	} else {
+		time(&now);
+	}
+
+	if (now != -1) {
+		struct tm *tm = gmtime(&now);
+		if (tm != NULL && tm->tm_year > 104) {
 			n = snprintf(year, sizeof(year), "-%d",
 				     tm->tm_year + 1900);
 			INSIST(n > 0 && (unsigned)n < sizeof(year));

@@ -998,7 +998,7 @@ $RNDCCMD 10.53.0.2 loadkeys bar. 2>&1 | sed 's/^/ns2 /' | cat_i
 echo_i "waiting for changes to take effect"
 sleep 5
 
-echo_i "checking former standby key is now active ($n)"
+echo_i "checking former standby key $newid is now active ($n)"
 ret=0
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $newid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
@@ -1379,8 +1379,12 @@ for i in 0 1 2 3 4 5 6 7 8 9; do
 	$DIG $DIGOPTS delzsk.example NSEC3PARAM @10.53.0.3 > dig.out.ns3.1.test$n 2>&1 || ret=1
 	grep "NSEC3PARAM.*12345678" dig.out.ns3.1.test$n > /dev/null 2>&1
 	if [ $? -eq 0 ]; then
-		_ret=0
-		break
+		$RNDCCMD 10.53.0.3 signing -list delzsk.example > signing.out.2.test$n 2>&1
+		grep "Creating NSEC3 chain " signing.out.2.test$n > /dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			_ret=0
+			break
+		fi
 	fi
 	sleep 1
 done
@@ -1395,10 +1399,10 @@ $SETTIME -D now-1h $file > settime.out.test$n 2>&1 || ret=1
 $RNDCCMD 10.53.0.3 loadkeys delzsk.example 2>&1 | sed 's/^/ns3 /' | cat_i
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	_ret=1
-	$RNDCCMD 10.53.0.3 signing -list delzsk.example > signing.out.2.test$n 2>&1
-	grep "Signing " signing.out.2.test$n > /dev/null 2>&1
+	$RNDCCMD 10.53.0.3 signing -list delzsk.example > signing.out.3.test$n 2>&1
+	grep "Signing " signing.out.3.test$n > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		if [ `cat signing.out.2.test$n | wc -l` -eq 2 ]; then
+		if [ `grep "Done signing " signing.out.3.test$n | wc -l` -eq 2 ]; then
 			_ret=0
 			break
 		fi

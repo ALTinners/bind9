@@ -310,7 +310,15 @@ AS_IF([test "$with_python" = "no"],
        AS_IF([test "X$PYTHON" = "X"],
 	     [AC_MSG_CHECKING([for Python support])
 	      AC_MSG_RESULT([no])
-	      AC_MSG_ERROR([Python required for dnssec-keymgr])])])
+	      AC_MSG_ERROR([m4_normalize(
+				[Python >= 2.7 or >= 3.2 and the PLY package
+                                 are required for dnssec-keymgr and other
+                                 Python-based tools. PLY may be
+                                 available from your OS package manager
+                                 as python-ply or python3-ply; it can also
+                                 be installed via pip. To build without
+                                 Python/PLY, use --disable-python.]
+			    )])])])
 
 PYTHON_TOOLS=''
 CHECKDS=''
@@ -804,8 +812,8 @@ AC_MSG_CHECKING(for GSSAPI library)
 AC_ARG_WITH(gssapi,
 	    AS_HELP_STRING([--with-gssapi=[PATH|[/path/]krb5-config]],
 			   [Specify path for system-supplied GSSAPI
-				[default=yes]]),
-	    use_gssapi="$withval", use_gssapi="yes")
+				[default=auto]]),
+	    use_gssapi="$withval", use_gssapi="auto")
 
 # first try using krb5-config, if that does not work then fall back to "yes" method.
 
@@ -859,7 +867,7 @@ esac
 
 case "$host" in
 *darwin*)
-	if test "yes" = "$use_gssapi"
+	if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 	then
 		use_gssapi=framework
 	fi
@@ -872,7 +880,7 @@ esac
 # for the specification of gssapi and krb5 headers in different locations,
 # which probably ought to be fixed although fixing might raise the issue of
 # trying to build with incompatible versions of gssapi and krb5.
-if test "yes" = "$use_gssapi"
+if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 then
 	# first, deal with the obvious
 	if test \( -f /usr/include/kerberosv5/krb5.h -o \
@@ -896,8 +904,11 @@ then
 				break
 			fi
 		fi
-		use_gssapi="no"
 	    done
+	    if test "auto" = "$use_gssapi"
+	    then
+		use_gssapi="no"
+	    fi
 	fi
 fi
 
@@ -4443,7 +4454,6 @@ DNSTAP=
 DNSTAPSRCS=
 DNSTAPOBJS=
 DNSTAPTARGETS=
-DNSTAP_PB_C_H=
 if test "x$use_dnstap" != "xno"; then
 	if ! $use_threads; then
 		AC_MSG_ERROR([Dnstap requires threads.])
@@ -4500,13 +4510,11 @@ if test "x$use_dnstap" != "xno"; then
 	DNSTAPSRCS='${DNSTAPSRCS}'
 	DNSTAPOBJS='${DNSTAPOBJS}'
 	DNSTAPTARGETS='${DNSTAPTARGETS}'
-	DNSTAP_PB_C_H="dnstap.pb-c.h"
 fi
 AC_SUBST(DNSTAP)
 AC_SUBST(DNSTAPSRCS)
 AC_SUBST(DNSTAPOBJS)
 AC_SUBST(DNSTAPTARGETS)
-AC_SUBST(DNSTAP_PB_C_H)
 
 #
 #  The following sets up how non-blocking i/o is established.
@@ -5065,98 +5073,94 @@ SO_LD=""
 SO_TARGETS=""
 SO_STRIP="cat"
 
-AC_ARG_WITH(dlopen,
+AC_ARG_WITH([dlopen],
 	    AS_HELP_STRING([--with-dlopen=ARG],
 			   [support dynamically loadable DLZ drivers]),
-	    dlopen="$withval", dlopen="yes")
+	    [], [with_dlopen="auto"])
 
-case $host in
-	*-sunos*) dlopen="no"
-		;;
-esac
+#
+# Disable for SunOS
+#
+AS_CASE([$host],[*-sunos*],[with_dlopen="no"])
 
-if test "yes" = "$dlopen"; then
-	AC_CHECK_LIB(dl, dlopen, have_dl=yes, have_dl=no)
-	if test "yes" = "$have_dl"; then
-		LIBS="-ldl $LIBS"
-	fi
-	AC_CHECK_FUNCS(dlopen dlclose dlsym,,dlopen=no)
-fi
+#
+# If PIC is disabled, dlopen must also be
+#
+AS_IF([test "$pic_mode" = "no"],
+      [AS_CASE([$with_dlopen],
+	       [auto],[with_dlopen="no"],
+	       [yes],[AC_MSG_ERROR([--with-dlopen requires PIC])])])
 
-if test "yes" = "$dlopen"; then
-	case $host in
-		*-linux*|*-gnu*)
-			SO_CFLAGS="-fPIC"
-                        LDFLAGS="${LDFLAGS} -Wl,--export-dynamic"
-			SO_LDFLAGS=""
-			if test "yes" = "$have_dl"
-			then
-				if test "yes" = "$use_libtool"; then
-					SO_LDFLAGS="-Xcompiler -shared"
-					SO_LD="${CC}"
-				else
-					SO_LDFLAGS="-shared"
-					SO_LD="${CC}"
-				fi
-			else
-				SO_LDFLAGS="-shared"
-				SO_LD="ld"
-			fi
-			;;
-		*-freebsd*|*-openbsd*)
-			LDFLAGS="${LDFLAGS} -Wl,-E"
-			SO_CFLAGS="-fpic"
-			if test "yes" = "$use_libtool"; then
-				SO_LDFLAGS="-Xcompiler -shared"
-				SO_LD="${CC}"
-			else
-				SO_LDFLAGS="-shared"
-				SO_LD="${CC}"
-			fi
-			;;
-		*-netbsd*)
-			SO_CFLAGS="-fpic"
-			SO_LDFLAGS="-Bshareable -x"
-			SO_LD="ld"
-			SO_STRIP="sed -e s/-Wl,//g"
-			;;
-		*-solaris*)
-			SO_CFLAGS="-KPIC"
-			SO_LDFLAGS="-G -z text"
-			SO_LD="ld"
-			;;
-		*-hp-hpux*)
-			SO=sl
-			SO_CFLAGS="+z"
-			SO_LDFLAGS="-b +vnocompatwarnings"
-			SO_LD="ld"
-			;;
-		*)
-			SO_CFLAGS="-fPIC"
-			;;
-	esac
+AS_CASE([$with_dlopen],
+	[auto|yes],[
+	  AC_SEARCH_LIBS([dlopen],[dl])
+	  AC_CHECK_FUNCS([dlopen dlclose dlsym],
+			 [with_dlopen="yes"],
+			 [with_dlopen="no"])
+	])
 
-	if test "X$GCC" = "Xyes"; then
-		SO_CFLAGS="-fPIC"
-		if test -z "$SO_LD"
-		then
-			if test "yes" = "$use_libtool"; then
-				SO_LDFLAGS="-Xcompiler -shared"
-				SO_LD="${CC}"
-			else
-				SO_LDFLAGS="-shared"
-				SO_LD="${CC}"
-			fi
-		fi
-	fi
+AS_IF([test "$with_dlopen" = "yes"],
+      [AS_CASE([$host],
+	       [*-linux*|*-gnu*],[
+		 LDFLAGS="${LDFLAGS} -Wl,--export-dynamic"
+		 SO_CFLAGS="-fPIC"
+		 SO_LDFLAGS=""
+		 AS_IF([test "$use_libtool" = "yes"],[
+			 SO_LDFLAGS="-Xcompiler -shared"
+			 SO_LD="${CC}"
+		       ],[
+			 SO_LDFLAGS="-shared"
+			 SO_LD="${CC}"
+		       ])
+	       ],
+	       [*-freebsd*|*-openbsd*|*-netbsd*],[
+		 LDFLAGS="${LDFLAGS} -Wl,-E"
+		 SO_CFLAGS="-fpic"
+		 AS_IF([test "$use_libtool" = "yes"],[
+			 SO_LDFLAGS="-Xcompiler -shared"
+			 SO_LD="${CC}"
+		       ],[
+			 SO_LDFLAGS="-shared"
+			 SO_LD="${CC}"
+		       ])
+	       ],
+	       [*-darwin*],[
+		 SO_CFLAGS="-fPIC"
+                 SO_LD="${CC}"
+		 AS_IF([test "$use_libtool" = "yes"],[
+			 SO_LDFLAGS="-Xcompiler -dynamiclib -undefined dynamic_lookup"
+		       ],[
+			 SO_LDFLAGS="-dynamiclib -undefined dynamic_lookup"
+		       ])
+	       ],
+	       [*-solaris*],[
+		 SO_CFLAGS="-KPIC"
+		 SO_LDFLAGS="-G -z text"
+		 SO_LD="ld"
+	       ],
+	       [
+		 SO_CFLAGS="-fPIC"
+	       ])
+       AS_IF([test "$GCC" = "yes"],[
+	       SO_CFLAGS="-fPIC"
+	       AS_IF([test -z "$SO_LD"],
+		     [AS_IF([test "$use_libtool" = "yes"],[
+			      SO_LDFLAGS="-Xcompiler -shared"
+			      SO_LD="${CC}"
+			    ],[
+			      SO_LDFLAGS="-shared"
+			      SO_LD="${CC}"
+			    ])
+		     ])
+	     ])
+       # If we still don't know how to make shared objects, don't make any.
+       AS_IF([test -n "$SO_LD"],
+	     [SO_TARGETS="\${SO_TARGETS}"
+	      AC_DEFINE([ISC_DLZ_DLOPEN], [1],
+			[Define to allow building of objects for dlopen().])
+	     ])
+      ])
 
-	# If we still don't know how to make shared objects, don't make any.
-	if test -n "$SO_LD"; then
-		SO_TARGETS="\${SO_TARGETS}"
-		AC_DEFINE(ISC_DLZ_DLOPEN, 1,
-			  [Define to allow building of objects for dlopen().])
-	fi
-fi
 CFLAGS="$CFLAGS $SO_CFLAGS"
 
 AC_SUBST(SO)
@@ -5165,7 +5169,6 @@ AC_SUBST(SO_LDFLAGS)
 AC_SUBST(SO_LD)
 AC_SUBST(SO_STRIP)
 AC_SUBST(SO_TARGETS)
-
 sinclude(contrib/dlz/config.dlz.in)
 AC_MSG_CHECKING(contributed DLZ drivers)
 
@@ -5389,7 +5392,6 @@ AC_CONFIG_FILES([
 	bin/tests/pkcs11/benchmarks/Makefile
 	bin/tests/system/Makefile
 	bin/tests/system/conf.sh
-	bin/tests/system/dlz/prereq.sh
 	bin/tests/system/dlzexternal/Makefile
 	bin/tests/system/dlzexternal/ns1/dlzs.conf
 	bin/tests/system/dyndb/Makefile
