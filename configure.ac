@@ -16,6 +16,14 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 AC_USE_SYSTEM_EXTENSIONS
 
+LFS_CFLAGS=`getconf LFS_CFLAGS 2>/dev/null`
+LFS_LDFLAGS=`getconf LFS_LDFLAGS 2>/dev/null`
+LFS_LIBS=`getconf LFS_LIBS 2>/dev/null`
+
+AC_SUBST([LFS_CFLAGS])
+AC_SUBST([LFS_LDFLAGS])
+AC_SUBST([LFS_LIBS])
+
 # Enable RFC 3542 APIs on macOS
 AC_DEFINE([__APPLE_USE_RFC_3542], [1], [Select RFC3542 IPv6 API on macOS])
 
@@ -259,7 +267,7 @@ AS_IF([test "$with_python" = "no"],
                                  available from your OS package manager
                                  as python-ply or python3-ply; it can also
                                  be installed via pip. To build without
-                                 Python/PLY, use --disable-python.]
+                                 Python/PLY, use --without-python.]
 			    )])])])
 
 PYTHON_TOOLS=''
@@ -414,15 +422,15 @@ AC_C_FLEXIBLE_ARRAY_MEMBER
 # Check for yield support on ARM processors
 #
 AS_CASE([$host],
-	[arm*],[
-	  AC_MSG_CHECKING([for yield instruction support])
-	  AC_COMPILE_IFELSE(
-	    [AC_LANG_PROGRAM(
-	       [[]],
-	       [[__asm__ __volatile__ ("yield")]]
-	     )],
-	    [AC_MSG_RESULT([yes])],
-	    [AC_MSG_ERROR([no, try adding -march=native or -march=armv7-a to CFLAGS (see PLATFORMS.md for more information)])])])
+	[arm*],
+	[AC_MSG_CHECKING([for yield instruction support])
+	 AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM([[]],
+			     [[__asm__ __volatile__ ("yield")]])],
+	     [AC_MSG_RESULT([yes])
+	      AC_DEFINE([HAVE_ARM_YIELD], [1],
+			[define if the ARM yield instruction is available])],
+	     [AC_MSG_RESULT([no])])])
 
 AC_CHECK_FUNCS([sysctlbyname])
 
@@ -790,14 +798,13 @@ AC_COMPILE_IFELSE(
     [AC_MSG_RESULT([no])])
 
 AC_MSG_CHECKING([for Ed448 support])
-AC_MSG_RESULT([broken])
-#AC_COMPILE_IFELSE(
-#    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
-#		       #include <openssl/ec.h>]],
-#		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);]])],
-#    [AC_DEFINE([HAVE_OPENSSL_ED448], [1], [define if OpenSSL supports Ed448])
-#     AC_MSG_RESULT([yes])],
-#    [AC_MSG_RESULT([no])])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+		       #include <openssl/ec.h>]],
+		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);]])],
+    [AC_DEFINE([HAVE_OPENSSL_ED448], [1], [define if OpenSSL supports Ed448])
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
 
 #
 # Check for OpenSSL SHA-1 support
@@ -2653,6 +2660,11 @@ AS_IF([test "$with_dlopen" = "yes"],
 		 SO_CFLAGS="-KPIC"
 		 SO_LDFLAGS="-G -z text"
 		 SO_LD="ld"
+	       ],
+	       [ia64-hp-hpux*],[
+		 SO_CFLAGS="+z"
+	         SO_LDFLAGS="-b"
+		 SO_LD="${CC}"
 	       ],
 	       [
 		 SO_CFLAGS="-fPIC"

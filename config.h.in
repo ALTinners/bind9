@@ -45,6 +45,9 @@
 /* Define to 1 if you have the `arc4random_uniform' function. */
 #undef HAVE_ARC4RANDOM_UNIFORM
 
+/* define if the ARM yield instruction is available */
+#undef HAVE_ARM_YIELD
+
 /* Define to 1 if the compiler supports __builtin_clz. */
 #undef HAVE_BUILTIN_CLZ
 
@@ -281,6 +284,9 @@
 
 /* define if OpenSSL supports Ed25519 */
 #undef HAVE_OPENSSL_ED25519
+
+/* define if OpenSSL supports Ed448 */
+#undef HAVE_OPENSSL_ED448
 
 /* Define to 1 if you have the `processor_bind' function. */
 #undef HAVE_PROCESSOR_BIND
