@@ -17,7 +17,7 @@ Subject: _library_paths
  5 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/lib/dns/Makefile.in b/lib/dns/Makefile.in
-index 56dd259..6f3c7b7 100644
+index f6868d1..2987db6 100644
 --- a/lib/dns/Makefile.in
 +++ b/lib/dns/Makefile.in
 @@ -37,7 +37,7 @@ ISCLIBS =	../../lib/isc/libisc.@A@
@@ -37,7 +37,7 @@ index 56dd259..6f3c7b7 100644
  
  include: gen
  	${MAKE} include/dns/enumtype.h
-@@ -206,6 +207,7 @@ clean distclean::
+@@ -208,6 +209,7 @@ clean distclean::
  newrr::
  	rm -f code.h include/dns/enumtype.h include/dns/enumclass.h
  	rm -f include/dns/rdatastruct.h

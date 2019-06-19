@@ -7,7 +7,7 @@ Subject: Use absolute srcdir path to protoc-c invocation
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/lib/dns/Makefile.in b/lib/dns/Makefile.in
-index 6f3c7b7..bfc694e 100644
+index 2987db6..9a64a23 100644
 --- a/lib/dns/Makefile.in
 +++ b/lib/dns/Makefile.in
 @@ -8,6 +8,7 @@
@@ -18,7 +18,7 @@ index 6f3c7b7..bfc694e 100644
  VPATH =		@srcdir@
  top_srcdir =	@top_srcdir@
  
-@@ -221,7 +222,7 @@ ${OBJS}: include
+@@ -223,7 +224,7 @@ ${OBJS}: include
  dnstap.@O@: dnstap.c dnstap.pb-c.c
  
  dnstap.pb-c.c dnstap.pb-c.h: dnstap.proto

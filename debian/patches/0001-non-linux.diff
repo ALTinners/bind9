@@ -11,10 +11,10 @@ Subject: _non-linux
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 320318d..e81799f 100644
+index 96c5657..a4de37f 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -431,7 +431,7 @@ case "$host" in
+@@ -439,7 +439,7 @@ case "$host" in
  	# as it breaks how the two halves (Basic and Advanced) of the IPv6
  	# Socket API were designed to be used but we have to live with it.
  	# Define _GNU_SOURCE to pull in the IPv6 Advanced Socket API.
@@ -23,7 +23,7 @@ index 320318d..e81799f 100644
  		STD_CDEFINES="$STD_CDEFINES -D_GNU_SOURCE"
  		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
  		;;
-@@ -1299,7 +1299,7 @@ then
+@@ -1307,7 +1307,7 @@ then
  		# LinuxThreads requires some changes to the way we
  		# deal with signals.
  		#
@@ -32,7 +32,7 @@ index 320318d..e81799f 100644
  			AC_DEFINE(HAVE_LINUXTHREADS)
  			;;
  		#
-@@ -2757,7 +2757,6 @@ case "$host" in
+@@ -2765,7 +2765,6 @@ case "$host" in
  		;;
  	*)
  		AC_CHECK_LIB(socket, socket)

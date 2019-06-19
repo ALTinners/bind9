@@ -73,10 +73,10 @@ index ae90616..4bc1256 100644
  DEPLIBS =	${ISCDEPLIBS}
  
 diff --git a/configure.ac b/configure.ac
-index e81799f..89b0994 100644
+index a4de37f..45167d7 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1081,12 +1081,14 @@ AC_SUBST(USE_GSSAPI)
+@@ -1089,12 +1089,14 @@ AC_SUBST(USE_GSSAPI)
  AC_SUBST(DST_GSSAPI_INC)
  AC_SUBST(DNS_GSSAPI_LIBS)
  DNS_CRYPTO_LIBS="$DNS_GSSAPI_LIBS $DNS_CRYPTO_LIBS"
@@ -91,7 +91,7 @@ index e81799f..89b0994 100644
  
  #
  # was --with-randomdev specified?
-@@ -1471,11 +1473,6 @@ fi
+@@ -1479,11 +1481,6 @@ fi
  AC_MSG_CHECKING(for OpenSSL library)
  OPENSSL_WARNING=
  openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
@@ -103,7 +103,7 @@ index e81799f..89b0994 100644
  
  if test "auto" = "$use_openssl"
  then
-@@ -1488,6 +1485,7 @@ then
+@@ -1496,6 +1493,7 @@ then
  		fi
  	done
  fi
@@ -111,7 +111,7 @@ index e81799f..89b0994 100644
  OPENSSL_ECDSA=""
  OPENSSL_GOST=""
  OPENSSL_ED25519=""
-@@ -1509,11 +1507,10 @@ case "$with_gost" in
+@@ -1517,11 +1515,10 @@ case "$with_gost" in
  		;;
  esac
  
@@ -126,7 +126,7 @@ index e81799f..89b0994 100644
  		OPENSSLECDSALINKOBJS=""
  		OPENSSLECDSALINKSRCS=""
  		OPENSSLEDDSALINKOBJS=""
-@@ -1522,7 +1519,9 @@ case "$use_openssl" in
+@@ -1530,7 +1527,9 @@ case "$use_openssl" in
  		OPENSSLGOSTLINKSRCS=""
  		OPENSSLLINKOBJS=""
  		OPENSSLLINKSRCS=""
@@ -137,7 +137,7 @@ index e81799f..89b0994 100644
  	no)
  		AC_MSG_RESULT(no)
  		DST_OPENSSL_INC=""
-@@ -1552,11 +1551,6 @@ case "$use_openssl" in
+@@ -1560,11 +1559,6 @@ case "$use_openssl" in
  If you don't want OpenSSL, use --without-openssl])
  		;;
  	*)
@@ -149,7 +149,7 @@ index e81799f..89b0994 100644
  		if test "yes" = "$use_openssl"
  		then
  			# User did not specify a path - guess it
-@@ -1979,6 +1973,7 @@ AC_SUBST(OPENSSL_ED25519)
+@@ -1987,6 +1981,7 @@ AC_SUBST(OPENSSL_ED25519)
  AC_SUBST(OPENSSL_GOST)
  
  DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
@@ -157,7 +157,7 @@ index e81799f..89b0994 100644
  
  ISC_PLATFORM_WANTAES="#undef ISC_PLATFORM_WANTAES"
  if test "yes" = "$with_aes"
-@@ -2303,6 +2298,7 @@ esac
+@@ -2311,6 +2306,7 @@ esac
  AC_SUBST(PKCS11LINKOBJS)
  AC_SUBST(PKCS11LINKSRCS)
  AC_SUBST(CRYPTO)
@@ -165,7 +165,7 @@ index e81799f..89b0994 100644
  AC_SUBST(PKCS11_ECDSA)
  AC_SUBST(PKCS11_GOST)
  AC_SUBST(PKCS11_ED25519)
-@@ -5358,8 +5354,11 @@ AC_CONFIG_FILES([
+@@ -5371,8 +5367,11 @@ AC_CONFIG_FILES([
  	bin/delv/Makefile
  	bin/dig/Makefile
  	bin/dnssec/Makefile
@@ -177,7 +177,7 @@ index e81799f..89b0994 100644
  	bin/nsupdate/Makefile
  	bin/pkcs11/Makefile
  	bin/python/Makefile
-@@ -5432,6 +5431,10 @@ AC_CONFIG_FILES([
+@@ -5445,6 +5444,10 @@ AC_CONFIG_FILES([
  	lib/dns/include/dns/Makefile
  	lib/dns/include/dst/Makefile
  	lib/dns/tests/Makefile
@@ -188,7 +188,7 @@ index e81799f..89b0994 100644
  	lib/irs/Makefile
  	lib/irs/include/Makefile
  	lib/irs/include/irs/Makefile
-@@ -5456,6 +5459,24 @@ AC_CONFIG_FILES([
+@@ -5469,6 +5472,24 @@ AC_CONFIG_FILES([
  	lib/isc/unix/include/Makefile
  	lib/isc/unix/include/isc/Makefile
  	lib/isc/unix/include/pkcs11/Makefile
