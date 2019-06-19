@@ -34,6 +34,14 @@ sunos*)
     ;;
 esac
 
+LFS_CFLAGS=`getconf LFS_CFLAGS 2>/dev/null`
+LFS_LDFLAGS=`getconf LFS_LDFLAGS 2>/dev/null`
+LFS_LIBS=`getconf LFS_LIBS 2>/dev/null`
+
+AC_SUBST([LFS_CFLAGS])
+AC_SUBST([LFS_LDFLAGS])
+AC_SUBST([LFS_LIBS])
+
 AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -317,7 +325,7 @@ AS_IF([test "$with_python" = "no"],
                                  available from your OS package manager
                                  as python-ply or python3-ply; it can also
                                  be installed via pip. To build without
-                                 Python/PLY, use --disable-python.]
+                                 Python/PLY, use --without-python.]
 			    )])])])
 
 PYTHON_TOOLS=''
@@ -1880,8 +1888,8 @@ int main() {
 	return (0);
 }
 ],
-		[AC_MSG_RESULT([broken])
-		have_ed448="no"],
+		[AC_MSG_RESULT([yes])
+		have_ed448="yes"],
 		[AC_MSG_RESULT([no])
 		have_ed448="no"],
 		[AC_MSG_RESULT(using --with-eddsa)])
@@ -5137,6 +5145,11 @@ AS_IF([test "$with_dlopen" = "yes"],
 		 SO_CFLAGS="-KPIC"
 		 SO_LDFLAGS="-G -z text"
 		 SO_LD="ld"
+	       ],
+	       [ia64-hp-hpux*],[
+		 SO_CFLAGS="+z"
+	         SO_LDFLAGS="-b"
+		 SO_LD="${CC}"
 	       ],
 	       [
 		 SO_CFLAGS="-fPIC"

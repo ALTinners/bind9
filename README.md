@@ -287,6 +287,11 @@ flaws disclosed in CVE-2018-5744, CVE-2018-5745, and CVE-2019-6465.
 BIND 9.11.7 is a maintenance release, and also addresses the security
 flaw disclosed in CVE-2018-5743.
 
+#### BIND 9.11.8
+
+BIND 9.11.8 is a maintenance release, and also addresses the security
+flaw disclosed in CVE-2019-6471.
+
 ### <a name="build"/> Building BIND
 
 BIND requires a UNIX or Linux system with an ANSI C compiler, basic POSIX
@@ -488,6 +493,25 @@ In general, [func] and [experimental] tags will only appear in new-feature
 releases (i.e., those with version numbers ending in zero).  Some new
 functionality may be backported to older releases on a case-by-case basis.
 All other change types may be applied to all currently-supported releases.
+
+#### Bug report identifiers
+
+Most notes in the CHANGES file include a reference to a bug report or
+issue number. Prior to 2018, these were usually of the form `[RT #NNN]`
+and referred to entries in the "bind9-bugs" RT database, which was not open
+to the public. More recent entries use the form `[GL #NNN]` or, less often,
+`[GL !NNN]`, which, respectively, refer to issues or merge requests in the
+Gitlab database. Most of these are publically readable, unless they include
+information which is confidential or security senstive.
+
+To look up a Gitlab issue by its number, use the URL
+[https://gitlab.isc.org/isc-projects/bind9/issues/NNN](https://gitlab.isc.org/isc-projects/bind9/issues).
+To look up a merge request, use
+[https://gitlab.isc.org/isc-projects/bind9/merge_requests/NNN](https://gitlab.isc.org/isc-projects/bind9/merge_requests).
+
+In rare cases, an issue or merge request number may be followed with the
+letter "P". This indicates that the information is in the private ISC
+Gitlab instance, which is not visible to the public.
 
 ### <a name="ack"/> Acknowledgments
 
