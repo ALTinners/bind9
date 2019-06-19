@@ -2598,15 +2598,16 @@ isc_socket_open(isc_socket_t *sock0) {
 
 	REQUIRE(VALID_SOCKET(sock));
 
-	REQUIRE(isc_refcount_current(&sock->references) == 1);
-	/*
-	 * We don't need to retain the lock hereafter, since no one else has
-	 * this socket.
-	 */
+	LOCK(&sock->lock);
+
+	REQUIRE(isc_refcount_current(&sock->references) >= 1);
 	REQUIRE(sock->fd == -1);
 	REQUIRE(sock->threadid == -1);
 
 	result = opensocket(sock->manager, sock, NULL);
+
+	UNLOCK(&sock->lock);
+
 	if (result != ISC_R_SUCCESS) {
 		sock->fd = -1;
 	} else {
@@ -2980,6 +2981,13 @@ internal_accept(isc__socket_t *sock) {
 		nthread = &manager->threads[NEWCONNSOCK(dev)->threadid];
 
 		/*
+		 * We already hold a lock on one fdlock in accepting thread,
+		 * we need to make sure that we don't double lock.
+		 */
+		bool same_bucket = (sock->threadid == NEWCONNSOCK(dev)->threadid) &&
+				   (FDLOCK_ID(sock->fd) == lockid);
+
+		/*
 		 * Use minimum mtu if possible.
 		 */
 		use_min_mtu(NEWCONNSOCK(dev));
@@ -3001,13 +3009,17 @@ internal_accept(isc__socket_t *sock) {
 			NEWCONNSOCK(dev)->active = 1;
 		}
 
-		LOCK(&nthread->fdlock[lockid]);
+		if (!same_bucket) {
+			LOCK(&nthread->fdlock[lockid]);
+		}
 		nthread->fds[fd] = NEWCONNSOCK(dev);
 		nthread->fdstate[fd] = MANAGED;
 #if defined(USE_EPOLL)
 		nthread->epoll_events[fd] = 0;
 #endif
-		UNLOCK(&nthread->fdlock[lockid]);
+		if (!same_bucket) {
+			UNLOCK(&nthread->fdlock[lockid]);
+		}
 
 		LOCK(&manager->lock);
 
@@ -4477,12 +4489,21 @@ isc_socket_bind(isc_socket_t *sock0, const isc_sockaddr_t *sockaddr,
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "setsockopt(%d) failed", sock->fd);
 		}
+#if defined(__FreeBSD_kernel__) && defined(SO_REUSEPORT_LB)
+		if (setsockopt(sock->fd, SOL_SOCKET, SO_REUSEPORT_LB,
+			       (void *)&on, sizeof(on)) < 0)
+		{
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "setsockopt(%d) failed", sock->fd);
+		}
+#elif defined(__linux__) && defined(SO_REUSEPORT)
 		if (setsockopt(sock->fd, SOL_SOCKET, SO_REUSEPORT,
 			       (void *)&on, sizeof(on)) < 0)
 		{
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "setsockopt(%d) failed", sock->fd);
 		}
+#endif
 		/* Press on... */
 	}
 #ifdef AF_UNIX
@@ -5334,7 +5355,8 @@ init_hasreuseport() {
  * We only want to use it on Linux, if it's available. On BSD we want to dup()
  * sockets instead of re-binding them.
  */
-#if defined(SO_REUSEPORT) && defined(__linux__)
+#if (defined(SO_REUSEPORT) && defined(__linux__)) || \
+    (defined(SO_REUSEPORT_LB) && defined(__FreeBSD_kernel__))
 	int sock, yes = 1;
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
@@ -5348,8 +5370,13 @@ init_hasreuseport() {
 	{
 		close(sock);
 		return;
+#if defined(__FreeBSD_kernel__)
+	} else if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT_LB,
+			      (void *)&yes, sizeof(yes)) < 0)
+#else
 	} else if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
 			      (void *)&yes, sizeof(yes)) < 0)
+#endif
 	{
 		close(sock);
 		return;
