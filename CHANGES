@@ -1,3 +1,16 @@
+	--- 9.11.8 released ---
+
+5244.	[security]	Fixed a race condition in dns_dispatch_getnext()
+			that could cause an assertion failure if a
+			significant number of incoming packets were
+			rejected. (CVE-2019-6471) [GL #942]
+
+5241.	[bug]		Fix Ed448 private and public key ASN.1 prefix blobs.
+			[GL #225]
+
+5237.	[bug]		Recurse to find the root server list with 'dig +trace'.
+			[GL #1028]
+
 	--- 9.11.7 released ---
 
 5233.	[bug]		Negative trust anchors did not work with "forward only;"
