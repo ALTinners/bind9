@@ -4,8 +4,9 @@ bind9 (1:9.11.8+dfsg-1) experimental; urgency=medium
   * Rebase patches for BIND 9.11.8
   * AppArmor: Allow /var/tmp/krb5_* (owner-only) for Samba AD DLZ.
     Thanks to Steven Monai (Closes: 928398)
+  * Enable readline support in dnsutils (nslookup and nsupdate)
 
- -- Ondřej Surý <ondrej@sury.org>  Wed, 19 Jun 2019 23:12:50 +0200
+ -- Bernhard Schmidt <berni@debian.org>  Sun, 07 Jul 2019 21:38:14 +0200
 
 bind9 (1:9.11.7+dfsg-2) experimental; urgency=medium
 
