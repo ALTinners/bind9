@@ -2,6 +2,8 @@ bind9 (1:9.11.8+dfsg-1) experimental; urgency=medium
 
   * New upstream version 9.11.8+dfsg
   * Rebase patches for BIND 9.11.8
+  * AppArmor: Allow /var/tmp/krb5_* (owner-only) for Samba AD DLZ.
+    Thanks to Steven Monai (Closes: 928398)
 
  -- Ondřej Surý <ondrej@sury.org>  Wed, 19 Jun 2019 23:12:50 +0200
 
