@@ -40,7 +40,7 @@ export LANG=C
 # SEQUENTIAL_UNIX in conf.sh.in; those that only run on windows should
 # be added to SEQUENTIAL_WINDOWS in conf.sh.win32.
 #
-SEQUENTIAL_COMMON="ecdsa eddsa @PKCS11_TEST@ tkey"
+SEQUENTIAL_COMMON="ecdsa eddsa tkey"
 
 #
 # These tests can use ports assigned by the caller (other than 5300
@@ -63,7 +63,8 @@ PARALLEL_COMMON="dnssec rpzrecurse serve-stale \
 	dns64 dscp dsdigest dyndb \
 	ednscompliance emptyzones \
 	fetchlimit filter-aaaa formerr forward \
-	geoip glue idna inline integrity ixfr keepalive legacy limits \
+	geoip geoip2 glue idna inline integrity ixfr \
+	keepalive legacy limits \
 	masterfile masterformat metadata mirror mkeys \
 	names notify nslookup nsupdate nzd2nzf \
 	padding pending pipelined qmin \
@@ -239,6 +240,15 @@ keyfile_to_managed_keys() {
     keyfile_to_keys_section "managed-keys" "initial-key " $*
 }
 
+# keyfile_to_key_id: convert a key file name to a key ID
+#
+# For a given key file name (e.g. "Kexample.+013+06160") provided as $1,
+# print the key ID with leading zeros stripped ("6160" for the
+# aforementioned example).
+keyfile_to_key_id() {
+	echo "$1" | sed "s/.*+0\{0,4\}//"
+}
+
 # nextpart*() - functions for reading files incrementally
 #
 # These functions aim to facilitate looking for (or waiting for)
@@ -337,21 +347,26 @@ rndc_reconfig() {
 # in $1, converting them to a format used by some system tests.
 get_dig_xfer_stats() {
 	LOGFILE="$1"
-	echo "messages=`sed -n "s/^;; XFR size: .*messages \([0-9][0-9]*\).*/\1/p" "${LOGFILE}"`"
-	echo "records=`sed -n "s/^;; XFR size: \([0-9][0-9]*\) records.*/\1/p" "${LOGFILE}"`"
-	echo "bytes=`sed -n "s/^;; XFR size: .*bytes \([0-9][0-9]*\).*/\1/p" "${LOGFILE}"`"
+	sed -n "s/^;; XFR size: .*messages \([0-9][0-9]*\).*/messages=\1/p" "${LOGFILE}"
+	sed -n "s/^;; XFR size: \([0-9][0-9]*\) records.*/records=\1/p" "${LOGFILE}"
+	sed -n "s/^;; XFR size: .*bytes \([0-9][0-9]*\).*/bytes=\1/p" "${LOGFILE}"
 }
 
 # get_named_xfer_stats: from named log file $1, extract transfer
-# statistics for the last transfer for peer $2 and zone $3, converting
+# statistics for the last transfer for peer $2 and zone $3 (from a log
+# message which has to contain the string provided in $4), converting
 # them to a format used by some system tests.
 get_named_xfer_stats() {
 	LOGFILE="$1"
-	PEER="$2"
-	ZONE="$3"
-	echo "messages=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) messages.*/\1/p" | tail -1`"
-	echo "records=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) records.*/\1/p" | tail -1`"
-	echo "bytes=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) bytes.*/\1/p" | tail -1`"
+	PEER="`echo $2 | sed 's/\./\\\\./g'`"
+	ZONE="`echo $3 | sed 's/\./\\\\./g'`"
+	MESSAGE="$4"
+	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
+		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) messages.*/messages=\1/p" | tail -1
+	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
+		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) records.*/records=\1/p" | tail -1
+	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
+		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) bytes.*/bytes=\1/p" | tail -1
 }
 
 # copy_setports - Copy Configuration File and Replace Ports

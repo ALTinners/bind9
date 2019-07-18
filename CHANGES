@@ -1,3 +1,45 @@
+	--- 9.14.4 released ---
+
+5260.	[bug]		dnstap-read was producing malformed output for large
+			packets. [GL #1093]
+
+5258.	[func]		Added support for the GeoIP2 API from MaxMind,
+			when BIND is compiled using "configure --with-geoip2".
+			The legacy GeoIP API can be enabled by using
+			"configure --with-geoip" instead. These options
+			cannot be used together.
+
+			Certain geoip ACL settings that were available with
+			legacy GeoIP are not available when using GeoIP2.
+			See the ARM for details. [GL #182]
+
+5257.	[bug]		Some statistics data was not being displayed.
+			Add shading to the zone tables. [GL #1030]
+
+5256.	[bug]		Ensure that glue records are included in root
+			priming responses if "minimal-responses" is not
+			set to "yes". [GL #1092]
+
+5255.	[bug]		Errors encountered while reloading inline-signing
+			zones could be ignored, causing the zone content to
+			be left in an incompletely updated state rather than
+			reverted. [GL #1109]
+
+5254.	[func]		Collect metrics to report to the statistics-channel
+			DNSSEC signing operations (dnssec-sign) and refresh
+			operations (dnssec-refresh) per zone and per keytag.
+			[GL #513]
+
+5253.	[port]		Support platforms that don't define ULLONG_MAX.
+			[GL #1098]
+
+5251.	[bug]		Statistics were broken in x86 Windows builds.
+			[GL #1081]
+
+5249.	[bug]		Fix a possible underflow in recursion clients
+			statistics when hitting recursive clients
+			soft quota. [GL #1067]
+
 	--- 9.14.3 released ---
 
 5244.	[security]	Fixed a race condition in dns_dispatch_getnext()
