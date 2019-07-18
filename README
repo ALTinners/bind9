@@ -39,7 +39,7 @@ in versions 4 and 8. Internet Systems Consortium (https://www.isc.org), a
 501(c)(3) public benefit corporation dedicated to providing software and
 services in support of the Internet infrastructure, developed BIND 9 and
 is responsible for its ongoing maintenance and improvement. BIND is open
-source software licenced under the terms of the Mozilla Public License,
+source software licensed under the terms of the Mozilla Public License,
 version 2.0.
 
 For a summary of features introduced in past major releases of BIND, see
@@ -158,6 +158,11 @@ BIND 9.14.3
 
 BIND 9.14.3 is a maintenance release, and addresses the security
 vulnerability disclosed in CVE-2019-6471.
+
+BIND 9.14.4
+
+BIND 9.14.4 is a maintenance release, and also adds support for the new
+MaxMind GeoIP2 geolocation API when built with configure --with-geoip2.
 
 Building BIND
 

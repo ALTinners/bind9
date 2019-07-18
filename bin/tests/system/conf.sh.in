@@ -75,7 +75,7 @@ KRB5_CONFIG=/dev/null
 #
 # Construct the lists of tests to run
 #
-SEQUENTIAL_UNIX=""
+SEQUENTIAL_UNIX="@PKCS11_TEST@"
 SEQUENTIALDIRS="$SEQUENTIAL_COMMON $SEQUENTIAL_UNIX"
 
 PARALLEL_UNIX="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@ logfileconfig"
@@ -99,6 +99,9 @@ CURL=@CURL@
 
 # XMLLINT will be empty if no program was found by configure
 XMLLINT=@XMLLINT@
+
+# XSLTPROC will be empty if no program was found by configure
+XSLTPROC=@XSLTPROC@
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@

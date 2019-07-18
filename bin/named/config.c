@@ -66,6 +66,11 @@ options {\n\
 #ifndef WIN32
 "	files unlimited;\n"
 #endif
+#if defined(HAVE_GEOIP2) && !defined(WIN32)
+"	geoip-directory \"" MAXMINDDB_PREFIX "/share/GeoIP2\";\n"
+#elif defined(HAVE_GEOIP2)
+"	geoip-directory \".\";\n"
+#endif
 "\
 #	has-old-clients <obsolete>;\n\
 	heartbeat-interval 60;\n\
@@ -154,11 +159,8 @@ options {\n\
 #	fetch-glue <obsolete>;\n\
 	fetch-quota-params 100 0.1 0.3 0.7;\n\
 	fetches-per-server 0;\n\
-	fetches-per-zone 0;\n"
-#ifdef HAVE_GEOIP
-"	geoip-use-ecs yes;\n"
-#endif
-"	glue-cache yes;\n\
+	fetches-per-zone 0;\n\
+	glue-cache yes;\n\
 	lame-ttl 600;\n"
 #ifdef HAVE_LMDB
 "	lmdb-mapsize 32M;\n"
