@@ -26,10 +26,10 @@ index f0c504a..ef6bf5f 100644
  TARGETS =
  
 diff --git a/bin/dnssec/Makefile.in b/bin/dnssec/Makefile.in
-index 2239ad1..1ded1fa 100644
+index d938054..22385d5 100644
 --- a/bin/dnssec/Makefile.in
 +++ b/bin/dnssec/Makefile.in
-@@ -19,7 +19,7 @@ VERSION=@BIND9_VERSION@
+@@ -17,7 +17,7 @@ VERSION=@BIND9_VERSION@
  
  CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
  
@@ -39,12 +39,12 @@ index 2239ad1..1ded1fa 100644
  CWARNINGS =
  
 diff --git a/bin/named/Makefile.in b/bin/named/Makefile.in
-index 1c41397..5e6e84c 100644
+index e7a61c9..df10fb0 100644
 --- a/bin/named/Makefile.in
 +++ b/bin/named/Makefile.in
-@@ -47,7 +47,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
- 		${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} ${ISC_INCLUDES} \
- 		${DLZDRIVER_INCLUDES} ${DBDRIVER_INCLUDES} @DST_OPENSSL_INC@
+@@ -48,7 +48,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
+ 		${DLZDRIVER_INCLUDES} ${DBDRIVER_INCLUDES} ${MAXMINDDB_CFLAGS} \
+ 		@DST_OPENSSL_INC@
  
 -CDEFINES =      @CONTRIB_DLZ@ @USE_PKCS11@ @PKCS11_ENGINE@ @CRYPTO@
 +CDEFINES =      @CONTRIB_DLZ@ @CRYPTO@
@@ -73,10 +73,10 @@ index ae90616..4bc1256 100644
  DEPLIBS =	${ISCDEPLIBS}
  
 diff --git a/configure.ac b/configure.ac
-index a4de37f..45167d7 100644
+index 89ca758..ea076d4 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1089,12 +1089,14 @@ AC_SUBST(USE_GSSAPI)
+@@ -1139,12 +1139,14 @@ AC_SUBST(USE_GSSAPI)
  AC_SUBST(DST_GSSAPI_INC)
  AC_SUBST(DNS_GSSAPI_LIBS)
  DNS_CRYPTO_LIBS="$DNS_GSSAPI_LIBS $DNS_CRYPTO_LIBS"
@@ -91,10 +91,10 @@ index a4de37f..45167d7 100644
  
  #
  # was --with-randomdev specified?
-@@ -1479,11 +1481,6 @@ fi
+@@ -1529,11 +1531,6 @@ fi
  AC_MSG_CHECKING(for OpenSSL library)
  OPENSSL_WARNING=
- openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
+ openssldirs="/usr /usr/local /usr/local/ssl /opt/local /usr/pkg /usr/sfw"
 -if test "yes" = "$want_native_pkcs11"
 -then
 -	use_openssl="native_pkcs11"
@@ -103,7 +103,7 @@ index a4de37f..45167d7 100644
  
  if test "auto" = "$use_openssl"
  then
-@@ -1496,6 +1493,7 @@ then
+@@ -1546,6 +1543,7 @@ then
  		fi
  	done
  fi
@@ -111,7 +111,7 @@ index a4de37f..45167d7 100644
  OPENSSL_ECDSA=""
  OPENSSL_GOST=""
  OPENSSL_ED25519=""
-@@ -1517,11 +1515,10 @@ case "$with_gost" in
+@@ -1567,11 +1565,10 @@ case "$with_gost" in
  		;;
  esac
  
@@ -126,7 +126,7 @@ index a4de37f..45167d7 100644
  		OPENSSLECDSALINKOBJS=""
  		OPENSSLECDSALINKSRCS=""
  		OPENSSLEDDSALINKOBJS=""
-@@ -1530,7 +1527,9 @@ case "$use_openssl" in
+@@ -1580,7 +1577,9 @@ case "$use_openssl" in
  		OPENSSLGOSTLINKSRCS=""
  		OPENSSLLINKOBJS=""
  		OPENSSLLINKSRCS=""
@@ -137,7 +137,7 @@ index a4de37f..45167d7 100644
  	no)
  		AC_MSG_RESULT(no)
  		DST_OPENSSL_INC=""
-@@ -1560,11 +1559,6 @@ case "$use_openssl" in
+@@ -1610,11 +1609,6 @@ case "$use_openssl" in
  If you don't want OpenSSL, use --without-openssl])
  		;;
  	*)
@@ -149,7 +149,7 @@ index a4de37f..45167d7 100644
  		if test "yes" = "$use_openssl"
  		then
  			# User did not specify a path - guess it
-@@ -1987,6 +1981,7 @@ AC_SUBST(OPENSSL_ED25519)
+@@ -2037,6 +2031,7 @@ AC_SUBST(OPENSSL_ED25519)
  AC_SUBST(OPENSSL_GOST)
  
  DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
@@ -157,7 +157,7 @@ index a4de37f..45167d7 100644
  
  ISC_PLATFORM_WANTAES="#undef ISC_PLATFORM_WANTAES"
  if test "yes" = "$with_aes"
-@@ -2311,6 +2306,7 @@ esac
+@@ -2361,6 +2356,7 @@ esac
  AC_SUBST(PKCS11LINKOBJS)
  AC_SUBST(PKCS11LINKSRCS)
  AC_SUBST(CRYPTO)
@@ -165,7 +165,7 @@ index a4de37f..45167d7 100644
  AC_SUBST(PKCS11_ECDSA)
  AC_SUBST(PKCS11_GOST)
  AC_SUBST(PKCS11_ED25519)
-@@ -5371,8 +5367,11 @@ AC_CONFIG_FILES([
+@@ -5421,8 +5417,11 @@ AC_CONFIG_FILES([
  	bin/delv/Makefile
  	bin/dig/Makefile
  	bin/dnssec/Makefile
@@ -177,7 +177,7 @@ index a4de37f..45167d7 100644
  	bin/nsupdate/Makefile
  	bin/pkcs11/Makefile
  	bin/python/Makefile
-@@ -5445,6 +5444,10 @@ AC_CONFIG_FILES([
+@@ -5495,6 +5494,10 @@ AC_CONFIG_FILES([
  	lib/dns/include/dns/Makefile
  	lib/dns/include/dst/Makefile
  	lib/dns/tests/Makefile
@@ -188,7 +188,7 @@ index a4de37f..45167d7 100644
  	lib/irs/Makefile
  	lib/irs/include/Makefile
  	lib/irs/include/irs/Makefile
-@@ -5469,6 +5472,24 @@ AC_CONFIG_FILES([
+@@ -5519,6 +5522,24 @@ AC_CONFIG_FILES([
  	lib/isc/unix/include/Makefile
  	lib/isc/unix/include/isc/Makefile
  	lib/isc/unix/include/pkcs11/Makefile

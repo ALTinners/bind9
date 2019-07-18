@@ -22,10 +22,10 @@ Subject: _min-cache-ttl
  8 files changed, 52 insertions(+), 14 deletions(-)
 
 diff --git a/bin/named/config.c b/bin/named/config.c
-index 7584efb..fe70944 100644
+index 32c454a..da9e31c 100644
 --- a/bin/named/config.c
 +++ b/bin/named/config.c
-@@ -182,6 +182,8 @@ options {\n\
+@@ -187,6 +187,8 @@ options {\n\
  	max-recursion-depth 7;\n\
  	max-recursion-queries 75;\n\
  	message-compression yes;\n\
@@ -35,7 +35,7 @@ index 7584efb..fe70944 100644
  	minimal-any false;\n\
  	minimal-responses false;\n\
 diff --git a/bin/named/server.c b/bin/named/server.c
-index 0abbbed..a132504 100644
+index 767d83f..12c5933 100644
 --- a/bin/named/server.c
 +++ b/bin/named/server.c
 @@ -3729,6 +3729,18 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
@@ -240,7 +240,7 @@ index 3a94536..8996401 100644
  	if (result != ISC_R_SUCCESS)
  		goto unlock;
 diff --git a/lib/isccfg/namedconf.c b/lib/isccfg/namedconf.c
-index fbc62cc..8508d8e 100644
+index 94bfc71..e7dbbd9 100644
 --- a/lib/isccfg/namedconf.c
 +++ b/lib/isccfg/namedconf.c
 @@ -1780,6 +1780,8 @@ view_clauses[] = {

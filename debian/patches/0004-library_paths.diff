@@ -17,19 +17,19 @@ Subject: _library_paths
  5 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/lib/dns/Makefile.in b/lib/dns/Makefile.in
-index f6868d1..2987db6 100644
+index 7f09bd6..0aaf38a 100644
 --- a/lib/dns/Makefile.in
 +++ b/lib/dns/Makefile.in
-@@ -37,7 +37,7 @@ ISCLIBS =	../../lib/isc/libisc.@A@
+@@ -38,7 +38,7 @@ ISCLIBS =	../../lib/isc/libisc.@A@
  
  ISCDEPLIBS =	../../lib/isc/libisc.@A@
  
--LIBS =		@LIBS@
-+LIBS =		@LIBS@ -L../../lib/isc -lcrypto
+-LIBS =		${MAXMINDDB_LIBS} @LIBS@
++LIBS =		${MAXMINDDB_LIBS} @LIBS@ -L../../lib/isc -lcrypto
  
  # Alphabetically
  
-@@ -155,6 +155,7 @@ libdns.la: ${OBJS}
+@@ -159,6 +159,7 @@ libdns.la: ${OBJS}
  		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libdns.la -rpath ${libdir} \
  		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
  		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
@@ -37,7 +37,7 @@ index f6868d1..2987db6 100644
  
  include: gen
  	${MAKE} include/dns/enumtype.h
-@@ -208,6 +209,7 @@ clean distclean::
+@@ -212,6 +213,7 @@ clean distclean::
  newrr::
  	rm -f code.h include/dns/enumtype.h include/dns/enumclass.h
  	rm -f include/dns/rdatastruct.h
@@ -122,7 +122,7 @@ index e7b6f04..3668490 100644
  	rm -f libisccc.@A@ timestamp
 +	rm -f libisccc.so
 diff --git a/lib/isccfg/Makefile.in b/lib/isccfg/Makefile.in
-index f459bd5..0c42b2a 100644
+index b97657d..b02a884 100644
 --- a/lib/isccfg/Makefile.in
 +++ b/lib/isccfg/Makefile.in
 @@ -29,7 +29,7 @@ ISCCFGLIBS =	../../lib/cfg/libisccfg.@A@

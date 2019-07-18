@@ -11,7 +11,7 @@ Subject: _non-linux
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 96c5657..a4de37f 100644
+index ffd54c7..89ca758 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -439,7 +439,7 @@ case "$host" in
@@ -23,7 +23,7 @@ index 96c5657..a4de37f 100644
  		STD_CDEFINES="$STD_CDEFINES -D_GNU_SOURCE"
  		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
  		;;
-@@ -1307,7 +1307,7 @@ then
+@@ -1357,7 +1357,7 @@ then
  		# LinuxThreads requires some changes to the way we
  		# deal with signals.
  		#
@@ -32,7 +32,7 @@ index 96c5657..a4de37f 100644
  			AC_DEFINE(HAVE_LINUXTHREADS)
  			;;
  		#
-@@ -2765,7 +2765,6 @@ case "$host" in
+@@ -2815,7 +2815,6 @@ case "$host" in
  		;;
  	*)
  		AC_CHECK_LIB(socket, socket)
