@@ -1,3 +1,9 @@
+bind9 (1:9.11.9+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 9.11.9+dfsg
+
+ -- Ondřej Surý <ondrej@sury.org>  Thu, 18 Jul 2019 10:00:52 +0200
+
 bind9 (1:9.11.8+dfsg-1) experimental; urgency=medium
 
   * New upstream version 9.11.8+dfsg
