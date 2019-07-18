@@ -43,6 +43,7 @@ usage() {
 	fprintf(stderr, "	--gssapi\n");
 	fprintf(stderr, "	--have-dlopen\n");
 	fprintf(stderr, "	--have-geoip\n");
+	fprintf(stderr, "	--have-geoip2\n");
 	fprintf(stderr, "	--have-libxml2\n");
 	fprintf(stderr, "	--ipv6only=no\n");
 	fprintf(stderr, "	--rpz-nsdname\n");
@@ -123,6 +124,14 @@ main(int argc, char **argv) {
 
 	if (strcmp(argv[1], "--have-geoip") == 0) {
 #ifdef HAVE_GEOIP
+		return (0);
+#else
+		return (1);
+#endif
+	}
+
+	if (strcmp(argv[1], "--have-geoip2") == 0) {
+#ifdef HAVE_GEOIP2
 		return (0);
 #else
 		return (1);

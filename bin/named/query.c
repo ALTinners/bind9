@@ -4220,12 +4220,14 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 	if (client->recursionquota == NULL) {
 		result = isc_quota_attach(&ns_g_server->recursionquota,
 					  &client->recursionquota);
+		if (result == ISC_R_SUCCESS || result == ISC_R_SOFTQUOTA) {
+			isc_stats_increment(ns_g_server->nsstats,
+					    dns_nsstatscounter_recursclients);
+		}
 		if (result == ISC_R_SUCCESS && !client->mortal && !TCP(client))
 			result = ns_client_replace(client);
 		if (result != ISC_R_SUCCESS)
 			return;
-		isc_stats_increment(ns_g_server->nsstats,
-				    dns_nsstatscounter_recursclients);
 	}
 
 	tmprdataset = query_newrdataset(client);
@@ -4277,8 +4279,10 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 		result = isc_quota_attach(&ns_g_server->recursionquota,
 					  &client->recursionquota);
 
-		isc_stats_increment(ns_g_server->nsstats,
-				    dns_nsstatscounter_recursclients);
+		if (result == ISC_R_SUCCESS || result == ISC_R_SOFTQUOTA) {
+			isc_stats_increment(ns_g_server->nsstats,
+					    dns_nsstatscounter_recursclients);
+		}
 
 		if  (result == ISC_R_SOFTQUOTA) {
 			static isc_stdtime_t last = 0;
@@ -4535,12 +4539,14 @@ query_rpzfetch(ns_client_t *client, dns_name_t *qname, dns_rdatatype_t type) {
 	if (client->recursionquota == NULL) {
 		result = isc_quota_attach(&ns_g_server->recursionquota,
 					  &client->recursionquota);
+		if (result == ISC_R_SUCCESS || result == ISC_R_SOFTQUOTA) {
+			isc_stats_increment(ns_g_server->nsstats,
+					    dns_nsstatscounter_recursclients);
+		}
 		if (result == ISC_R_SUCCESS && !client->mortal && !TCP(client))
 			result = ns_client_replace(client);
 		if (result != ISC_R_SUCCESS)
 			return;
-		isc_stats_increment(ns_g_server->nsstats,
-				    dns_nsstatscounter_recursclients);
 	}
 
 	tmprdataset = query_newrdataset(client);
@@ -9022,11 +9028,13 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			}
 
 			/*
-			 * BIND 8 priming queries need the additional section.
+			 * Always add glue for root priming queries, regardless
+			 * of "minimal-responses" setting.
 			 */
 			if (dns_name_equal(client->query.qname, dns_rootname)) {
 				client->query.attributes &=
 					~NS_QUERYATTR_NOADDITIONAL;
+				dns_db_attach(db, &client->query.gluedb);
 			}
 		}
 
@@ -9176,6 +9184,10 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	}
 	if (event != NULL) {
 		free_devent(client, ISC_EVENT_PTR(&event), &event);
+	}
+
+	if (client->query.gluedb != NULL) {
+		dns_db_detach(&client->query.gluedb);
 	}
 
 	/*

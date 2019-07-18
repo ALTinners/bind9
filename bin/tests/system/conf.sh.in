@@ -115,7 +115,7 @@ PARALLELDIRS="dnssec rpzrecurse \
 	dns64 @DNSTAP@ dscp dsdigest dyndb \
 	ednscompliance emptyzones \
 	fetchlimit filter-aaaa formerr forward \
-	geoip glue idna inline integrity ixfr \
+	geoip geoip2 glue idna inline integrity ixfr \
 	legacy limits logfileconfig \
 	masterfile masterformat metadata mkeys \
 	names notify nslookup nsupdate nzd2nzf \
@@ -145,6 +145,9 @@ CURL=@CURL@
 
 # XMLLINT will be empty if no program was found by configure
 XMLLINT=@XMLLINT@
+
+# XSLTPROC will be empty if no program was found by configure
+XSLTPROC=@XSLTPROC@
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
@@ -323,6 +326,15 @@ keyfile_to_trusted_keys() {
 # resolver's configuration file
 keyfile_to_managed_keys() {
     keyfile_to_keys_section "managed-keys" "initial-key " $*
+}
+
+# keyfile_to_key_id: convert a key file name to a key ID
+#
+# For a given key file name (e.g. "Kexample.+013+06160") provided as $1,
+# print the key ID with leading zeros stripped ("6160" for the
+# aforementioned example).
+keyfile_to_key_id() {
+	echo "$1" | sed "s/.*+0\{0,4\}//"
 }
 
 # nextpart: read everything that's been appended to a file since the
