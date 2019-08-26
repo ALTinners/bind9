@@ -32,6 +32,7 @@
 #include <isc/result.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
+#include <isc/siphash.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/symtab.h>
@@ -516,6 +517,12 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 				    "dns64 requires a IPv6 prefix");
 			result = ISC_R_FAILURE;
 			continue;
+		}
+
+		if (na.type.in6.s6_addr[8] != 0) {
+			cfg_obj_log(map, logctx, ISC_LOG_WARNING,
+				    "warning: invalid prefix, bits [64..71] "
+				    "must be zero");
 		}
 
 		if (prefixlen != 32 && prefixlen != 40 && prefixlen != 48 &&
@@ -1417,8 +1424,14 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			if (strcasecmp(ccalg, "aes") == 0 &&
 			    usedlength != ISC_AES128_KEYLENGTH) {
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-					    "AES cookie-secret must be "
-					    "128 bits");
+					    "AES cookie-secret must be 128 bits");
+				if (result == ISC_R_SUCCESS)
+					result = ISC_R_RANGE;
+			}
+			if (strcasecmp(ccalg, "siphash24") == 0 &&
+			    usedlength != ISC_SIPHASH24_KEY_LENGTH) {
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "SipHash-2-4 cookie-secret must be 128 bits");
 				if (result == ISC_R_SUCCESS)
 					result = ISC_R_RANGE;
 			}
@@ -1477,6 +1490,21 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 					    fstrm[i].name,
 					    cfg_obj_asuint32(obj));
 				result = ISC_R_RANGE;
+			}
+		}
+	}
+
+	obj = NULL;
+	(void) cfg_map_get(options, "dnstap", &obj);
+	if (obj != NULL) {
+		const cfg_obj_t *output = NULL;
+		(void) cfg_map_get(options, "dnstap-output", &output);
+		if (output == NULL) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "'dnstap-output' must be set if 'dnstap' "
+				    "is set");
+			if (result == ISC_R_SUCCESS) {
+				result = ISC_R_FAILURE;
 			}
 		}
 	}

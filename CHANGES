@@ -1,3 +1,30 @@
+	--- 9.11.10 released ---
+
+5275.	[bug]		Mark DS records included in referral messages
+			with trust level "pending" so that they can be
+			validated and cached immediately, with no need to
+			re-query. [GL #964]
+
+5273.	[bug]		Check that bits [64..71] of a dns64 prefix are zero.
+			[GL #1159]
+
+5269.	[port]		cygwin: can return ETIMEDOUT on connect() with a
+			non-blocking socket. [GL #1133]
+
+5268.	[bug]		named could crash during configuration if
+			configured to use "geoip continent" ACLs with
+			legacy GeoIP. [GL #1163]
+
+5266.	[bug]		named-checkconf failed to report dnstap-output
+			missing from named.conf when dnstap was specified.
+			[GL #1136]
+
+5265.	[bug]		DNS64 and RPZ nodata (CNAME *.) rules interacted badly
+			[GL #1106]
+
+5264.	[func]		New DNS Cookie algorithm - siphash24 - has been added to
+			BIND 9. [GL #605]
+
 	--- 9.11.9 released ---
 
 5260.	[bug]		dnstap-read was producing malformed output for large
