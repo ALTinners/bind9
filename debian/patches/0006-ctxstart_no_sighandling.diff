@@ -7,7 +7,7 @@ Subject: _ctxstart_no_sighandling
  1 file changed, 3 insertions(+)
 
 diff --git a/lib/isc/unix/app.c b/lib/isc/unix/app.c
-index 7e5a0ee..8574141 100644
+index 068e053..9e2401a 100644
 --- a/lib/isc/unix/app.c
 +++ b/lib/isc/unix/app.c
 @@ -262,6 +262,9 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {

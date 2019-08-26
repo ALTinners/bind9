@@ -11,7 +11,7 @@ Subject: _non-linux
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index ffd54c7..89ca758 100644
+index c4c525c..39e99ef 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -439,7 +439,7 @@ case "$host" in
@@ -32,7 +32,7 @@ index ffd54c7..89ca758 100644
  			AC_DEFINE(HAVE_LINUXTHREADS)
  			;;
  		#
-@@ -2815,7 +2815,6 @@ case "$host" in
+@@ -2742,7 +2742,6 @@ case "$host" in
  		;;
  	*)
  		AC_CHECK_LIB(socket, socket)

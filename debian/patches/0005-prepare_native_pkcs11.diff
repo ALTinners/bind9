@@ -73,7 +73,7 @@ index ae90616..4bc1256 100644
  DEPLIBS =	${ISCDEPLIBS}
  
 diff --git a/configure.ac b/configure.ac
-index 89ca758..ea076d4 100644
+index 39e99ef..1660eb8 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -1139,12 +1139,14 @@ AC_SUBST(USE_GSSAPI)
@@ -91,7 +91,7 @@ index 89ca758..ea076d4 100644
  
  #
  # was --with-randomdev specified?
-@@ -1529,11 +1531,6 @@ fi
+@@ -1494,11 +1496,6 @@ AC_ARG_ENABLE(openssl-hash,
  AC_MSG_CHECKING(for OpenSSL library)
  OPENSSL_WARNING=
  openssldirs="/usr /usr/local /usr/local/ssl /opt/local /usr/pkg /usr/sfw"
@@ -103,7 +103,7 @@ index 89ca758..ea076d4 100644
  
  if test "auto" = "$use_openssl"
  then
-@@ -1546,6 +1543,7 @@ then
+@@ -1511,6 +1508,7 @@ then
  		fi
  	done
  fi
@@ -111,7 +111,7 @@ index 89ca758..ea076d4 100644
  OPENSSL_ECDSA=""
  OPENSSL_GOST=""
  OPENSSL_ED25519=""
-@@ -1567,11 +1565,10 @@ case "$with_gost" in
+@@ -1532,11 +1530,10 @@ case "$with_gost" in
  		;;
  esac
  
@@ -126,7 +126,7 @@ index 89ca758..ea076d4 100644
  		OPENSSLECDSALINKOBJS=""
  		OPENSSLECDSALINKSRCS=""
  		OPENSSLEDDSALINKOBJS=""
-@@ -1580,7 +1577,9 @@ case "$use_openssl" in
+@@ -1545,7 +1542,9 @@ case "$use_openssl" in
  		OPENSSLGOSTLINKSRCS=""
  		OPENSSLLINKOBJS=""
  		OPENSSLLINKSRCS=""
@@ -137,7 +137,7 @@ index 89ca758..ea076d4 100644
  	no)
  		AC_MSG_RESULT(no)
  		DST_OPENSSL_INC=""
-@@ -1610,11 +1609,6 @@ case "$use_openssl" in
+@@ -1575,11 +1574,6 @@ case "$use_openssl" in
  If you don't want OpenSSL, use --without-openssl])
  		;;
  	*)
@@ -149,7 +149,7 @@ index 89ca758..ea076d4 100644
  		if test "yes" = "$use_openssl"
  		then
  			# User did not specify a path - guess it
-@@ -2037,6 +2031,7 @@ AC_SUBST(OPENSSL_ED25519)
+@@ -2002,6 +1996,7 @@ AC_SUBST(OPENSSL_ED25519)
  AC_SUBST(OPENSSL_GOST)
  
  DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
@@ -157,7 +157,7 @@ index 89ca758..ea076d4 100644
  
  ISC_PLATFORM_WANTAES="#undef ISC_PLATFORM_WANTAES"
  if test "yes" = "$with_aes"
-@@ -2361,6 +2356,7 @@ esac
+@@ -2288,6 +2283,7 @@ esac
  AC_SUBST(PKCS11LINKOBJS)
  AC_SUBST(PKCS11LINKSRCS)
  AC_SUBST(CRYPTO)
@@ -165,7 +165,7 @@ index 89ca758..ea076d4 100644
  AC_SUBST(PKCS11_ECDSA)
  AC_SUBST(PKCS11_GOST)
  AC_SUBST(PKCS11_ED25519)
-@@ -5421,8 +5417,11 @@ AC_CONFIG_FILES([
+@@ -5348,8 +5344,11 @@ AC_CONFIG_FILES([
  	bin/delv/Makefile
  	bin/dig/Makefile
  	bin/dnssec/Makefile
@@ -177,7 +177,7 @@ index 89ca758..ea076d4 100644
  	bin/nsupdate/Makefile
  	bin/pkcs11/Makefile
  	bin/python/Makefile
-@@ -5495,6 +5494,10 @@ AC_CONFIG_FILES([
+@@ -5422,6 +5421,10 @@ AC_CONFIG_FILES([
  	lib/dns/include/dns/Makefile
  	lib/dns/include/dst/Makefile
  	lib/dns/tests/Makefile
@@ -188,7 +188,7 @@ index 89ca758..ea076d4 100644
  	lib/irs/Makefile
  	lib/irs/include/Makefile
  	lib/irs/include/irs/Makefile
-@@ -5519,6 +5522,24 @@ AC_CONFIG_FILES([
+@@ -5446,6 +5449,24 @@ AC_CONFIG_FILES([
  	lib/isc/unix/include/Makefile
  	lib/isc/unix/include/isc/Makefile
  	lib/isc/unix/include/pkcs11/Makefile
