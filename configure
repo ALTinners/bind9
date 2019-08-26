@@ -1644,8 +1644,7 @@ Optional Packages:
   --with-locktype=ARG     Specify mutex lock type (adaptive or standard)
   --with-libtool          use GNU libtool
   --with-openssl=DIR      root of the OpenSSL directory
-  --with-cc-alg=ALG       choose the algorithm for Client Cookie
-                          [aes|sha1|sha256] (default is aes)
+  --with-cc-alg=ALG       deprecated
   --with-pkcs11=PATH      Build with PKCS11 support [no|path] (PATH is for the
                           PKCS11 provider)
   --with-gssapi=PATH|/path/krb5-config
@@ -13628,6 +13627,39 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext ;; #(
      ;;
 esac
 
+#
+# Check for pause support on SPARC processors
+#
+case $host in #(
+  sparc*) :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pause instruction support" >&5
+$as_echo_n "checking for pause instruction support... " >&6; }
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+__asm__ __volatile__ ("pause")
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_SPARC_PAUSE 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext ;; #(
+  *) :
+     ;;
+esac
+
 for ac_func in sysctlbyname
 do :
   ac_fn_c_check_func "$LINENO" "sysctlbyname" "ac_cv_func_sysctlbyname"
@@ -16348,35 +16380,17 @@ LDFLAGS="$save_LDFLAGS"
 if test "${with_cc_alg+set}" = set; then :
   withval=$with_cc_alg; :
 else
-  with_cc_alg="aes"
+  with_cc_alg="siphash24"
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the algorithm for Client Cookie" >&5
-$as_echo_n "checking for the algorithm for Client Cookie... " >&6; }
 case $with_cc_alg in #(
-  sha1|SHA1) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: sha1" >&5
-$as_echo "sha1" >&6; }
-
-$as_echo "#define HMAC_SHA1_CC 1" >>confdefs.h
- ;; #(
-  sha256|SHA256) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: sha256" >&5
-$as_echo "sha256" >&6; }
-
-$as_echo "#define HMAC_SHA256_CC 1" >>confdefs.h
- ;; #(
-  aes|AES|auto) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: aes" >&5
-$as_echo "aes" >&6; }
-
-$as_echo "#define AES_CC 1" >>confdefs.h
- ;; #(
+  siphash24) :
+    : ;; #(
   *) :
-    as_fn_error $? "Invalid $with_cc_alg algorithm for Client Cookie" "$LINENO" 5 ;;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: The Client Cookie is always SipHash 2-4 based" >&5
+$as_echo "$as_me: WARNING: The Client Cookie is always SipHash 2-4 based" >&2;} ;;
 esac
-
 
 PKCS11_TOOLS=
 PKCS11_TEST=
@@ -20344,27 +20358,97 @@ fi
 # Check for -Wl,--wrap= support
 #
 
-save_LDFLAGS=$LDFLAGS
-LDFLAGS="--wrap=printf"
 
+
+  CCASFLAGS_wrap_ax_save_flags=$CCASFLAGS
+
+
+
+  CFLAGS_wrap_ax_save_flags=$CFLAGS
+
+
+
+  CPPFLAGS_wrap_ax_save_flags=$CPPFLAGS
+
+
+
+  CXXFLAGS_wrap_ax_save_flags=$CXXFLAGS
+
+
+
+  ERLCFLAGS_wrap_ax_save_flags=$ERLCFLAGS
+
+
+
+  FCFLAGS_wrap_ax_save_flags=$FCFLAGS
+
+
+
+  FCLIBS_wrap_ax_save_flags=$FCLIBS
+
+
+
+  FFLAGS_wrap_ax_save_flags=$FFLAGS
+
+
+
+  FLIBS_wrap_ax_save_flags=$FLIBS
+
+
+
+  GCJFLAGS_wrap_ax_save_flags=$GCJFLAGS
+
+
+
+  JAVACFLAGS_wrap_ax_save_flags=$JAVACFLAGS
+
+
+
+  LDFLAGS_wrap_ax_save_flags=$LDFLAGS
+
+
+
+  LIBS_wrap_ax_save_flags=$LIBS
+
+
+
+  OBJCFLAGS_wrap_ax_save_flags=$OBJCFLAGS
+
+
+
+  OBJCXXFLAGS_wrap_ax_save_flags=$OBJCXXFLAGS
+
+
+
+  UPCFLAGS_wrap_ax_save_flags=$UPCFLAGS
+
+
+
+  VALAFLAGS_wrap_ax_save_flags=$VALAFLAGS
+
+
+
+
+LDFLAGS="-Wl,-wrap,exit"
 LD_WRAP_TESTS=false
-enable_ld_wrap=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linker support for --wrap option" >&5
 $as_echo_n "checking for linker support for --wrap option... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <stdio.h>
+#include <stdlib.h>
+		       void __real_exit (int status);
+		       void __wrap_exit (int status) { __real_exit (status); }
+
 int
 main ()
 {
-__wrap_printf("success"); return (0);
+exit (1);
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  enable_ld_wrap=yes
-     LD_WRAP_TESTS=true
+  LD_WRAP_TESTS=true
 
 $as_echo "#define LD_WRAP 1" >>confdefs.h
 
@@ -20376,10 +20460,61 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-# AM_CONDITIONAL([LD_WRAP], [test $enable_ld_wrap = yes])
 
 
-LDFLAGS=$save_LDFLAGS
+
+  CCASFLAGS=$CCASFLAGS_wrap_ax_save_flags
+
+
+  CFLAGS=$CFLAGS_wrap_ax_save_flags
+
+
+  CPPFLAGS=$CPPFLAGS_wrap_ax_save_flags
+
+
+  CXXFLAGS=$CXXFLAGS_wrap_ax_save_flags
+
+
+  ERLCFLAGS=$ERLCFLAGS_wrap_ax_save_flags
+
+
+  FCFLAGS=$FCFLAGS_wrap_ax_save_flags
+
+
+  FCLIBS=$FCLIBS_wrap_ax_save_flags
+
+
+  FFLAGS=$FFLAGS_wrap_ax_save_flags
+
+
+  FLIBS=$FLIBS_wrap_ax_save_flags
+
+
+  GCJFLAGS=$GCJFLAGS_wrap_ax_save_flags
+
+
+  JAVACFLAGS=$JAVACFLAGS_wrap_ax_save_flags
+
+
+  LDFLAGS=$LDFLAGS_wrap_ax_save_flags
+
+
+  LIBS=$LIBS_wrap_ax_save_flags
+
+
+  OBJCFLAGS=$OBJCFLAGS_wrap_ax_save_flags
+
+
+  OBJCXXFLAGS=$OBJCXXFLAGS_wrap_ax_save_flags
+
+
+  UPCFLAGS=$UPCFLAGS_wrap_ax_save_flags
+
+
+  VALAFLAGS=$VALAFLAGS_wrap_ax_save_flags
+
+
+
 
 #
 # Check for i18n

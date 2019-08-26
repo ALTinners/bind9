@@ -31,6 +31,7 @@
 #include <isc/print.h>
 #include <isc/region.h>
 #include <isc/result.h>
+#include <isc/siphash.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/symtab.h>
@@ -529,6 +530,12 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			continue;
 		}
 
+		if (na.type.in6.s6_addr[8] != 0) {
+			cfg_obj_log(map, logctx, ISC_LOG_WARNING,
+				    "warning: invalid prefix, bits [64..71] "
+				    "must be zero");
+		}
+
 		if (prefixlen != 32 && prefixlen != 40 && prefixlen != 48 &&
 		    prefixlen != 56 && prefixlen != 64 && prefixlen != 96) {
 			cfg_obj_log(map, logctx, ISC_LOG_ERROR,
@@ -859,7 +866,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	dns_name_t *name;
 	isc_buffer_t b;
 	uint32_t lifetime = 3600;
-	const char *ccalg = "aes";
+	const char *ccalg = "siphash24";
 
 	/*
 	 * { "name", scale, value }
@@ -1353,8 +1360,14 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			if (strcasecmp(ccalg, "aes") == 0 &&
 			    usedlength != ISC_AES128_KEYLENGTH) {
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-					    "AES cookie-secret must be "
-					    "128 bits");
+					    "AES cookie-secret must be 128 bits");
+				if (result == ISC_R_SUCCESS)
+					result = ISC_R_RANGE;
+			}
+			if (strcasecmp(ccalg, "siphash24") == 0 &&
+			    usedlength != ISC_SIPHASH24_KEY_LENGTH) {
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "SipHash-2-4 cookie-secret must be 128 bits");
 				if (result == ISC_R_SUCCESS)
 					result = ISC_R_RANGE;
 			}
@@ -1469,6 +1482,16 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 					    "cannot be set with mode unix");
 				if (result == ISC_R_SUCCESS)
 					result = ISC_R_FAILURE;
+			}
+		}
+	} else {
+		(void) cfg_map_get(options, "dnstap", &obj);
+		if (obj != NULL) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "'dnstap-output' must be set if 'dnstap' "
+				    "is set");
+			if (result == ISC_R_SUCCESS) {
+				result = ISC_R_FAILURE;
 			}
 		}
 	}

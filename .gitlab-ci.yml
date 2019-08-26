@@ -34,6 +34,12 @@ stages:
 
 ### Docker Image Templates
 
+# Alpine Linux
+
+.alpine-3.10-amd64: &alpine_3_10_amd64_image
+  image: "$CI_REGISTRY_IMAGE:alpine-3.10-amd64"
+  <<: *linux_amd64
+
 # CentOS
 
 .centos-centos6-amd64: &centos_centos6_amd64_image
@@ -50,16 +56,16 @@ stages:
   image: "$CI_REGISTRY_IMAGE:debian-jessie-amd64"
   <<: *linux_amd64
 
-.debian-jessie-i386: &debian_jessie_i386_image
-  image: "$CI_REGISTRY_IMAGE:debian-jessie-i386"
-  <<: *linux_i386
-
 .debian-stretch-amd64: &debian_stretch_amd64_image
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
   <<: *linux_amd64
 
 .debian-stretch-i386: &debian_stretch_i386_image
   image: "$CI_REGISTRY_IMAGE:debian-stretch-i386"
+  <<: *linux_i386
+
+.debian-buster-amd64: &debian_buster_amd64_image
+  image: "$CI_REGISTRY_IMAGE:debian-buster-amd64"
   <<: *linux_i386
 
 .debian-sid-amd64: &debian_sid_amd64_image
@@ -72,8 +78,8 @@ stages:
 
 # Fedora
 
-.fedora-29-amd64: &fedora_29_amd64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-29-amd64"
+.fedora-30-amd64: &fedora_30_amd64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-30-amd64"
   <<: *linux_amd64
 
 # Ubuntu
@@ -93,14 +99,6 @@ stages:
 .ubuntu-bionic-i386: &ubuntu_bionic_i386_image
   image: "$CI_REGISTRY_IMAGE:ubuntu-bionic-i386"
   <<: *linux_i386
-
-# FreeBSD
-
-.freebsd-12-amd64: &freebsd_12_amd64_image
-  tags:
-    - freebsd12
-    - amd64
-  allow_failure: true
 
 ### Job Templates
 
@@ -130,13 +128,13 @@ stages:
 
 .setup_interfaces: &setup_interfaces |
     if [ "$(id -u)" -eq "0" ]; then
-      bash -x bin/tests/system/ifconfig.sh up;
+      sh -x bin/tests/system/ifconfig.sh up;
     else
-      sudo bash -x bin/tests/system/ifconfig.sh up;
+      sudo sh -x bin/tests/system/ifconfig.sh up;
     fi
 
 .setup_softhsm: &setup_softhsm |
-    bash -x util/prepare-softhsm2.sh
+    sh -x util/prepare-softhsm2.sh
 
 .system_test: &system_test_job
   <<: *default_triggering_rules
@@ -239,6 +237,28 @@ push:docs:sid:amd64:
     - master@isc-projects/bind9
     - /^v9_[1-9][0-9]$/@isc-projects/bind9
 
+# Jobs for regular GCC builds on Alpine Linux 3.10 (amd64)
+
+gcc:alpine3.10:amd64:
+  variables:
+    CC: gcc
+    CFLAGS: "-Wall -Wextra -O2 -g"
+    EXTRA_CONFIGURE: "--enable-dnstap"
+  <<: *alpine_3_10_amd64_image
+  <<: *build_job
+
+system:gcc:alpine3.10:amd64:
+  <<: *alpine_3_10_amd64_image
+  <<: *system_test_job
+  dependencies:
+    - gcc:alpine3.10:amd64
+
+unit:gcc:alpine3.10:amd64:
+  <<: *alpine_3_10_amd64_image
+  <<: *unit_test_job
+  dependencies:
+    - gcc:alpine3.10:amd64
+
 # Jobs for regular GCC builds on CentOS 6 (amd64)
 
 gcc:centos6:amd64:
@@ -267,7 +287,7 @@ gcc:centos7:amd64:
   variables:
     CC: gcc
     CFLAGS: "-Wall -Wextra -O2 -g"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
   <<: *centos_centos7_amd64_image
   <<: *build_job
 
@@ -326,13 +346,34 @@ unit:gcc:stretch:amd64:
   dependencies:
     - gcc:stretch:amd64
 
+# Jobs for regular GCC builds on Debian 10 Buster (amd64)
+
+gcc:buster:amd64:
+  variables:
+    CC: gcc
+    CFLAGS: "-Wall -Wextra -O2 -g"
+  <<: *debian_buster_amd64_image
+  <<: *build_job
+
+system:gcc:buster:amd64:
+  <<: *debian_buster_amd64_image
+  <<: *system_test_job
+  dependencies:
+    - gcc:buster:amd64
+
+unit:gcc:buster:amd64:
+  <<: *debian_buster_amd64_image
+  <<: *unit_test_job
+  dependencies:
+    - gcc:buster:amd64
+
 # Jobs for regular GCC builds on Debian Sid (amd64)
 
 gcc:sid:amd64:
   variables:
     CC: gcc
     CFLAGS: "-Wall -Wextra -O3 -g"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
     RUN_MAKE_INSTALL: 1
   <<: *debian_sid_amd64_image
   <<: *build_job
@@ -355,7 +396,7 @@ gcc:sid:i386:
   variables:
     CC: gcc
     CFLAGS: "-Wall -Wextra -O3 -g"
-    EXTRA_CONFIGURE: "--with-libidn2 --without-python"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2 --without-python"
   <<: *debian_sid_i386_image
   <<: *build_job
 
@@ -371,27 +412,27 @@ unit:gcc:sid:i386:
   dependencies:
     - gcc:sid:i386
 
-# Jobs for regular GCC builds on Fedora 29 (amd64)
+# Jobs for regular GCC builds on Fedora 30 (amd64)
 
-gcc:fedora29:amd64:
+gcc:fedora30:amd64:
   variables:
     CC: gcc
     CFLAGS: "-Wall -Wextra -O2 -g"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *fedora_29_amd64_image
+  <<: *fedora_30_amd64_image
   <<: *build_job
 
-system:gcc:fedora29:amd64:
-  <<: *fedora_29_amd64_image
+system:gcc:fedora30:amd64:
+  <<: *fedora_30_amd64_image
   <<: *system_test_job
   dependencies:
-    - gcc:fedora29:amd64
+    - gcc:fedora30:amd64
 
-unit:gcc:fedora29:amd64:
-  <<: *fedora_29_amd64_image
+unit:gcc:fedora30:amd64:
+  <<: *fedora_30_amd64_image
   <<: *unit_test_job
   dependencies:
-    - gcc:fedora29:amd64
+    - gcc:fedora30:amd64
 
 # Jobs for regular GCC builds on Ubuntu 16.04 Xenial Xerus (amd64)
 
@@ -435,24 +476,6 @@ unit:gcc:bionic:amd64:
   <<: *unit_test_job
   dependencies:
     - gcc:bionic:amd64
-
-# Jobs for default CC builds on FreeBSD 12 (amd64)
-
-clang:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
-  <<: *build_job
-
-system:clang:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
-  <<: *system_test_job
-  dependencies:
-    - clang:freebsd12:amd64
-
-unit:clang:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
-  <<: *unit_test_job
-  dependencies:
-    - clang:freebsd12:amd64
 
 # Jobs for GCC builds with ASAN enabled on Debian Sid (amd64)
 
