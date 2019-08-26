@@ -1,3 +1,47 @@
+	--- 9.14.5 released ---
+
+5277.	[bug]		Cache DB statistics could underflow when serve-stale
+			was in use, because of a bug in counter maintenance
+			when RRsets become stale.
+
+			Functions for dumping statistics have been updated
+			to dump active, stale, and ancient statistic
+			counters.  Ancient RRset counters are prefixed
+			with '~'; stale RRset counters are still prefixed
+			with '#'. [GL #602]
+
+5275.	[bug]		Mark DS records included in referral messages
+			with trust level "pending" so that they can be
+			validated and cached immediately, with no need to
+			re-query. [GL #964]
+
+5274.	[bug]		Address potential use after free race when shutting
+			down rpz. [GL #1175]
+
+5273.	[bug]		Check that bits [64..71] of a dns64 prefix are zero.
+			[GL #1159]
+
+5269.	[port]		cygwin: can return ETIMEDOUT on connect() with a
+			non-blocking socket. [GL #1133]
+
+5268.	[bug]		named could crash during configuration if
+			configured to use "geoip continent" ACLs with
+			legacy GeoIP. [GL #1163]
+
+5266.	[bug]		named-checkconf failed to report dnstap-output
+			missing from named.conf when dnstap was specified.
+			[GL #1136]
+
+5265.	[bug]		DNS64 and RPZ nodata (CNAME *.) rules interacted badly
+			[GL #1106]
+
+5264.	[func]		New DNS Cookie algorithm - siphash24 - has been added
+			to BIND 9. [GL #605]
+
+5236.	[func]		Add SipHash 2-4 implementation in lib/isc/siphash.c
+			and switch isc_hash_function() to use SipHash 2-4.
+			[GL #605]
+
 	--- 9.14.4 released ---
 
 5260.	[bug]		dnstap-read was producing malformed output for large

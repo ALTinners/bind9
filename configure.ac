@@ -443,6 +443,20 @@ AS_CASE([$host],
 			[define if the ARM yield instruction is available])],
 	     [AC_MSG_RESULT([no])])])
 
+#
+# Check for pause support on SPARC processors
+#
+AS_CASE([$host],
+	[sparc*],
+	[AC_MSG_CHECKING([for pause instruction support])
+	 AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM([[]],
+			     [[__asm__ __volatile__ ("pause")]])],
+	     [AC_MSG_RESULT([yes])
+	      AC_DEFINE([HAVE_SPARC_PAUSE], [1],
+			[define if the SPARC pause instruction is available])],
+	     [AC_MSG_RESULT([no])])])
+
 AC_CHECK_FUNCS([sysctlbyname])
 
 #
@@ -917,21 +931,12 @@ AC_SUBST([OPENSSL_LDFLAGS])
 # Client Cookie algorithm choice
 #
 AC_ARG_WITH([cc-alg],
-	    [AS_HELP_STRING([--with-cc-alg=ALG],
-			   [choose the algorithm for Client Cookie
-			    [aes|sha1|sha256] (default is aes)])],
-	    [:], [with_cc_alg="aes"])
+	    [AS_HELP_STRING([--with-cc-alg=ALG], [deprecated])],
+	    [:], [with_cc_alg="siphash24"])
 
-AC_MSG_CHECKING([for the algorithm for Client Cookie])
 AS_CASE([$with_cc_alg],
-	[sha1|SHA1],[AC_MSG_RESULT([sha1])
-		     AC_DEFINE([HMAC_SHA1_CC], [1], [Use HMAC-SHA1 for Client Cookie generation])],
-	[sha256|SHA256],[AC_MSG_RESULT([sha256])
-			 AC_DEFINE([HMAC_SHA256_CC], [1], [Use HMAC-SHA256 for Client Cookie generation])],
-	[aes|AES|auto],[AC_MSG_RESULT([aes])
-		       AC_DEFINE([AES_CC], [1], [Use AES for Client Cookie generation])],
-	[AC_MSG_ERROR([Invalid $with_cc_alg algorithm for Client Cookie])])
-
+	[siphash24],[:],
+	[AC_MSG_WARN([The Client Cookie is always SipHash 2-4 based])])
 
 PKCS11_TOOLS=
 PKCS11_TEST=
@@ -2450,23 +2455,24 @@ AC_SUBST([KYUA])
 # Check for -Wl,--wrap= support
 #
 
-save_LDFLAGS=$LDFLAGS
-LDFLAGS="--wrap=printf"
+AX_SAVE_FLAGS([wrap])
 
+LDFLAGS="-Wl,-wrap,exit"
 LD_WRAP_TESTS=false
-enable_ld_wrap=no
 AC_MSG_CHECKING([for linker support for --wrap option])
 AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([#include <stdio.h>], [__wrap_printf("success"); return (0);])],
-    [enable_ld_wrap=yes
-     LD_WRAP_TESTS=true
+    [AC_LANG_PROGRAM([[#include <stdlib.h>
+		       void __real_exit (int status);
+		       void __wrap_exit (int status) { __real_exit (status); }
+		      ]],
+		     [[exit (1);]])],
+    [LD_WRAP_TESTS=true
      AC_DEFINE([LD_WRAP], [1], [define if the linker supports --wrap option])
      AC_MSG_RESULT([yes])],
     [AC_MSG_RESULT([no])])
-# AM_CONDITIONAL([LD_WRAP], [test $enable_ld_wrap = yes])
 AC_SUBST([LD_WRAP_TESTS])
 
-LDFLAGS=$save_LDFLAGS
+AX_RESTORE_FLAGS([wrap])
 
 #
 # Check for i18n
