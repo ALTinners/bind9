@@ -1,3 +1,11 @@
+bind9 (1:9.11.10+dfsg-1) unstable; urgency=medium
+
+  * Disable old GeoIP and enable new GeoIP2
+  * New upstream version 9.11.10+dfsg
+  * Bump libdns SOVERSION to 1107
+
+ -- Ondřej Surý <ondrej@sury.org>  Mon, 26 Aug 2019 08:34:42 +0200
+
 bind9 (1:9.11.9+dfsg-1) unstable; urgency=medium
 
   * New upstream version 9.11.9+dfsg
