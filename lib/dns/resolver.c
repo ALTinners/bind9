@@ -22,17 +22,12 @@
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/random.h>
+#include <isc/siphash.h>
 #include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
-
-#ifdef AES_CC
-#include <isc/aes.h>
-#else
-#include <isc/hmacsha.h>
-#endif
 
 #include <dns/acl.h>
 #include <dns/adb.h>
@@ -207,7 +202,7 @@ typedef struct query {
 	isc_mem_t *			mctx;
 	dns_dispatchmgr_t *		dispatchmgr;
 	dns_dispatch_t *		dispatch;
-	bool			exclusivesocket;
+	bool				exclusivesocket;
 	dns_adbaddrinfo_t *		addrinfo;
 	isc_socket_t *			tcpsocket;
 	isc_time_t			start;
@@ -219,7 +214,7 @@ typedef struct query {
 	dns_tsigkey_t			*tsigkey;
 	isc_socketevent_t		sendevent;
 	isc_dscp_t			dscp;
-	int 				ednsversion;
+	int				ednsversion;
 	unsigned int			options;
 	unsigned int			attributes;
 	unsigned int			sends;
@@ -542,6 +537,7 @@ struct dns_resolver {
 #define BADCOOKIE(a)                    (((a)->flags & \
 					 FCTX_ADDRINFO_BADCOOKIE) != 0)
 
+#define NONTA(o)			(((o) & DNS_FETCHOPT_NONTA) != 0)
 
 #define NXDOMAIN(r) (((r)->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
 #define NEGATIVE(r) (((r)->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
@@ -2009,79 +2005,46 @@ add_triededns512(fetchctx_t *fctx, isc_sockaddr_t *address) {
 	ISC_LIST_INITANDAPPEND(fctx->edns512, tried, link);
 }
 
+static inline size_t
+addr2buf(void *buf, const size_t bufsize, const isc_sockaddr_t *sockaddr) {
+	isc_netaddr_t netaddr;
+	isc_netaddr_fromsockaddr(&netaddr, sockaddr);
+	switch (netaddr.family) {
+	case AF_INET:
+		INSIST(bufsize >= 4);
+		memmove(buf, &netaddr.type.in, 4);
+		return (4);
+	case AF_INET6:
+		INSIST(bufsize >= 16);
+		memmove(buf, &netaddr.type.in6, 16);
+		return (16);
+	default:
+		INSIST(0);
+		ISC_UNREACHABLE();
+	}
+	return (0);
+}
+
+static inline size_t
+add_serveraddr(uint8_t *buf, const size_t bufsize, const resquery_t *query)
+{
+	return (addr2buf(buf, bufsize, &query->addrinfo->sockaddr));
+}
+
+#define CLIENT_COOKIE_SIZE 8U
+
 static void
-compute_cc(resquery_t *query, unsigned char *cookie, size_t len) {
-#ifdef AES_CC
-	unsigned char digest[ISC_AES_BLOCK_LENGTH];
-	unsigned char input[16];
-	isc_netaddr_t netaddr;
-	unsigned int i;
+compute_cc(const resquery_t *query, uint8_t *cookie, const size_t len) {
+	INSIST(len >= CLIENT_COOKIE_SIZE);
+	INSIST(sizeof(query->fctx->res->view->secret)
+	       >= ISC_SIPHASH24_KEY_LENGTH);
 
-	INSIST(len >= 8U);
+	uint8_t buf[16] = { 0 };
+	size_t buflen = add_serveraddr(buf, sizeof(buf), query);
 
-	isc_netaddr_fromsockaddr(&netaddr, &query->addrinfo->sockaddr);
-	switch (netaddr.family) {
-	case AF_INET:
-		memmove(input, (unsigned char *)&netaddr.type.in, 4);
-		memset(input + 4, 0, 12);
-		break;
-	case AF_INET6:
-		memmove(input, (unsigned char *)&netaddr.type.in6, 16);
-		break;
-	}
-	isc_aes128_crypt(query->fctx->res->view->secret, input, digest);
-	for (i = 0; i < 8; i++)
-		digest[i] ^= digest[i + 8];
-	memmove(cookie, digest, 8);
-#endif
-#ifdef HMAC_SHA1_CC
-	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
-	isc_netaddr_t netaddr;
-	isc_hmacsha1_t hmacsha1;
-
-	INSIST(len >= 8U);
-
-	isc_hmacsha1_init(&hmacsha1, query->fctx->res->view->secret,
-			  ISC_SHA1_DIGESTLENGTH);
-	isc_netaddr_fromsockaddr(&netaddr, &query->addrinfo->sockaddr);
-	switch (netaddr.family) {
-	case AF_INET:
-		isc_hmacsha1_update(&hmacsha1,
-				    (unsigned char *)&netaddr.type.in, 4);
-		break;
-	case AF_INET6:
-		isc_hmacsha1_update(&hmacsha1,
-				    (unsigned char *)&netaddr.type.in6, 16);
-		break;
-	}
-	isc_hmacsha1_sign(&hmacsha1, digest, sizeof(digest));
-	memmove(cookie, digest, 8);
-	isc_hmacsha1_invalidate(&hmacsha1);
-#endif
-#ifdef HMAC_SHA256_CC
-	unsigned char digest[ISC_SHA256_DIGESTLENGTH];
-	isc_netaddr_t netaddr;
-	isc_hmacsha256_t hmacsha256;
-
-	INSIST(len >= 8U);
-
-	isc_hmacsha256_init(&hmacsha256, query->fctx->res->view->secret,
-			    ISC_SHA256_DIGESTLENGTH);
-	isc_netaddr_fromsockaddr(&netaddr, &query->addrinfo->sockaddr);
-	switch (netaddr.family) {
-	case AF_INET:
-		isc_hmacsha256_update(&hmacsha256,
-				      (unsigned char *)&netaddr.type.in, 4);
-		break;
-	case AF_INET6:
-		isc_hmacsha256_update(&hmacsha256,
-				      (unsigned char *)&netaddr.type.in6, 16);
-		break;
-	}
-	isc_hmacsha256_sign(&hmacsha256, digest, sizeof(digest));
-	memmove(cookie, digest, 8);
-	isc_hmacsha256_invalidate(&hmacsha256);
-#endif
+	uint8_t digest[ISC_SIPHASH24_TAG_LENGTH] = { 0 };
+	isc_siphash24(query->fctx->res->view->secret, buf, buflen, digest);
+	memmove(cookie, digest, CLIENT_COOKIE_SIZE);
 }
 
 static isc_result_t
@@ -2239,7 +2202,7 @@ resquery_send(resquery_t *query) {
 	} else if (res->view->enablevalidation &&
 		   ((fctx->qmessage->flags & DNS_MESSAGEFLAG_RD) != 0))
 	{
-		bool checknta = ((query->options & DNS_FETCHOPT_NONTA) == 0);
+		bool checknta = !NONTA(query->options);
 		bool ntacovered = false;
 		result = issecuredomain(res->view, &fctx->name, fctx->type,
 					isc_time_seconds(&query->start),
@@ -2560,10 +2523,12 @@ resquery_send(resquery_t *query) {
 	 */
 	dns_message_reset(fctx->qmessage, DNS_MESSAGE_INTENTRENDER);
 
-	if (query->exclusivesocket)
+	if (query->exclusivesocket) {
 		sock = dns_dispatch_getentrysocket(query->dispentry);
-	else
+	} else {
 		sock = dns_dispatch_getsocket(query->dispatch);
+	}
+
 	/*
 	 * Send the query!
 	 */
@@ -4871,9 +4836,9 @@ validated(isc_task_t *task, isc_event_t *event) {
 	REQUIRE(event->ev_type == DNS_EVENT_VALIDATORDONE);
 	valarg = event->ev_arg;
 	fctx = valarg->fctx;
+	REQUIRE(VALID_FCTX(fctx));
 	res = fctx->res;
 	addrinfo = valarg->addrinfo;
-	REQUIRE(VALID_FCTX(fctx));
 	REQUIRE(!ISC_LIST_EMPTY(fctx->validators));
 
 	vevent = (dns_validatorevent_t *)event;
@@ -5421,7 +5386,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 	/*
 	 * Is DNSSEC validation required for this name?
 	 */
-	if ((fctx->options & DNS_FETCHOPT_NONTA) != 0) {
+	if (NONTA(fctx->options)) {
 		valoptions |= DNS_VALIDATOR_NONTA;
 		checknta = false;
 	}
@@ -6008,7 +5973,7 @@ ncache_message(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 	/*
 	 * Is DNSSEC validation required for this name?
 	 */
-	if ((fctx->options & DNS_FETCHOPT_NONTA) != 0) {
+	if (NONTA(fctx->options)) {
 		valoptions |= DNS_VALIDATOR_NONTA;
 		checknta = false;
 	}
@@ -6729,6 +6694,10 @@ noanswer_response(fetchctx_t *fctx, dns_name_t *oqname,
 					 * marked.
 					 */
 				} else if (type == dns_rdatatype_ds) {
+					bool checknta = true;
+					bool secure_domain = false;
+					isc_stdtime_t now;
+
 					/*
 					 * DS or SIG DS.
 					 *
@@ -6759,15 +6728,32 @@ noanswer_response(fetchctx_t *fctx, dns_name_t *oqname,
 						DNS_NAMEATTR_CACHE;
 					rdataset->attributes |=
 						DNS_RDATASETATTR_CACHE;
-					if (aa)
+
+					isc_stdtime_get(&now);
+					if (NONTA(fctx->options)) {
+						checknta = false;
+					}
+					result = issecuredomain(fctx->res->view,
+								name, type, now,
+								checknta, NULL,
+								&secure_domain);
+					if (result != ISC_R_SUCCESS) {
+						return (result);
+					}
+					if (secure_domain) {
+						rdataset->trust =
+						     dns_trust_pending_answer;
+					} else if (aa) {
 						rdataset->trust =
 						    dns_trust_authauthority;
-					else if (ISFORWARDER(fctx->addrinfo))
+					} else if (ISFORWARDER(fctx->addrinfo))
+					{
 						rdataset->trust =
 							dns_trust_answer;
-					else
+					} else {
 						rdataset->trust =
 							dns_trust_additional;
+					}
 				}
 			}
 		} else {

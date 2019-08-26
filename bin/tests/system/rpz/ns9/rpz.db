@@ -7,5 +7,8 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-. 0 NS ns.root-servers.nil.
-ns.root-servers.nil. 0 A 10.53.0.1
+rpz.                                    28800 IN SOA      rpz. hostmaster.rpz. 6 10800 3600 2419200 900
+rpz.                                    28800 IN NS       .
+a-only.example.rpz.                     28800 IN CNAME    *.
+no-a-no-aaaa.example.rpz.               28800 IN CNAME    *.
+a-plus-aaaa.example.rpz.                28800 IN CNAME    *.
