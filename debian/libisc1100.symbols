@@ -669,6 +669,7 @@ libisc.so.1100 libisc1100 #MINVER#
  isc_sha512_last@Base 1:9.11.3+dfsg
  isc_sha512_transform@Base 1:9.11.3+dfsg
  isc_sha512_update@Base 1:9.11.3+dfsg
+ isc_siphash24@Base 1:9.11.10+dfsg
  isc_sockaddr_any6@Base 1:9.11.3+dfsg
  isc_sockaddr_any@Base 1:9.11.3+dfsg
  isc_sockaddr_anyofpf@Base 1:9.11.3+dfsg
@@ -1569,6 +1570,7 @@ libisc-pkcs11.so.1100 libisc1100 #MINVER#
  isc_sha512_init@Base 1:9.11.3+dfsg
  isc_sha512_invalidate@Base 1:9.11.3+dfsg
  isc_sha512_update@Base 1:9.11.3+dfsg
+ isc_siphash24@Base 1:9.11.10+dfsg
  isc_sockaddr_any6@Base 1:9.11.3+dfsg
  isc_sockaddr_any@Base 1:9.11.3+dfsg
  isc_sockaddr_anyofpf@Base 1:9.11.3+dfsg

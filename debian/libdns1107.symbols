@@ -1,4 +1,4 @@
-libdns-pkcs11.so.1106 libdns1106 #MINVER#
+libdns-pkcs11.so.1107 libdns1107 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
@@ -1581,7 +1581,7 @@ libdns-pkcs11.so.1106 libdns1106 #MINVER#
  isc__rdatalist_next@Base 1:9.11.3+dfsg
  isc__rdatalist_setownercase@Base 1:9.11.3+dfsg
  ishex@Base 1:9.11.3+dfsg
-libdns.so.1106 libdns1106 #MINVER#
+libdns.so.1107 libdns1107 #MINVER#
  dns__rbt_checkproperties@Base 1:9.11.3+dfsg
  dns__rbt_getheight@Base 1:9.11.3+dfsg
  dns__rbtnode_getdistance@Base 1:9.11.3+dfsg
@@ -3071,7 +3071,7 @@ libdns.so.1106 libdns1106 #MINVER#
  dst__openssldh_init@Base 1:9.11.3+dfsg
  dst__openssldsa_init@Base 1:9.11.3+dfsg
  dst__opensslecdsa_init@Base 1:9.11.3+dfsg
-#MISSING: 1:9.11.6+dfsg-1# (optional)dst__openssleddsa_init@Base 1:9.11.4.P1+dfsg
+ (optional)dst__openssleddsa_init@Base 1:9.11.4.P1+dfsg
  dst__opensslrsa_init@Base 1:9.11.3+dfsg
  dst__privstruct_free@Base 1:9.11.3+dfsg
  dst__privstruct_parse@Base 1:9.11.3+dfsg
